@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cổng doanh nghiệp</title>
+<style>
+  :root {
+    --bg:#f5f6f8; --card:#ffffff; --text:#1c2330; --muted:#677084; --line:#dfe3ea; --grid:#e8ebf0;
+    --accent:#2457d6; --danger:#c0392b; --ok:#1e8e5a;
+    /* Màu chuỗi dữ liệu theo region, thứ tự cố định */
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#12151b; --card:#1b2029; --text:#e7eaf0; --muted:#98a1b3; --line:#2c3442; --grid:#262d39;
+      --accent:#6f95ff; --danger:#ff7b6b; --ok:#4fc38a;
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+    }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui,"Segoe UI",sans-serif; }
+  main { max-width:920px; margin:0 auto; padding:24px 16px 48px; }
+  header { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  h1 { font-size:22px; margin:0; }
+  h2 { font-size:16px; margin:0 0 12px; }
+  h3 { font-size:14px; margin:0 0 8px; }
+  p { margin:0; }
+  .muted { color:var(--muted); font-size:13px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:16px; }
+  .stack { display:grid; gap:10px; }
+  .narrow { max-width:380px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .spread { justify-content:space-between; }
+  .row > input { flex:1 1 200px; }
+  input, button { font:inherit; padding:9px 11px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--text); }
+  input { width:100%; }
+  button { cursor:pointer; background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.ghost { background:transparent; color:var(--text); border-color:var(--line); }
+  button.danger { background:transparent; color:var(--danger); border-color:var(--danger); padding:4px 10px; }
+  button.link { background:none; border:none; color:var(--accent); padding:0; text-align:left; }
+
+  nav { display:flex; gap:4px; margin-top:20px; border-bottom:1px solid var(--line); overflow-x:auto; }
+  nav button { background:none; border:none; border-bottom:2px solid transparent; border-radius:0; color:var(--muted); padding:10px 14px; white-space:nowrap; }
+  nav button[aria-selected="true"] { color:var(--text); border-bottom-color:var(--accent); font-weight:600; }
+
+  .segmented { display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .segmented button { background:transparent; color:var(--muted); border:none; border-radius:0; padding:6px 12px; }
+  .segmented button[aria-pressed="true"] { background:var(--accent); color:#fff; }
+
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-top:16px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .tile b { display:block; font-size:26px; line-height:1.2; margin-top:4px; }
+
+  .chart { position:relative; margin-top:8px; }
+  .chart svg { display:block; width:100%; height:auto; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:13px; }
+  .legend span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; background:var(--c); }
+  .tip { position:absolute; top:0; pointer-events:none; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:13px; box-shadow:0 4px 14px rgba(0,0,0,.14); white-space:nowrap; z-index:1; }
+  .tip div { display:flex; justify-content:space-between; gap:16px; }
+  .tip i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:6px; }
+  .two { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+
+  code, pre { font-family:ui-monospace,Consolas,monospace; font-size:13px; }
+  pre { margin:0; padding:10px; border:1px solid var(--line); border-radius:6px; white-space:pre-wrap; word-break:break-word; }
+  .secret { border:1px solid var(--ok); border-radius:8px; padding:12px; }
+  .secret code { display:block; word-break:break-all; margin:6px 0 10px; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th { font-size:12px; color:var(--muted); font-weight:600; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .badge { font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+  .badge.active { color:var(--ok); border-color:var(--ok); }
+  .status { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; font-size:13px; }
+  .chip { border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--card); }
+  .chip.healthy b { color:var(--ok); }
+  .chip.unhealthy b { color:var(--danger); }
+  .error { color:var(--danger); min-height:1.5em; overflow-wrap:anywhere; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Cổng doanh nghiệp</h1>
+      <p class="muted">Đang phục vụ từ region: <b id="region">…</b></p>
+    </div>
+    <div class="row" id="account" hidden>
+      <span class="muted" id="who"></span>
+      <button class="ghost" id="logout">Đăng xuất</button>
+    </div>
+  </header>
+
+  <section class="card" id="auth" hidden>
+    <h2 id="auth-title">Đăng nhập</h2>
+    <form class="stack narrow" id="auth-form">
+      <input name="orgName" placeholder="Tên doanh nghiệp" maxlength="100" hidden>
+      <input name="email" type="email" placeholder="Email" maxlength="200" required>
+      <input name="password" type="password" placeholder="Mật khẩu (ít nhất 8 ký tự)" minlength="8" maxlength="200" required>
+      <button type="submit" id="auth-submit">Đăng nhập</button>
+      <button type="button" class="link" id="auth-toggle">Chưa có tài khoản? Đăng ký doanh nghiệp</button>
+      <p class="error" id="auth-error"></p>
+    </form>
+  </section>
+
+  <div id="app" hidden>
+    <nav role="tablist">
+      <button role="tab" data-view="overview">Tổng quan</button>
+      <button role="tab" data-view="keys">API key</button>
+      <button role="tab" data-view="try">Thử API</button>
+      <button role="tab" data-view="guide">Hướng dẫn</button>
+    </nav>
+
+    <!-- Tổng quan -->
+    <div id="view-overview" hidden>
+      <div class="row spread" style="margin-top:16px">
+        <div class="segmented" id="ranges">
+          <button data-range="1h">1 giờ</button>
+          <button data-range="24h">24 giờ</button>
+          <button data-range="7d">7 ngày</button>
+        </div>
+        <span class="muted" id="updated"></span>
+      </div>
+      <div class="status" id="status" hidden></div>
+      <p class="error" id="usage-error"></p>
+
+      <div class="tiles">
+        <div class="tile"><span class="muted">Tổng lượt gọi</span><b id="t-requests">–</b></div>
+        <div class="tile"><span class="muted">Lượt lỗi</span><b id="t-errors">–</b><span class="muted" id="t-error-rate"></span></div>
+        <div class="tile"><span class="muted">Thời gian xử lý trung bình</span><b id="t-latency">–</b></div>
+        <div class="tile"><span class="muted">Key đang dùng</span><b id="t-keys">–</b></div>
+      </div>
+
+      <section class="card">
+        <div class="row spread">
+          <h2 style="margin:0" id="chart-title">Lượt gọi theo thời gian</h2>
+          <div class="legend" id="legend"></div>
+        </div>
+        <p class="muted" id="chart-note"></p>
+        <div class="chart" id="chart"></div>
+      </section>
+
+      <div class="two">
+        <section class="card">
+          <h3>Theo region</h3>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Region</th><th class="num">Lượt gọi</th><th class="num">Lỗi</th><th class="num">Tỉ trọng</th></tr></thead>
+            <tbody id="by-region"></tbody>
+          </table></div>
+        </section>
+        <section class="card">
+          <h3>Theo API key</h3>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Ứng dụng</th><th class="num">Lượt gọi</th><th class="num">Lỗi</th></tr></thead>
+            <tbody id="by-key"></tbody>
+          </table></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- API key -->
+    <div id="view-keys" hidden>
+      <section class="card">
+        <h2>API key</h2>
+        <div class="stack">
+          <p class="muted">Mỗi ứng dụng nên dùng một key riêng để có thể thu hồi độc lập.</p>
+          <form class="row" id="key-form">
+            <input name="keyName" placeholder="Tên ứng dụng, ví dụ: Website bán hàng" maxlength="60" required>
+            <button type="submit">Tạo key</button>
+          </form>
+          <p class="error" id="key-error"></p>
+          <div class="secret" id="secret" hidden>
+            <b>Hãy sao chép key ngay — key sẽ không hiển thị lại.</b>
+            <code id="secret-value"></code>
+            <button type="button" class="ghost" id="copy">Sao chép</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Ứng dụng</th><th>Mã key</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr></thead>
+              <tbody id="keys"></tbody>
+            </table>
+          </div>
+          <p class="muted" id="no-keys" hidden>Chưa có key nào.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Thử API -->
+    <div id="view-try" hidden>
+      <section class="card">
+        <h2>Thử gọi API</h2>
+        <div class="stack">
+          <input id="try-key" placeholder="Dán API key vào đây (mrk_…)" autocomplete="off">
+          <div class="row">
+            <button type="button" id="try-create">Tạo đơn hàng thử</button>
+            <button type="button" class="ghost" id="try-list">Xem danh sách đơn</button>
+          </div>
+          <pre id="output" style="min-height:60px">Kết quả sẽ hiện ở đây.</pre>
+          <p class="muted">Mỗi lượt gọi ở đây được tính vào thống kê ở tab Tổng quan.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Hướng dẫn -->
+    <div id="view-guide" hidden>
+      <section class="card stack">
+        <h2 style="margin:0">Gọi API từ ứng dụng của bạn</h2>
+        <p>Gửi API key trong header <code>x-api-key</code> của mọi request. Chỉ gọi từ backend, không đặt key trong mã chạy trên trình duyệt hay ứng dụng di động.</p>
+        <h3 style="margin:8px 0 0">Địa chỉ API</h3>
+        <pre id="guide-base"></pre>
+        <h3 style="margin:8px 0 0">Tạo đơn hàng</h3>
+        <pre id="guide-create"></pre>
+        <h3 style="margin:8px 0 0">Xem danh sách đơn hàng</h3>
+        <pre id="guide-list"></pre>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Method</th><th>Đường dẫn</th><th>Mô tả</th></tr></thead>
+          <tbody>
+            <tr><td>POST</td><td><code>/orders</code></td><td>Tạo đơn, body là JSON bất kỳ</td></tr>
+            <tr><td>GET</td><td><code>/orders</code></td><td>50 đơn gần nhất của doanh nghiệp</td></tr>
+            <tr><td>GET</td><td><code>/orders/{id}</code></td><td>Đọc một đơn</td></tr>
+            <tr><td>PUT</td><td><code>/orders/{id}</code></td><td>Ghi đè nội dung một đơn</td></tr>
+            <tr><td>DELETE</td><td><code>/orders/{id}</code></td><td>Xoá một đơn</td></tr>
+          </tbody>
+        </table></div>
+        <p class="muted">Key sai hoặc đã thu hồi trả về HTTP 401. Mọi response có trường <code>region</code> cho biết region đã xử lý.</p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+const BASE = location.pathname.replace(/\/+$/, "");
+const OFFLINE = "Không kết nối được tới máy chủ.";
+const REGION_NAMES = { "ap-southeast-1": "Singapore", "ap-northeast-1": "Tokyo" };
+// Màu đi theo region, không theo thứ hạng: Singapore luôn là màu 1, Tokyo luôn là màu 2.
+const REGION_ORDER = ["ap-southeast-1", "ap-northeast-1"];
+const RANGES = {
+  "1h": { buckets: 60, minutes: 1, chars: 16, labelEvery: 10, title: "Lượt gọi mỗi phút" },
+  "24h": { buckets: 24, minutes: 60, chars: 13, labelEvery: 4, title: "Lượt gọi mỗi giờ" },
+  "7d": { buckets: 7, minutes: 1440, chars: 10, labelEvery: 1, title: "Lượt gọi mỗi ngày (theo ngày UTC)" },
+};
+
+const $ = (id) => document.getElementById(id);
+const num = (n) => Number(n).toLocaleString("vi-VN");
+const el = (tag, props = {}, ...children) => {
+  const node = Object.assign(document.createElement(tag), props);
+  node.append(...children.filter((c) => c !== null && c !== undefined));
+  return node;
+};
+const svg = (tag, attrs = {}) => {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
+  return node;
+};
+
+let token = null;
+try { token = sessionStorage.getItem("token"); } catch {}
+let signupMode = false;
+let view = "overview";
+let range = "24h";
+let keys = [];
+
+function setToken(value) {
+  token = value;
+  try { value ? sessionStorage.setItem("token", value) : sessionStorage.removeItem("token"); } catch {}
+}
+
+async function call(method, path, body, apiKey) {
+  const headers = {};
+  if (body) headers["Content-Type"] = "application/json";
+  if (apiKey) headers["x-api-key"] = apiKey;
+  else if (token) headers["Authorization"] = "Bearer " + token;
+  const res = await fetch(BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  return { status: res.status, ok: res.ok, data };
+}
+const fail = (r) => r.data.error || "Lỗi HTTP " + r.status;
+
+function signedOut() {
+  setToken(null);
+  render();
+}
+
+function render() {
+  $("auth").hidden = !!token;
+  $("app").hidden = !token;
+  $("account").hidden = !token;
+  for (const tab of document.querySelectorAll("nav button")) {
+    const selected = tab.dataset.view === view;
+    tab.setAttribute("aria-selected", selected);
+    $("view-" + tab.dataset.view).hidden = !selected;
+  }
+  for (const button of document.querySelectorAll("#ranges button")) {
+    button.setAttribute("aria-pressed", button.dataset.range === range);
+  }
+}
+
+// ---------- Tổng quan ----------
+
+const regionColor = (region, regions) => {
+  const known = REGION_ORDER.indexOf(region);
+  const slot = known >= 0 ? known : 2 + regions.filter((r) => !REGION_ORDER.includes(r)).indexOf(region);
+  return "var(--s" + (Math.min(slot, 3) + 1) + ")";
+};
+const regionName = (region) => REGION_NAMES[region] || region;
+
+function bucketList(spec) {
+  const now = Date.now();
+  return Array.from({ length: spec.buckets }, (_, i) => {
+    const date = new Date(now - (spec.buckets - 1 - i) * spec.minutes * 60000);
+    const id = date.toISOString().slice(0, spec.chars);
+    let label;
+    if (spec.chars === 10) label = id.slice(8, 10) + "/" + id.slice(5, 7);
+    else {
+      const local = new Date(id + (spec.chars === 13 ? ":00:00Z" : ":00Z"));
+      label = String(local.getHours()).padStart(2, "0") + ":" + String(local.getMinutes()).padStart(2, "0");
+    }
+    return { id, label };
+  });
+}
+
+function niceMax(value) {
+  if (value <= 4) return 4;
+  const power = Math.pow(10, Math.floor(Math.log10(value)));
+  for (const step of [1, 2, 4, 5, 8, 10]) if (value <= step * power) return step * power;
+  return 10 * power;
+}
+
+// Hình chữ nhật bo tròn hai góc trên, đáy phẳng trên đường gốc.
+const topRounded = (x, y, w, h, r) => {
+  r = Math.max(0, Math.min(r, w / 2, h));
+  return "M" + x + " " + (y + h) + "V" + (y + r) + "a" + r + " " + r + " 0 0 1 " + r + " " + -r +
+    "H" + (x + w - r) + "a" + r + " " + r + " 0 0 1 " + r + " " + r + "V" + (y + h) + "z";
+};
+
+function drawChart(data) {
+  const spec = RANGES[data.range];
+  const buckets = bucketList(spec);
+  const regions = Object.keys(data.byRegion).sort((a, b) => {
+    const ia = REGION_ORDER.indexOf(a), ib = REGION_ORDER.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
+  });
+  const cells = {};
+  for (const point of data.series) (cells[point.bucket] ??= {})[point.servedRegion] = point;
+
+  $("chart-title").textContent = spec.title;
+  $("legend").replaceChildren(...(regions.length > 1 ? regions.map((region) => {
+    const item = el("span", { textContent: regionName(region) });
+    item.style.setProperty("--c", regionColor(region, regions));
+    return item;
+  }) : []));
+  $("chart-note").textContent = data.totals.requests === 0
+    ? "Chưa có lượt gọi nào trong khoảng này. Tạo key rồi gọi thử ở tab Thử API."
+    : regions.length === 1 ? "Tất cả lượt gọi được xử lý tại " + regionName(regions[0]) + "." : "";
+
+  const W = 880, H = 240, left = 44, right = 8, top = 12, bottom = 26;
+  const plotW = W - left - right, plotH = H - top - bottom;
+  const totalOf = (id) => regions.reduce((sum, r) => sum + (cells[id]?.[r]?.requests ?? 0), 0);
+  const max = niceMax(Math.max(0, ...buckets.map((b) => totalOf(b.id))));
+  const step = plotW / buckets.length;
+  const barW = Math.max(2, Math.min(28, step - 2));
+  const y = (value) => top + plotH - (value / max) * plotH;
+
+  const root = svg("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": spec.title });
+  for (let i = 0; i <= 4; i++) {
+    const value = (max / 4) * i;
+    root.append(svg("line", { x1: left, x2: W - right, y1: y(value), y2: y(value), stroke: i === 0 ? "var(--line)" : "var(--grid)" }));
+    const tick = svg("text", { x: left - 8, y: y(value) + 4, "text-anchor": "end", "font-size": 11, fill: "var(--muted)" });
+    tick.textContent = num(value);
+    root.append(tick);
+  }
+
+  const band = svg("rect", { y: top, width: step, height: plotH, fill: "var(--grid)", opacity: 0 });
+  root.append(band);
+
+  buckets.forEach((bucket, i) => {
+    const x = left + i * step + (step - barW) / 2;
+    if (i % spec.labelEvery === 0) {
+      const label = svg("text", { x: left + i * step + step / 2, y: H - 8, "text-anchor": "middle", "font-size": 11, fill: "var(--muted)" });
+      label.textContent = bucket.label;
+      root.append(label);
+    }
+    let stacked = 0;
+    const present = regions.filter((r) => (cells[bucket.id]?.[r]?.requests ?? 0) > 0);
+    present.forEach((region, index) => {
+      const value = cells[bucket.id][region].requests;
+      const y1 = y(stacked + value), y0 = y(stacked);
+      // Khe 2px giữa các đoạn xếp chồng để tách chúng mà không cần viền.
+      const gap = index > 0 && y0 - y1 > 4 ? 2 : 0;
+      const isTop = index === present.length - 1;
+      root.append(svg("path", {
+        d: topRounded(x, y1, barW, y0 - y1 - gap, isTop ? 4 : 0),
+        fill: regionColor(region, regions),
+      }));
+      stacked += value;
+    });
+  });
+
+  // Vùng bắt chuột rộng bằng cả cột, lớn hơn cột thật.
+  const tip = el("div", { className: "tip", hidden: true });
+  buckets.forEach((bucket, i) => {
+    const hit = svg("rect", { x: left + i * step, y: top, width: step, height: plotH, fill: "transparent" });
+    hit.addEventListener("pointerenter", () => {
+      band.setAttribute("x", left + i * step);
+      band.setAttribute("opacity", 1);
+      const rows = regions.map((region) => {
+        const swatch = el("i");
+        swatch.style.background = regionColor(region, regions);
+        return el("div", {}, el("span", {}, swatch, regionName(region)), el("b", { textContent: num(cells[bucket.id]?.[region]?.requests ?? 0) }));
+      });
+      const errors = regions.reduce((sum, r) => sum + (cells[bucket.id]?.[r]?.errors ?? 0), 0);
+      tip.replaceChildren(
+        el("div", {}, el("b", { textContent: bucket.label })),
+        ...rows,
+        el("div", { className: "muted" }, el("span", { textContent: "Tổng" }), el("span", { textContent: num(totalOf(bucket.id)) })),
+        el("div", { className: "muted" }, el("span", { textContent: "Lỗi" }), el("span", { textContent: num(errors) })),
+      );
+      tip.hidden = false;
+      const fraction = (left + i * step + step / 2) / W;
+      tip.style.left = fraction < 0.6 ? "calc(" + fraction * 100 + "% + 12px)" : "";
+      tip.style.right = fraction < 0.6 ? "" : "calc(" + (1 - fraction) * 100 + "% + 12px)";
+    });
+    root.append(hit);
+  });
+  root.addEventListener("pointerleave", () => { tip.hidden = true; band.setAttribute("opacity", 0); });
+
+  $("chart").replaceChildren(root, tip);
+
+  const numCell = (value) => el("td", { className: "num", textContent: value });
+  $("by-region").replaceChildren(...(regions.length ? regions.map((region) => {
+    const row = data.byRegion[region];
+    const share = data.totals.requests ? Math.round((row.requests / data.totals.requests) * 100) + "%" : "–";
+    return el("tr", {}, el("td", { textContent: regionName(region) + " (" + region + ")" }), numCell(num(row.requests)), numCell(num(row.errors)), numCell(share));
+  }) : [el("tr", {}, el("td", { colSpan: 4, className: "muted", textContent: "Chưa có dữ liệu." }))]));
+
+  const used = Object.entries(data.byKey).sort((a, b) => b[1].requests - a[1].requests);
+  $("by-key").replaceChildren(...(used.length ? used.map(([keyId, row]) => {
+    const key = keys.find((k) => k.keyId === keyId);
+    return el("tr", {}, el("td", { textContent: key ? key.name : keyId }), numCell(num(row.requests)), numCell(num(row.errors)));
+  }) : [el("tr", {}, el("td", { colSpan: 3, className: "muted", textContent: "Chưa có dữ liệu." }))]));
+}
+
+// Trạng thái từng region lấy từ health check của Route 53; luôn kèm chữ, không chỉ dựa vào màu.
+const STATUS_TEXT = { healthy: "✓ Hoạt động", unhealthy: "✕ Gặp sự cố", unknown: "? Chưa rõ" };
+async function loadStatus() {
+  try {
+    const r = await call("GET", "/api/status");
+    const regions = r.ok ? r.data.regions : [];
+    $("status").hidden = regions.length === 0;
+    $("status").replaceChildren(
+      el("span", { className: "muted", textContent: "Trạng thái region:" }),
+      ...regions.map((item) => el("span", { className: "chip " + item.status },
+        regionName(item.region) + " ", el("b", { textContent: STATUS_TEXT[item.status] || STATUS_TEXT.unknown }))),
+    );
+  } catch { $("status").hidden = true; }
+}
+
+async function loadOverview() {
+  if (!token) return;
+  loadStatus();
+  try {
+    const [usage, list] = await Promise.all([call("GET", "/api/usage?range=" + range), call("GET", "/api/keys")]);
+    if (usage.status === 401) return signedOut();
+    if (!usage.ok) { $("usage-error").textContent = fail(usage); return; }
+    if (list.ok) keys = list.data.keys;
+    $("usage-error").textContent = "";
+    const totals = usage.data.totals;
+    $("t-requests").textContent = num(totals.requests);
+    $("t-errors").textContent = num(totals.errors);
+    $("t-error-rate").textContent = totals.requests ? (totals.errors / totals.requests * 100).toFixed(1).replace(".", ",") + "% số lượt gọi" : "";
+    $("t-latency").textContent = totals.requests ? num(Math.round(totals.totalMs / totals.requests)) + " ms" : "–";
+    $("t-keys").textContent = num(keys.filter((k) => k.status === "active").length);
+    $("updated").textContent = "Cập nhật lúc " + new Date().toLocaleTimeString("vi-VN");
+    drawChart(usage.data);
+  } catch {
+    $("usage-error").textContent = OFFLINE;
+  }
+}
+
+// ---------- API key ----------
+
+function renderKeys() {
+  $("no-keys").hidden = keys.length > 0;
+  $("keys").replaceChildren(...keys.map((key) => {
+    let action = null;
+    if (key.status === "active") {
+      action = el("button", { className: "danger", textContent: "Thu hồi" });
+      action.onclick = async () => {
+        if (!confirm('Thu hồi key của "' + key.name + '"? Ứng dụng đang dùng key này sẽ bị từ chối ngay.')) return;
+        try {
+          const r = await call("DELETE", "/api/keys/" + key.keyId);
+          if (!r.ok) $("key-error").textContent = fail(r);
+          loadKeys();
+        } catch { $("key-error").textContent = OFFLINE; }
+      };
+    }
+    return el("tr", {},
+      el("td", { textContent: key.name }),
+      el("td", {}, el("code", { textContent: key.keyId })),
+      el("td", {}, el("span", { className: "badge " + key.status, textContent: key.status === "active" ? "Đang dùng" : "Đã thu hồi" })),
+      el("td", { textContent: new Date(key.createdAt).toLocaleString("vi-VN") }),
+      el("td", {}, action),
+    );
+  }));
+}
+
+async function loadKeys() {
+  try {
+    const r = await call("GET", "/api/keys");
+    if (r.status === 401) return signedOut();
+    if (r.ok) { keys = r.data.keys; renderKeys(); }
+  } catch { $("key-error").textContent = OFFLINE; }
+}
+
+// ---------- Điều hướng ----------
+
+function open(next) {
+  view = next;
+  render();
+  if (view === "overview") loadOverview();
+  if (view === "keys") loadKeys();
+}
+
+async function enter() {
+  render();
+  if (!token) return;
+  try {
+    const r = await call("GET", "/api/me");
+    if (!r.ok) return signedOut();
+    $("who").textContent = r.data.orgName + " · " + r.data.email;
+    open(view);
+  } catch { $("usage-error").textContent = OFFLINE; }
+}
+
+for (const tab of document.querySelectorAll("nav button")) tab.onclick = () => open(tab.dataset.view);
+for (const button of document.querySelectorAll("#ranges button")) {
+  button.onclick = () => { range = button.dataset.range; render(); loadOverview(); };
+}
+setInterval(() => { if (token && view === "overview" && !document.hidden) loadOverview(); }, 15000);
+
+$("auth-toggle").onclick = () => {
+  signupMode = !signupMode;
+  const form = $("auth-form");
+  form.orgName.hidden = !signupMode;
+  form.orgName.required = signupMode;
+  $("auth-title").textContent = signupMode ? "Đăng ký doanh nghiệp" : "Đăng nhập";
+  $("auth-submit").textContent = signupMode ? "Đăng ký" : "Đăng nhập";
+  $("auth-toggle").textContent = signupMode ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký doanh nghiệp";
+  $("auth-error").textContent = "";
+};
+
+$("auth-form").onsubmit = async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const body = { email: form.email.value, password: form.password.value };
+  if (signupMode) body.orgName = form.orgName.value;
+  $("auth-error").textContent = "";
+  try {
+    const r = await call("POST", signupMode ? "/api/signup" : "/api/login", body);
+    if (!r.ok) { $("auth-error").textContent = fail(r); return; }
+    // Tài khoản mới chưa có key nên đưa thẳng tới tab tạo key.
+    view = signupMode ? "keys" : "overview";
+    form.reset();
+    setToken(r.data.token);
+    enter();
+  } catch { $("auth-error").textContent = OFFLINE; }
+};
+
+$("logout").onclick = () => {
+  call("POST", "/api/logout").catch(() => {});
+  $("secret").hidden = true;
+  $("try-key").value = "";
+  $("output").textContent = "Kết quả sẽ hiện ở đây.";
+  keys = [];
+  view = "overview";
+  signedOut();
+};
+
+$("key-form").onsubmit = async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  $("key-error").textContent = "";
+  try {
+    const r = await call("POST", "/api/keys", { name: form.keyName.value });
+    if (!r.ok) { $("key-error").textContent = fail(r); return; }
+    $("secret-value").textContent = r.data.apiKey;
+    $("try-key").value = r.data.apiKey;
+    $("secret").hidden = false;
+    form.reset();
+    loadKeys();
+  } catch { $("key-error").textContent = OFFLINE; }
+};
+
+$("copy").onclick = () => navigator.clipboard.writeText($("secret-value").textContent);
+
+async function tryCall(method, body) {
+  $("output").textContent = "Đang gọi…";
+  try {
+    const r = await call(method, "/orders", body, $("try-key").value.trim() || "none");
+    $("output").textContent = "HTTP " + r.status + "\n" + JSON.stringify(r.data, null, 2);
+  } catch { $("output").textContent = OFFLINE; }
+}
+$("try-create").onclick = () => tryCall("POST", { item: "Áo thun", quantity: 1 });
+$("try-list").onclick = () => tryCall("GET");
+
+const apiBase = location.origin + BASE;
+$("guide-base").textContent = apiBase;
+$("guide-create").textContent = 'curl -X POST "' + apiBase + '/orders" \\\n  -H "x-api-key: <API key của bạn>" \\\n  -H "Content-Type: application/json" \\\n  -d \'{"item":"Áo thun","quantity":2}\'';
+$("guide-list").textContent = 'curl "' + apiBase + '/orders" -H "x-api-key: <API key của bạn>"';
+
+call("GET", "/health").then((r) => { $("region").textContent = r.data.region || "không rõ"; })
+  .catch(() => { $("region").textContent = "không kết nối được"; });
+enter();
+</script>
+</body>
+</html>

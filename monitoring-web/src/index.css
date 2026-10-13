@@ -1,0 +1,79 @@
+@import 'tailwindcss';
+
+/* Màu theo vai trò. Chế độ tối là một bộ giá trị riêng, không phải đảo màu tự động. */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --raised: #f0efec;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6f6d68;
+  --border: rgba(11, 11, 11, 0.1);
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+
+  /* Biểu đồ: danh tính Region */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  /* Biểu đồ: loại lỗi */
+  --error-4xx: #4a3aa7;
+  --error-5xx: #e34948;
+
+  /* Trạng thái: luôn đi kèm biểu tượng và nhãn */
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --raised: #262624;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #9a988f;
+  --border: rgba(255, 255, 255, 0.1);
+  --grid: #2c2c2a;
+  --axis: #383835;
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --error-4xx: #9085e9;
+  --error-5xx: #e66767;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-ink: var(--ink);
+  --color-ink2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--border);
+  --color-accent: var(--series-1);
+  --color-good: var(--good);
+  --color-warning: var(--warning);
+  --color-serious: var(--serious);
+  --color-critical: var(--critical);
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 2px;
+}
+
+.recharts-surface:focus,
+.recharts-wrapper:focus {
+  outline: none;
+}
