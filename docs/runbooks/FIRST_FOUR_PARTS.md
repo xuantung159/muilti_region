@@ -1,5 +1,7 @@
 # Tùng thực hiện bốn phần đầu
 
+Quy trình bắt buộc cho từng bước: **cấu hình AWS Console → mở lại kiểm tra → ghi cấu hình thực tế vào infra → cập nhật config → test và lưu bằng chứng**. Mẫu/cách copy JSON tại [RECORD_CONSOLE_CONFIG.md](RECORD_CONSOLE_CONFIG.md).
+
 ## 1. Thiết kế
 
 Đọc [GATEWAY_DESIGN.md](../GATEWAY_DESIGN.md), xác nhận contract/schema với nhóm. Hướng mới là proxy request, không orders. Chưa deploy route proxy cho đến khi có kiểm tra key scope và đích kết nối.
@@ -26,6 +28,18 @@ IAM user đã có; các bước dưới chưa được agent xác minh trên AWS
 7. Thử đăng ký/đăng nhập; tab API đích: tạo HTTPS backend, sửa tên/timeout/URL, tắt rồi bật API. Logout và kiểm tra token cũ bị từ chối.
 8. Tạo tài khoản thứ hai: không thấy API của tài khoản đầu; gọi GET/PATCH ID của tài khoản đầu phải 404. Thử URL IP/HTTP, timeout sai phải 400.
 9. Chạy `node tests/e2e/control-plane.mjs` khi URL đã điền. Script tạo dữ liệu thử thật, giữ API ở trạng thái tắt; tài khoản/cấu hình vẫn còn để kiểm tra và dọn thủ công.
+
+### Ghi vào infra ngay sau từng bước Console
+
+| Sau bước | File cần tạo/cập nhật | Ghi gì |
+|---|---|---|
+| 1 — bảng | infra/dynamodb/ap-southeast-1/mrapi-control.md | Schema PK/SK, capacity, TTL, tag, ARN và trạng thái |
+| 2 — role | infra/iam/roles/mrapi-dashboard-role/README.md, trust.json, permissions.json | Copy JSON từ role đang có; boundary, policy attachment, ARN |
+| 4 — Lambda | infra/lambda/ap-southeast-1/mrapi-dashboard.md | Handler/runtime/role/env/memory/timeout/log retention, ZIP/commit thực tế |
+| 5–6 — API/stage | infra/apigateway/ap-southeast-1/portal.md | API ID, route → Lambda, proxy integration, auth, permission invoke, stage/URL |
+| 7–9 — test | Cập nhật mục test trong file infra, link docs/evidence/ | Kết quả thật, thời điểm, lỗi còn lại; không lưu token/password |
+
+AWS base: nhóm/policy JSON ghi infra/iam; Budget/SNS/tag/Resource Groups ghi infra/monitoring. Tài nguyên đã có thì mở Console đối chiếu rồi ghi lại, không tạo trùng.
 
 Chưa cần deploy authorizer để chứng minh bốn phần này. Lambda api hiện chỉ có GET /health đọc bảng control; có thể nối route health riêng khi cần. Dashboard cũ có tab key/usage nhưng key scope/proxy chưa hoàn tất, không dùng làm bằng chứng cho gateway.
 

@@ -2,6 +2,8 @@
 
 Owner: L — Tùng. Phân công: [WORK_ASSIGNMENT.md](WORK_ASSIGNMENT.md). Tài liệu này ghi nhận cách IAM đã làm và hướng dẫn kiểm tra/bổ sung; không yêu cầu tạo lại user hoặc policy đã tồn tại.
 
+Sau mỗi phần Console, ghi cấu hình thực tế vào infra theo [RECORD_CONSOLE_CONFIG.md](runbooks/RECORD_CONSOLE_CONFIG.md): IAM → infra/iam; Budget/SNS/tag/Resource Groups → infra/monitoring. Copy JSON hiện hành, ghi attachment/boundary và liên kết bằng chứng; cập nhật config cho người tích hợp.
+
 ## 1. Trạng thái đã biết
 
 - Tùng xác nhận đã tạo IAM user admin/thành viên và đã kiểm tra IAM base theo hướng dẫn.
@@ -9,7 +11,7 @@ Owner: L — Tùng. Phân công: [WORK_ASSIGNMENT.md](WORK_ASSIGNMENT.md). Tài 
 - Ảnh không xác nhận policy attachment, membership, MFA từng người, nội dung JSON hoặc phiên bản policy. Kiểm tra các mục này ở Console trước khi ghi bằng chứng.
 - Tùng báo đã hoàn thành đến bước tạo/cấu hình Lambda dashboard Singapore, sau bảng control/role/đóng gói. Test Lambda/API Gateway/e2e chưa được xác nhận.
 - Budget, SNS, Resource Groups và cost tag chưa được xác nhận hoàn tất.
-- Repo hiện không có infra/iam/ và các JSON IAM từng được tham chiếu. Policy đang có trên AWS là nơi đối chiếu; không tự khôi phục hoặc tạo lại chỉ vì thiếu file repo. Khi cần bàn giao, xuất JSON từ Console về infra/iam/ theo mục 8.
+- Repo đã chuẩn bị infra/iam/ để nhận JSON; chưa có bản xuất policy thực tế. Policy đang có trên AWS là nơi đối chiếu; không tự khôi phục hoặc tạo lại chỉ vì thiếu file repo. Khi cần bàn giao, xuất JSON từ Console về infra/iam/ theo mục 8.
 
 ## 2. User, group và policy: gắn ở đâu?
 
@@ -113,10 +115,11 @@ Resource Groups: Singapore và Tokyo → Create resource group → Tag based →
 
 Tên/Region/tag: Singapore và Tokyo; không dùng mốc Ngày 5 cũ để bắt đầu Tokyo. Tên ví dụ: mrapi-control, mrapi-dashboard, mrapi-api, mrapi-authorizer, mrapi-dashboard-role, mrapi-logs-<suffix>-<region>. Project=mrapi và Owner=L/A/B/C.
 
-Lưu cấu hình vào infra/<dịch-vụ>, thông tin bàn giao vào config/demo, bằng chứng vào docs/evidence. JSON IAM xuất từ Console lưu lại infra/iam/policies, infra/iam/trust, infra/iam/roles khi cần; các thư mục này hiện chưa có trong repo. Kiểm tra ARN Account ID trước khi dùng lại; không sửa ${aws:username} thành username cố định trong policy MFA.
+Lưu cấu hình vào infra/<dịch-vụ>, thông tin bàn giao vào config/demo, bằng chứng vào docs/evidence. JSON IAM xuất từ Console lưu lại infra/iam/policies, infra/iam/trust, infra/iam/roles khi cần; thư mục policies và roles đã chuẩn bị trong repo, JSON thực tế cần được chép từ Console. Kiểm tra ARN Account ID trước khi dùng lại; không sửa ${aws:username} thành username cố định trong policy MFA.
 
 Khi thêm dịch vụ/quyền: người cần cung cấp action/resource và lỗi thật, L review base/boundary; không cấp admin cho developer để chữa lỗi. Xem [WORK_ASSIGNMENT.md](WORK_ASSIGNMENT.md) để biết owner/điểm nối.
 
 ## 9. Sau demo
 
 Theo [cleanup.md](runbooks/cleanup.md): lưu bằng chứng, rà inventory hai Region/toàn cục, dọn đúng tài nguyên dự án và kiểm tra chi phí/domain renewal. IAM user/MFA/access key cần xử lý theo trạng thái thực tế; không giả định Console tự gỡ mọi dependency khi xóa user. Giữ khả năng quản trị cho đến khi kiểm tra hóa đơn và tài nguyên còn lại xong.
+
