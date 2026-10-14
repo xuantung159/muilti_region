@@ -1,0 +1,86 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ReadIam",
+            "Effect": "Allow",
+            "Action": [
+                "iam:Get*",
+                "iam:List*",
+                "iam:SimulatePrincipalPolicy",
+                "iam:SimulateCustomPolicy"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "CreateAndChangeProjectRolesOnlyWithBoundary",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateRole",
+                "iam:PutRolePermissionsBoundary",
+                "iam:PutRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::138150704839:role/mrapi-*",
+            "Condition": {
+                "StringEquals": {
+                    "iam:PermissionsBoundary": "arn:aws:iam::138150704839:policy/mrapi-workload-boundary"
+                }
+            }
+        },
+        {
+            "Sid": "ManageProjectRoles",
+            "Effect": "Allow",
+            "Action": [
+                "iam:DeleteRole",
+                "iam:UpdateRole",
+                "iam:UpdateRoleDescription",
+                "iam:UpdateAssumeRolePolicy",
+                "iam:TagRole",
+                "iam:UntagRole"
+            ],
+            "Resource": "arn:aws:iam::138150704839:role/mrapi-*"
+        },
+        {
+            "Sid": "PassProjectRolesToProjectServices",
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": "arn:aws:iam::138150704839:role/mrapi-*",
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": [
+                        "lambda.amazonaws.com",
+                        "s3.amazonaws.com",
+                        "apigateway.amazonaws.com"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "ServiceLinkedRoles",
+            "Effect": "Allow",
+            "Action": "iam:CreateServiceLinkedRole",
+            "Resource": "*"
+        },
+        {
+            "Sid": "NoBoundaryRemoval",
+            "Effect": "Deny",
+            "Action": "iam:DeleteRolePermissionsBoundary",
+            "Resource": "*"
+        },
+        {
+            "Sid": "NoChangesToBasePolicies",
+            "Effect": "Deny",
+            "Action": [
+                "iam:CreatePolicy",
+                "iam:CreatePolicyVersion",
+                "iam:DeletePolicy",
+                "iam:DeletePolicyVersion",
+                "iam:SetDefaultPolicyVersion"
+            ],
+            "Resource": "arn:aws:iam::138150704839:policy/mrapi-*"
+        }
+    ]
+}

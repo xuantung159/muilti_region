@@ -1,0 +1,47 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyServicesOutsideProjectScope",
+            "Effect": "Deny",
+            "NotAction": [
+                "lambda:*",
+                "dynamodb:*",
+                "apigateway:*",
+                "execute-api:*",
+                "s3:*",
+                "logs:*",
+                "cloudwatch:*",
+                "sns:*",
+                "acm:*",
+                "route53:*",
+                "route53domains:Get*",
+                "route53domains:List*",
+                "route53domains:CheckDomainAvailability",
+                "xray:*",
+                "cloudshell:*",
+                "tag:*",
+                "resource-groups:*",
+                "resource-explorer-2:*",
+                "iam:*",
+                "sts:*",
+                "kms:Describe*",
+                "kms:List*",
+                "ec2:Describe*",
+                "application-autoscaling:*",
+                "cloudtrail:LookupEvents",
+                "access-analyzer:ValidatePolicy",
+                "servicequotas:Get*",
+                "servicequotas:List*",
+                "budgets:View*",
+                "budgets:Describe*",
+                "ce:Get*",
+                "ce:Describe*",
+                "health:*",
+                "pricing:*",
+                "notifications:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
