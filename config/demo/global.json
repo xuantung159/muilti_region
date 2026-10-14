@@ -1,0 +1,6 @@
+{
+  "project": "mrapi",
+  "domain": "",
+  "hostedZoneId": "",
+  "roles": { "api": "", "dashboard": "", "authorizer": "", "monitoring": "", "s3Replication": "" }
+}

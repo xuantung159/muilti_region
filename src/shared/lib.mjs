@@ -4,11 +4,8 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 export const REGION = process.env.AWS_REGION;
-export const ORDERS_TABLE = process.env.ORDERS_TABLE;
 export const CONTROL_TABLE = process.env.CONTROL_TABLE;
 
-// Bảng orders:
-//   TENANT#<tenantId> / ORDER#<orderId>                 đơn hàng
 // Bảng control:
 //   USER#<email>      / META                            tài khoản doanh nghiệp (mật khẩu đã băm)
 //   SESSION#<hash>    / META                            phiên đăng nhập

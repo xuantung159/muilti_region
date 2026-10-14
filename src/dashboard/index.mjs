@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { GetHealthCheckStatusCommand, ListHealthChecksCommand, Route53Client } from "@aws-sdk/client-route-53";
 import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { CONTROL_TABLE, db, json, keyRef, parseBody, routeOf, sameHex, sha256, text } from "../shared/lib.mjs";
+import { apis } from './apis.mjs';
 
 const SESSION_HOURS = 8;
 const MAX_KEYS = 20;
@@ -81,7 +82,10 @@ async function signup(event) {
 async function login(event) {
   const body = parseBody(event);
   const email = text(body.email, 200).toLowerCase();
-  const password = typeof body.password === "string" ? body.password.slice(0, 200) : "";
+  if (typeof body.password !== 'string' || body.password.length < 8 || body.password.length > 200 || !/^\S+@\S+\.\S+$/.test(email)) {
+    return json(401, { error: 'Email hoặc mật khẩu không đúng' });
+  }
+  const password = body.password;
 
   const { Item: user } = await db.send(
     new GetCommand({ TableName: CONTROL_TABLE, Key: { PK: `USER#${email}`, SK: "META" }, ConsistentRead: true }),
@@ -98,7 +102,7 @@ const sessionRef = (token) => ({ PK: `SESSION#${sha256(token)}`, SK: "META" });
 async function sessionOf(headers) {
   const token = bearer(headers);
   if (!token) return null;
-  const { Item: session } = await db.send(new GetCommand({ TableName: CONTROL_TABLE, Key: sessionRef(token) }));
+  const { Item: session } = await db.send(new GetCommand({ TableName: CONTROL_TABLE, Key: sessionRef(token), ConsistentRead: true }));
   return session && session.expiresAt > Date.now() / 1000 ? session : null;
 }
 
@@ -256,6 +260,7 @@ async function portalApi(method, [action, id, ...extra], headers, event) {
 
   const session = await sessionOf(headers);
   if (!session) return json(401, { error: "Phiên đăng nhập không hợp lệ hoặc đã hết hạn" });
+  if (action === 'apis') return apis(method, id, session, event);
 
   if (action === "me" && !id && method === "GET") {
     return json(200, { orgName: session.orgName, email: session.email, tenantId: session.tenantId });
