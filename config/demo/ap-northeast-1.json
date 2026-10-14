@@ -1,0 +1,16 @@
+{
+  "region": "ap-northeast-1",
+  "tables": {
+    "control": "mrapi-control"
+  },
+  "functions": {
+    "api": "mrapi-api",
+    "dashboard": "mrapi-dashboard",
+    "authorizer": "mrapi-authorizer"
+  },
+  "apiGateway": {
+    "apiId": "",
+    "stage": "demo",
+    "baseUrl": ""
+  }
+}

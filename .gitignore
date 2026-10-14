@@ -1,0 +1,15 @@
+node_modules/
+dist/
+artifacts/*
+!artifacts/.gitkeep
+.env
+.env.*
+!.env.example
+*.local
+*.log
+*.pem
+*.key
+.aws/
+credentials
+Thumbs.db
+~$*

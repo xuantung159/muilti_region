@@ -10,7 +10,7 @@ Nguồn của số request, tỷ lệ lỗi và latency theo Region, và của b
 | Quyền IAM | `cloudwatch:GetMetricData`; thêm `apigateway:GET` nếu muốn tự liệt kê route |
 | Bật thêm | Detailed metrics trên stage, nếu cần số liệu theo từng route |
 
-Hiện tại backend của dự án còn chạy bằng Lambda Function URL. Function URL không sinh metric của API Gateway, nên nguồn này chỉ kết nối được sau khi chuyển sang API Gateway.
+Theo mã nguồn trong `src/`, API của dự án là REST API, nên dùng cột REST API trong bảng dưới. Nếu một Region còn chạy bằng Lambda Function URL thì Region đó không sinh metric của API Gateway.
 
 ## Metric
 

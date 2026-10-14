@@ -109,7 +109,7 @@
     <nav role="tablist">
       <button role="tab" data-view="overview">Tổng quan</button>
       <button role="tab" data-view="keys">API key</button>
-      <button role="tab" data-view="try">Thử API</button>
+      <button role="tab" data-view="apis">API đích</button>
       <button role="tab" data-view="guide">Hướng dẫn</button>
     </nav>
 
@@ -187,44 +187,28 @@
       </section>
     </div>
 
-    <!-- Thử API -->
-    <div id="view-try" hidden>
-      <section class="card">
-        <h2>Thử gọi API</h2>
-        <div class="stack">
-          <input id="try-key" placeholder="Dán API key vào đây (mrk_…)" autocomplete="off">
-          <div class="row">
-            <button type="button" id="try-create">Tạo đơn hàng thử</button>
-            <button type="button" class="ghost" id="try-list">Xem danh sách đơn</button>
-          </div>
-          <pre id="output" style="min-height:60px">Kết quả sẽ hiện ở đây.</pre>
-          <p class="muted">Mỗi lượt gọi ở đây được tính vào thống kê ở tab Tổng quan.</p>
-        </div>
+    <div id="view-apis" hidden>
+      <section class="card stack">
+        <h2>Đăng ký API đích</h2>
+        <p class="muted">Khai báo backend HTTPS của doanh nghiệp. Chức năng chuyển tiếp request sẽ được tích hợp ở giai đoạn tiếp theo.</p>
+        <form id="api-form" class="stack">
+          <input name="apiName" placeholder="Tên API" maxlength="100" required>
+          <input name="baseUrl" type="url" placeholder="https://backend.doanhnghiep.com/v1" required>
+          <input name="timeoutMs" type="number" min="1000" max="10000" value="5000" required aria-label="Timeout (ms)">
+          <button id="api-save">Đăng ký API</button>
+          <button type="button" class="ghost" id="api-cancel" hidden>Hủy chỉnh sửa</button>
+        </form>
+        <p id="api-error" class="error" role="alert"></p>
+        <div id="api-list" class="stack"></div>
       </section>
     </div>
-
-    <!-- Hướng dẫn -->
     <div id="view-guide" hidden>
       <section class="card stack">
-        <h2 style="margin:0">Gọi API từ ứng dụng của bạn</h2>
-        <p>Gửi API key trong header <code>x-api-key</code> của mọi request. Chỉ gọi từ backend, không đặt key trong mã chạy trên trình duyệt hay ứng dụng di động.</p>
-        <h3 style="margin:8px 0 0">Địa chỉ API</h3>
+        <h2>Tích hợp gateway</h2>
+        <p>Đăng ký API đích, sau đó tạo key và cấp quyền cho API. Backend của doanh nghiệp gửi request qua gateway; không đưa key bí mật vào JavaScript công khai.</p>
         <pre id="guide-base"></pre>
-        <h3 style="margin:8px 0 0">Tạo đơn hàng</h3>
-        <pre id="guide-create"></pre>
-        <h3 style="margin:8px 0 0">Xem danh sách đơn hàng</h3>
-        <pre id="guide-list"></pre>
-        <div class="table-wrap"><table>
-          <thead><tr><th>Method</th><th>Đường dẫn</th><th>Mô tả</th></tr></thead>
-          <tbody>
-            <tr><td>POST</td><td><code>/orders</code></td><td>Tạo đơn, body là JSON bất kỳ</td></tr>
-            <tr><td>GET</td><td><code>/orders</code></td><td>50 đơn gần nhất của doanh nghiệp</td></tr>
-            <tr><td>GET</td><td><code>/orders/{id}</code></td><td>Đọc một đơn</td></tr>
-            <tr><td>PUT</td><td><code>/orders/{id}</code></td><td>Ghi đè nội dung một đơn</td></tr>
-            <tr><td>DELETE</td><td><code>/orders/{id}</code></td><td>Xoá một đơn</td></tr>
-          </tbody>
-        </table></div>
-        <p class="muted">Key sai hoặc đã thu hồi trả về HTTP 401. Mọi response có trường <code>region</code> cho biết region đã xử lý.</p>
+        <p>Đường dẫn dự kiến: /proxy/{apiId}/{path}. Proxy và phân quyền key theo API chưa triển khai trong giai đoạn tài khoản/đăng ký API.</p>
+        <p>Hiện có: đăng ký/đăng nhập, quản lý phiên và tạo/sửa/bật/tắt API đích. API đích chỉ nhận HTTPS, timeout từ 1 đến 10 giây. Không nhập credentials vào URL.</p>
       </section>
     </div>
   </div>
@@ -352,7 +336,7 @@ function drawChart(data) {
     return item;
   }) : []));
   $("chart-note").textContent = data.totals.requests === 0
-    ? "Chưa có lượt gọi nào trong khoảng này. Tạo key rồi gọi thử ở tab Thử API."
+    ? "Chưa có lượt gọi nào trong khoảng này. Số liệu request sẽ có sau khi tích hợp proxy."
     : regions.length === 1 ? "Tất cả lượt gọi được xử lý tại " + regionName(regions[0]) + "." : "";
 
   const W = 880, H = 240, left = 44, right = 8, top = 12, bottom = 26;
@@ -521,6 +505,7 @@ function open(next) {
   render();
   if (view === "overview") loadOverview();
   if (view === "keys") loadKeys();
+  if (view === 'apis') loadApis();
 }
 
 async function enter() {
@@ -560,20 +545,26 @@ $("auth-form").onsubmit = async (event) => {
   try {
     const r = await call("POST", signupMode ? "/api/signup" : "/api/login", body);
     if (!r.ok) { $("auth-error").textContent = fail(r); return; }
-    // Tài khoản mới chưa có key nên đưa thẳng tới tab tạo key.
-    view = signupMode ? "keys" : "overview";
+    // Tài khoản mới bắt đầu bằng đăng ký backend đích.
+    view = signupMode ? "apis" : "overview";
     form.reset();
     setToken(r.data.token);
     enter();
   } catch { $("auth-error").textContent = OFFLINE; }
 };
 
-$("logout").onclick = () => {
-  call("POST", "/api/logout").catch(() => {});
+$("logout").onclick = async () => {
+  try {
+    const result = await call("POST", "/api/logout");
+    if (!result.ok) { $("usage-error").textContent = fail(result); return; }
+  } catch { $("usage-error").textContent = OFFLINE; return; }
   $("secret").hidden = true;
-  $("try-key").value = "";
-  $("output").textContent = "Kết quả sẽ hiện ở đây.";
+  
+  
   keys = [];
+  apiItems = [];
+  $("api-list").replaceChildren();
+  resetApiForm();
   view = "overview";
   signedOut();
 };
@@ -586,7 +577,7 @@ $("key-form").onsubmit = async (event) => {
     const r = await call("POST", "/api/keys", { name: form.keyName.value });
     if (!r.ok) { $("key-error").textContent = fail(r); return; }
     $("secret-value").textContent = r.data.apiKey;
-    $("try-key").value = r.data.apiKey;
+    
     $("secret").hidden = false;
     form.reset();
     loadKeys();
@@ -595,24 +586,67 @@ $("key-form").onsubmit = async (event) => {
 
 $("copy").onclick = () => navigator.clipboard.writeText($("secret-value").textContent);
 
-async function tryCall(method, body) {
-  $("output").textContent = "Đang gọi…";
-  try {
-    const r = await call(method, "/orders", body, $("try-key").value.trim() || "none");
-    $("output").textContent = "HTTP " + r.status + "\n" + JSON.stringify(r.data, null, 2);
-  } catch { $("output").textContent = OFFLINE; }
+let editingApi = null;
+let apiItems = [];
+function resetApiForm() {
+  editingApi = null;
+  $("api-form").reset();
+  $("api-save").textContent = "Đăng ký API";
+  $("api-cancel").hidden = true;
 }
-$("try-create").onclick = () => tryCall("POST", { item: "Áo thun", quantity: 1 });
-$("try-list").onclick = () => tryCall("GET");
-
+$("api-cancel").onclick = resetApiForm;
+async function loadApis() {
+  try {
+    const r = await call("GET", "/api/apis");
+    if (r.status === 401) return signedOut();
+    if (!r.ok) { $("api-error").textContent = fail(r); return; }
+    apiItems = r.data.apis;
+    $("api-list").replaceChildren();
+    if (!apiItems.length) $("api-list").textContent = "Chưa đăng ký API nào.";
+    for (const api of apiItems) {
+      const card = document.createElement("div"); card.className = "card stack";
+      const info = document.createElement("p");
+      info.textContent = api.name + " · " + (api.enabled ? "Đang bật" : "Đã tắt") + " · " + api.timeoutMs + " ms";
+      const detail = document.createElement("p"); detail.textContent = api.baseUrl + " | ID: " + api.apiId;
+      const edit = document.createElement("button"); edit.textContent = "Chỉnh sửa";
+      edit.onclick = () => {
+        editingApi = api.apiId;
+        const form = $("api-form"); form.apiName.value = api.name; form.baseUrl.value = api.baseUrl; form.timeoutMs.value = api.timeoutMs;
+        $("api-save").textContent = "Lưu thay đổi"; $("api-cancel").hidden = false;
+      };
+      const toggle = document.createElement("button"); toggle.className = "ghost"; toggle.textContent = api.enabled ? "Vô hiệu hóa" : "Bật API";
+      toggle.onclick = async () => {
+        toggle.disabled = true;
+        try {
+          const result = await call("PATCH", "/api/apis/" + api.apiId, { enabled: !api.enabled });
+          if (result.status === 401) return signedOut();
+          if (!result.ok) { $("api-error").textContent = fail(result); return; }
+          await loadApis();
+        } catch { $("api-error").textContent = OFFLINE; }
+        finally { toggle.disabled = false; }
+      };
+      card.append(info, detail, edit, toggle); $("api-list").append(card);
+    }
+  } catch { $("api-error").textContent = OFFLINE; }
+}
+$("api-form").onsubmit = async event => {
+  event.preventDefault(); const form = event.target; $("api-error").textContent = ""; $("api-save").disabled = true;
+  try {
+    const result = await call(editingApi ? "PATCH" : "POST", "/api/apis" + (editingApi ? "/" + editingApi : ""), {
+      name: form.apiName.value, baseUrl: form.baseUrl.value, timeoutMs: Number(form.timeoutMs.value)
+    });
+    if (result.status === 401) return signedOut();
+    if (!result.ok) { $("api-error").textContent = fail(result); return; }
+    resetApiForm(); await loadApis();
+  } catch { $("api-error").textContent = OFFLINE; }
+  finally { $("api-save").disabled = false; }
+};
 const apiBase = location.origin + BASE;
-$("guide-base").textContent = apiBase;
-$("guide-create").textContent = 'curl -X POST "' + apiBase + '/orders" \\\n  -H "x-api-key: <API key của bạn>" \\\n  -H "Content-Type: application/json" \\\n  -d \'{"item":"Áo thun","quantity":2}\'';
-$("guide-list").textContent = 'curl "' + apiBase + '/orders" -H "x-api-key: <API key của bạn>"';
-
+$("guide-base").textContent = apiBase + "/proxy/{apiId}/{path} (chưa triển khai)";
 call("GET", "/health").then((r) => { $("region").textContent = r.data.region || "không rõ"; })
   .catch(() => { $("region").textContent = "không kết nối được"; });
 enter();
 </script>
 </body>
 </html>
+

@@ -1,0 +1,19 @@
+{
+  "name": "mrapi-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test ../tests/control-plane/*.test.mjs",
+    "package": "node ../scripts/package-lambdas.mjs",
+    "test:e2e": "node ../tests/e2e/control-plane.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/lib-dynamodb": "^3.0.0",
+    "@aws-sdk/client-route-53": "^3.0.0"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.0"
+  }
+}
