@@ -1,17 +1,70 @@
 # Phân công hiện hành — gateway multi-region
 
-Cập nhật 14/10/2026. Đây là tài liệu phân công duy nhất áp dụng. L là Đặng Xuân Tùng; A/B/C điền tên thật khi nhóm xác nhận. Hạn từng mốc do nhóm chốt theo ngày demo thực tế.
+Cập nhật 14/10/2026. Đây là tài liệu phân công duy nhất áp dụng. L là Đặng Xuân Tùng; A/B/C điền tên thật khi nhóm xác nhận. **Đợt đang giao: 15–18/10/2026 (4 ngày tiếp theo), hạn nộp cuối ngày 18/10, giờ Việt Nam.** Sau báo cáo/review mới chia đợt tiếp; các phần dài hạn phía dưới chỉ để tham khảo hướng kiến trúc.
+
+## 0. Mục tiêu và lịch đợt 4 ngày
+
+**Mốc cần đạt:** Singapore chạy được đăng ký/đăng nhập → đăng ký API đích → tạo key có scope → gọi proxy tới backend mẫu → xem được bản ghi request → thu hồi key bị từ chối. Chứng minh API của tenant khác không truy cập được. Nếu chưa đạt, báo FAIL/BLOCKED và owner sửa, không ghi hệ thống đã chạy từ mock.
+
+Đợt này ưu tiên luồng thật và hồ sơ cấu hình; **chưa giao hoàn tất** Tokyo, S3 replication/RTC/export producer, CloudFront production, frontend monitoring dữ liệu thật, X-Ray đầy đủ hoặc failover. Các phần đó vẫn thuộc kiến trúc, sẽ chia sau nghiệm thu. Domain/ACM và lựa chọn topology được chuẩn bị sớm vì có thời gian chờ xác thực.
+
+| Ngày | L — Tùng | A — dữ liệu/quyền | B — proxy/authorizer | C — cửa vào/frontend | Kết quả trong ngày |
+|---|---|---|---|---|---|
+| **15/10** | Test Lambda dashboard; ghi IAM/Lambda thực tế vào infra; chốt API/key contract cùng B/A | Tiếp nhận control; chốt telemetry schema/query với B/L; chuẩn bị role proxy/authorizer | Backend mẫu success/error/delay; fixture key/API; chốt route/context/telemetry | Nối portal REST API/stage; gửi URL; khảo sát/chốt đề xuất CloudFront/domain | Schema/contract ghi trong DESIGN; bảng/role/ARN bàn giao; portal mở được |
+| **16/10** | Tạo/thu hồi key có scope API; test dữ liệu quyền bằng bảng control | Tạo telemetry Singapore theo schema; gửi tên/ARN/query; cấp quyền data/log cho Lambda | Authorizer kiểm tra key/scope; proxy forwarding cơ bản test local với backend mẫu | Nối route proxy/health bằng mock nếu B chưa bàn giao; chuẩn bị DNS/ACM sau L chốt domain | Key/schema/role dùng được; proxy local và route wiring có test |
+| **17/10** | Deploy portal phiên bản mới; test account/API/key scope; Budget/SNS nếu chưa có | Test access pattern/quyền thật; hỗ trợ B ghi telemetry; kiểm tra ttl/tag | Deploy proxy/authorizer Singapore; kiểm soát DNS/IP/header/timeout; ghi telemetry và test thật | Đổi integration mock sang Lambda thật; deploy stage; test request/auth/CORS; giữ frontend fixture đúng contract | Request proxy qua API Gateway trả đúng response và có telemetry thật |
+| **18/10** | Chạy test chung/tenant/revoke; tổng hợp lỗi; nộp báo cáo L | Kiểm tra bản ghi request/schema/quyền; hoàn thiện infra/config/bằng chứng; nộp A | Sửa lỗi blocking; bàn giao code/ZIP/config/test; nộp B | Kiểm tra URL/route/stage; hoàn thiện infra và đề xuất CloudFront; nộp C | Demo nội bộ Singapore, đủ 4 báo cáo và danh sách lỗi để chia đợt sau |
+
+### Bàn giao sớm để giảm chờ
+
+- Ngày 15: L gửi ARN dashboard/tài nguyên đã có cho A/C; A gửi role ARN ngay khi tạo; B/C gửi quyết định method/path/context.
+- Trước khi ghi telemetry ngày 16: A/B/L xác nhận schema và query. L/B xác nhận key scope và migration key cũ trước test thật.
+- Khi chờ, B dùng fixture/backend mẫu, C dùng Lambda echo/fixture frontend, A dùng script ghi/đọc mẫu. Ghi rõ mock; ngày 17–18 phải ghép với Lambda/dữ liệu thật để nghiệm thu.
+- Có lỗi chặn người khác thì báo ngay: action/resource/request lỗi đã che secret, ảnh/output, người cần hỗ trợ và việc vẫn làm độc lập được.
+
+### Test bắt buộc ngày 18/10
+
+| ID | Test | Mong đợi |
+|---|---|---|
+| D1 | Signup/login, tạo/sửa/bật/tắt API đích | Portal thật hoạt động, cấu hình đúng tenant |
+| D2 | Key được cấp API A gọi backend mẫu qua proxy | Method/path/query/body, HTTP status/body khớp contract; không lộ key |
+| D3 | Thiếu/sai/revoked key | Bị từ chối theo mã lỗi contract đã chốt |
+| D4 | Key không có scope API B hoặc thuộc tenant khác | Bị từ chối; không gọi backend đích |
+| D5 | API disabled, backend HTTP error và backend chậm | Chặn đúng trạng thái; lỗi/timeout phân loại đúng |
+| D6 | Đích kết nối nội bộ/không hợp lệ | Bị chặn trước khi kết nối; validation registration không thay validation proxy |
+| D7 | Request thật tạo telemetry | Có tenant/api/requestId/status/errorType/latency/region/time; truy vấn đúng tenant |
+| D8 | Config/infra/hướng dẫn chạy lại | Reviewer mở URL/chạy test được; ARN/env/route thực tế đã bàn giao |
+
+L chủ trì demo, A/B/C xác minh phần mình và review chéo. Endpoint method/error code chưa chốt thì cập nhật GATEWAY_DESIGN trước khi test; không tự ghi PASS theo dự đoán.
 
 ## 1. Bảng phân công theo cụm dịch vụ
 
 | Người | Dịch vụ/phần chính | Công việc tiếp theo | Bàn giao và nghiệm thu |
 |---|---|---|---|
-| L — Tùng | Lambda dashboard/monitoring, IAM base, Budgets, CloudWatch, SNS, giám sát X-Ray | Hoàn tất portal; API config/key scope; backend monitoring; cảnh báo và kiểm tra trace; tổng hợp tích hợp | Portal/key scope đúng contract, metric thật, alarm SNS và trace có bằng chứng |
-| A — tên: … | DynamoDB Global Tables, S3 replication, IAM role dữ liệu | Tiếp nhận control Singapore; chốt telemetry schema; replica Tokyo; bucket export log và replication; policy quyền dữ liệu | Hai Region đọc/ghi được, đo replication, bucket private, ARN/policy/config trong repo |
-| B — tên: … | Lambda proxy/authorizer, instrumentation tracing | Key/scope, forwarding/timeout/lỗi, telemetry, trace backend, backend mẫu | Cùng code hai Region, test proxy/bảo mật đạt, trace thể hiện lỗi/độ trễ |
-| C — tên: … | API Gateway, Route 53, ACM, CloudFront, frontend giám sát | Route/stage/tracing API; domain/TLS/CloudFront; latency/health; hosting và tích hợp frontend | URL hai Region/domain, cấu hình CloudFront đúng phương án đã chốt, frontend dữ liệu thật và failover có đo |
+| L — Tùng | Đợt này: portal, IAM base/Budget/SNS; dài hạn: monitoring/CloudWatch/X-Ray | Hoàn tất portal/API config, key scope và thu hồi; test chung; base và hồ sơ tài nguyên đã có | D1/D3/D4, test/report tổng hợp, schema key và cấu hình thật |
+| A — tên: … | Đợt này: DynamoDB Singapore/role; dài hạn: Global Tables/S3 replication | Tiếp nhận control, tạo telemetry, policy quyền, test query/tenant/TTL | D7/D8, tên/ARN/schema/policy, script đọc/ghi và bằng chứng |
+| B — tên: … | Lambda proxy/authorizer | Backend mẫu, key/scope validation, forwarding, kiểm soát đích/timeout/lỗi, telemetry Singapore | D2–D7, Lambda/commit/test; code không lộ secret |
+| C — tên: … | Đợt này: REST API Singapore, chuẩn bị DNS/ACM/CloudFront; dài hạn: 2 Region/frontend | Portal/proxy/health routes, stage/integration/auth, URL test; đề xuất topology CloudFront và domain | D1–D5/D8, API/config/URL thật; fixture frontend ghi rõ; proposal CloudFront |
 
 Tùng đã báo hoàn thành đến bước tạo/cấu hình Lambda dashboard Singapore. Bàn giao tiếp tài nguyên đã tạo, không tạo trùng hoặc xóa để làm lại.
+
+### Tiến độ đã xác nhận — 14/10/2026
+
+“Đã cấu hình” là trạng thái trên AWS do Tùng xác nhận; “đã lưu/commit” được đối chiếu trong repo. Test AWS và review chỉ ghi đạt khi có xác nhận/bằng chứng riêng, không suy ra từ code hoặc tên tài nguyên.
+
+| Đầu việc | Người đã thực hiện | Trạng thái | Căn cứ/bàn giao | Việc còn lại |
+|---|---|---|---|---|
+| IAM user admin và thành viên, group/phân quyền base | L | Đã cấu hình, đã kiểm tra base theo xác nhận của Tùng | Trao đổi và ảnh Console 5 policy | Ghi membership/attachment thực tế và link bằng chứng trong infra/iam/README.md; MFA từng thành viên chưa có xác nhận riêng |
+| 5 policy IAM base | L | Đã tạo, xuất JSON và commit | infra/iam/policies/; commit effdbdb; cả 5 file parse JSON hợp lệ | Ghi ARN/default version, reviewer khi bàn giao |
+| Role mrapi-dashboard-role, trust và inline policy mrapi-dashboard-access | L | Đã cấu hình, xuất JSON và commit | infra/iam/roles/mrapi-dashboard-role/trust.json và permission.json; commit effdbdb; 2 file JSON hợp lệ | Ghi role/boundary ARN, tên policy trong README role; điền roles.dashboard trong config/demo/global.json |
+| Bảng mrapi-control Singapore | L | Đã cấu hình theo xác nhận hoàn thành đến bước 5 | Schema/config tên bảng trong repo; chưa có bản ghi cấu hình Console ở infra/dynamodb | Ghi ARN/capacity/TTL/tag thực tế và test; A tiếp nhận để làm replica/telemetry |
+| Dependency, test local và đóng gói Lambda | L cùng hỗ trợ code | Đã thực hiện local | 4 test local đã đạt trong lần kiểm tra trước; script package tạo dashboard.zip | Ghi commit đã upload và chạy lại khi code thay đổi; local PASS không thay test AWS |
+| Lambda mrapi-dashboard Singapore | L | Đã tạo/cấu hình theo xác nhận của Tùng | Hoàn thành đến bước 5 hướng dẫn triển khai | Ghi infra/lambda/ap-southeast-1/mrapi-dashboard.md; test GET / và /api/me; bàn giao ARN cho C |
+| Thiết kế gateway, code tài khoản/API đích và UI portal | L cùng hỗ trợ code | Có trong repo, test local đạt | GATEWAY_DESIGN.md, src/dashboard/, tests/control-plane/ | Chưa nghiệm thu luồng portal qua AWS API Gateway/e2e |
+
+**Chưa có xác nhận hoàn tất:** API Gateway/stage/URL portal và e2e AWS; Budget/SNS/Resource Groups/cost tag; MFA riêng từng thành viên; key scope/proxy/telemetry mới; Tokyo/Global Tables/S3 replication; CloudFront/domain/ACM/Route 53; monitoring backend/dữ liệu thật/X-Ray/failover. Không đánh dấu toàn bộ phần của L/A/B/C là DONE chỉ vì các bước chuẩn bị đã xong.
+
+**Bước tiếp theo:** L ghi lại cấu hình IAM/bảng/Lambda và test Lambda; C tiếp nhận ARN dashboard để nối REST API/stage; A tiếp nhận control/role đã có; B bắt đầu proxy/authorizer bằng fixture sau khi chốt key/API/telemetry contract.
 
 ## 2. Chốt điểm nối trước khi làm song song
 
@@ -26,6 +79,8 @@ Tùng đã báo hoàn thành đến bước tạo/cấu hình Lambda dashboard S
 Ghi quyết định vào GATEWAY_DESIGN.md. Đổi contract phải cập nhật producer, consumer, test và hướng dẫn trong cùng PR hoặc các PR liên kết.
 
 ## 3. Cách tự làm và tự kiểm thử
+
+Các bước dưới mô tả toàn bộ cụm dịch vụ dài hạn. **Trong 15–18/10 chỉ làm phạm vi mục 0–1**; không coi các phần Tokyo/monitoring/failover là hạn nộp đợt này.
 
 ### L — portal và vận hành
 
@@ -80,6 +135,8 @@ A phụ trách cả bucket và replication/role S3 để tránh chờ chéo. L g
 
 ## 5. Mốc ghép hệ thống
 
+Đợt 4 ngày chỉ nghiệm thu M1 và M2. M3–M5 giữ làm mục tiêu dài hạn, chưa giao ngày/đầu việc chi tiết cho đợt tiếp theo.
+
 | Mốc | Điều kiện đạt |
 |---|---|
 | M1 | Contract chốt; tài nguyên có sẵn bàn giao; role chuẩn bị sớm |
@@ -88,11 +145,11 @@ A phụ trách cả bucket và replication/role S3 để tránh chờ chéo. L g
 | M4 — domain/giám sát | Topology CloudFront/domain đã chốt và kiểm thử; TLS/latency/health; frontend/backend monitoring dữ liệu thật; alarm SNS và trace X-Ray |
 | M5 — nghiệm thu | Failover/phục hồi có đo; test chức năng/bảo mật/replication; báo cáo và tập demo |
 
-L chốt ngày hoàn thành từng mốc theo lịch demo thực tế.
+L chốt lịch M3–M5 sau khi review báo cáo ngày 18/10.
 
 ## 6. Báo cáo bàn giao và DONE
 
-Mỗi người nộp docs/reports/<ngay>-<L-A-B-C>.md, bằng chứng tại docs/evidence/ hoặc link PR. Nội dung:
+Hạn **cuối ngày 18/10/2026**: mỗi người nộp docs/reports/2026-10-18-<L-A-B-C>.md, dùng [mẫu báo cáo đợt 4 ngày](reports/FOUR_DAY_REPORT_TEMPLATE.md). Bằng chứng tại docs/evidence/2026-10-18/<L-A-B-C>/ hoặc link PR. Nội dung:
 
 1. Việc đạt và commit/PR.
 2. Tên/ARN/URL/Region, handler/env/route/quyền; cấu hình trong infra/config.
@@ -104,6 +161,10 @@ Mỗi người nộp docs/reports/<ngay>-<L-A-B-C>.md, bằng chứng tại docs
 Review: L do B/C; A do L/B; B do A/L; C do B/L. DONE cần chức năng đạt, code/config bàn giao, bằng chứng thật và review. Không nộp password, token, API key gốc, AWS secret hoặc QR MFA.
 
 ## 7. Hướng dẫn thực hiện chi tiết — dùng cho bước tiếp theo
+
+Đây là tài liệu thao tác theo dịch vụ, gồm cả phần dài hạn. Lịch/phạm vi được giao trong đợt này lấy từ mục 0–1; không cần làm hết mục 7 trong 4 ngày.
+
+Mọi người thực hiện **Console xong → ghi cấu hình vào infra**, theo [hướng dẫn và mẫu](runbooks/RECORD_CONSOLE_CONFIG.md). Dùng giá trị thực tế, copy JSON đang áp dụng; cập nhật config và dẫn link test/bằng chứng. Chưa có file infra thì phần cấu hình chưa đủ điều kiện bàn giao.
 
 ### 7.1. Chuẩn bị chung trước khi mỗi người bắt đầu
 
@@ -194,6 +255,8 @@ Review: L do B/C; A do L/B; B do A/L; C do B/L. DONE cần chức năng đạt, 
 
 ## 8. Checklist kiến trúc và phối hợp cuối
 
+Checklist toàn dự án để chia tiếp sau báo cáo; không phải checklist tất cả phải DONE ngày 18/10.
+
 | Thành phần | Owner chính | Bằng chứng |
 |---|---|---|
 | Route 53 latency + health/failover | C | DNS/health/timeline độc lập từng Region |
@@ -206,3 +269,15 @@ Review: L do B/C; A do L/B; B do A/L; C do B/L. DONE cần chức năng đạt, 
 | CloudWatch/SNS/X-Ray | L, B/C cấu hình tracing phần mình | Alarm email, service map/trace/log đối chiếu |
 
 CloudFront có thể chưa nằm trong allowlist IAM base đã áp dụng. L kiểm tra policy thực tế trước khi C triển khai và cập nhật quyền/guardrail có phạm vi phù hợp nếu cần; không gắn AdministratorAccess cho C để vượt lỗi. Các thư mục/config dành cho CloudFront/X-Ray chỉ bổ sung khi có cấu hình thật, chưa tự xem là đã triển khai.
+
+## 9. Review báo cáo và chia đợt tiếp theo
+
+Sau khi nhận đủ báo cáo ngày 18/10, L tổng hợp và reviewer kiểm tra lại kết quả. **Chưa tự giao lịch đợt 2 trước khi biết kết quả đợt 1.**
+
+1. Đánh dấu D1–D8 PASS/FAIL/NOT TESTED, chỉ ra commit và bằng chứng. Chốt lỗi blocking trước.
+2. Nếu Singapore chưa đạt: giao sửa đúng owner và test hồi quy trước khi nhân sang Tokyo; phần data/S3/DNS độc lập có thể tiếp tục khi không làm lệch contract.
+3. Nếu Singapore đạt: chia tiếp Tokyo/Global Tables, S3 export/replication/RTC, topology CloudFront/domain/TLS, monitoring frontend/backend và X-Ray, rồi failover/phục hồi.
+4. Mỗi đầu việc đợt 2 phải có owner, input đã nhận, deliverable, test/reviewer và ngày hạn dựa trên ngày demo thực tế. Cân lại tải L/C sau đợt 1.
+5. Cập nhật chính file WORK_ASSIGNMENT này bằng mục “Đợt 2”; giữ kết quả đợt 1 làm lịch sử, không tạo thêm file phân công song song.
+
+Tại buổi review cần chốt: ngày demo thật, thời gian mỗi người có thể làm, topology CloudFront khả thi, trạng thái domain/cert, quyền IAM còn thiếu và số lượng lỗi chưa sửa. Báo cáo trung thực là căn cứ phân công tiếp, không mặc định mọi phần đã xong.

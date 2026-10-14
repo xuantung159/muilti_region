@@ -55,7 +55,7 @@ aws/
 │       ├── ap-southeast-1.json
 │       └── ap-northeast-1.json
 ├── infra/
-│   ├── iam/                       # Dự kiến lưu JSON; hiện không có trong repo
+│   ├── iam/                       # Đã chuẩn bị; chờ JSON từ Console
 │   │   ├── policies/
 │   │   ├── trust/
 │   │   └── roles/
@@ -188,7 +188,7 @@ Sau bước 5 đã làm, ghi ARN role và tên Lambda thực tế. Khi tạo API
 |---|---|
 | `iam/policies/` | Policy base MFA, region, developer IAM/services, boundary |
 | `iam/trust/` | Trust policy dịch vụ nào được assume role |
-| `iam/roles/` | Policy quyền thực tế của từng role; hiện không có thư mục/file JSON IAM trong repo; policy ở Console |
+| `iam/roles/` | Policy quyền thực tế của từng role; đã có thư mục bàn giao, chờ JSON thực tế từ Console |
 | `dynamodb/` | Tên bảng, PK/SK, capacity, TTL, Global Tables và thao tác kiểm tra |
 | `lambda/` | Runtime, handler, role, memory/timeout, env, version code |
 | `apigateway/` | Resource/method → integration, authorizer, stage, CORS |
@@ -196,7 +196,7 @@ Sau bước 5 đã làm, ghi ARN role và tên Lambda thực tế. Khi tạo API
 | `s3/` | Bucket, public access, versioning, replication, lifecycle, export log |
 | `monitoring/` | CloudWatch dashboard/alarm, SNS, nguồn metric |
 
-`infra/iam/` trong cây là vị trí bàn giao dự kiến, hiện chưa có trên filesystem. Không mở các đường dẫn JSON IAM cũ; xem BASE_SETUP và policy tham khảo trong FIRST_FOUR_PARTS hoặc xuất từ Console.
+`infra/iam/` đã được tạo để lưu bản sao policy/trust/role từ Console; hiện chưa có JSON thực tế. Không mở các đường dẫn JSON IAM cũ; xem BASE_SETUP và policy tham khảo trong FIRST_FOUR_PARTS hoặc xuất từ Console.
 
 `infra/` hiện không phải Terraform/CDK và không có lệnh deploy tự động. JSON/README là tài liệu/cấu hình để người làm dựng bằng Console. Khi thao tác xong phải cập nhật cấu hình tại đây, không chỉ gửi ảnh hoặc tên tài nguyên trong chat.
 
@@ -332,6 +332,7 @@ Thứ tự làm:
 - Bàn giao đủ commit, file, ARN/URL, env/handler, route, quyền, output test và lỗi còn lại.
 - Không có secret trong config, report hoặc ảnh; xác thực AWS bằng user/role hợp lệ.
 - Nhãn DONE cần kiểm tra thực tế và reviewer; folder/README/mock chưa phải kết quả triển khai.
+
 
 
 
