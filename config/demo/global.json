@@ -2,5 +2,5 @@
   "project": "mrapi",
   "domain": "",
   "hostedZoneId": "",
-  "roles": { "api": "", "dashboard": "", "authorizer": "", "monitoring": "", "s3Replication": "" }
+  "roles": { "api": "", "dashboard": "", "authorizer": "arn:aws:iam::138150704839:role/mrapi-authorizer-role", "monitoring": "", "s3Replication": "" }
 }
