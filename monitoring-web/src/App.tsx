@@ -7,11 +7,13 @@ import { OverviewPage } from './pages/OverviewPage';
 import { RegionsPage } from './pages/RegionsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SourcesPage } from './pages/SourcesPage';
+import { PortalPage } from './pages/PortalPage';
 
 export function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
+        <Route path="portal" element={<PortalPage />} />
         <Route index element={<OverviewPage />} />
         <Route path="regions" element={<RegionsPage />} />
         <Route path="apis" element={<ApisPage />} />

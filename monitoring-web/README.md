@@ -1,8 +1,15 @@
-# Monitoring Web — hướng dẫn tích hợp và triển khai
+# Multi-Region Web — portal doanh nghiệp và giám sát
 
 Dashboard giám sát cho dự án AWS Multi-Region Active-Active API Platform. Tài liệu này dành cho cả nhóm: cách chạy trên máy, cách nối dashboard với AWS thật, và cách đưa nó lên AWS.
 
-**Trạng thái hiện tại:** giao diện đã xong và chạy bằng dữ liệu mẫu sinh trong trình duyệt. Chưa có backend giám sát, chưa có số liệu AWS thật nào. Mọi số đang thấy trên dashboard đều mang nhãn `DEMO DATA`.
+**Trạng thái hiện tại:** một ứng dụng React chứa portal doanh nghiệp (`/portal`) và sáu trang giám sát. Portal có nút **Trải nghiệm demo** để dùng tài khoản, API và key mẫu trong bộ nhớ trình duyệt, không gọi AWS. Thoát demo trở về tài khoản thật và bỏ dữ liệu demo. Giám sát vẫn dùng dữ liệu mẫu mang nhãn `DEMO DATA`, chưa có backend monitoring.
+
+### Demo portal và hướng dẫn doanh nghiệp
+
+Mở `/portal` → **Trải nghiệm demo**. Thử thêm/sửa/bật/tắt API đích, tạo key `DEMO_ONLY`, sao chép key, rồi mở **Thử request demo**. Có sẵn API/key mẫu để thử ngay. Màn hình mô phỏng HTTP 200, thiếu/sai key (401), key thu hồi/API tắt (403), backend lỗi (502). Không gửi request đến URL backend đã nhập. Mọi kết quả đều là mô phỏng; proxy thật và key scope chưa triển khai.
+
+Tab **Hướng dẫn** (cũng có dưới form đăng nhập) giải thích lấy API ID/key, cấu hình biến môi trường ở backend doanh nghiệp, mẫu Node.js/Python/cURL, và cách xử lý lỗi. Mã mẫu là contract dự kiến cho proxy tương lai; không nhúng key vào frontend. Demo portal độc lập với chế độ demo monitoring trong Settings và không thay token đăng nhập thật.
+
 
 ## Mục lục
 
@@ -31,7 +38,17 @@ npm install
 npm run dev
 ```
 
-Mở http://localhost:5173. Bạn sẽ thấy sáu trang ở sidebar, tất cả dùng dữ liệu mẫu.
+Mở http://localhost:5173. Sidebar có Cổng doanh nghiệp và sáu trang giám sát. Mở http://localhost:5173/portal để đăng nhập, đăng ký, tạo/sửa/bật/tắt API đích, tạo/thu hồi key và xem thống kê doanh nghiệp.
+
+### Nối portal với backend doanh nghiệp
+
+Tạo `.env.local` từ `.env.example`. Khi phát triển, đặt `PORTAL_API_TARGET=https://<api-id>.execute-api.ap-southeast-1.amazonaws.com/demo`, để trống `VITE_PORTAL_API_URL`, rồi khởi động lại Vite. Proxy dev chuyển `/api/*` tới stage tương ứng. Proxy chỉ chuyển request; vẫn cần API Gateway/Lambda thật.
+
+Khi triển khai frontend tĩnh, đặt `VITE_PORTAL_API_URL` thành URL gốc API Gateway bao gồm stage trước khi build. Trên Lambda dashboard đặt `PORTAL_ALLOWED_ORIGIN` bằng origin của frontend (không có path/dấu `/` cuối), mở method `OPTIONS` qua Lambda hoặc cấu hình preflight tương đương ở API Gateway, rồi deploy stage. CORS cần có cả trên Gateway Responses cho lỗi do API Gateway trả. Nếu phục vụ frontend và `/api/*` qua cùng origin thì để trống URL này.
+
+Lambda dashboard không còn chứa `page.html`. Đóng gói/upload lại `dashboard.zip`. Đặt `FRONTEND_URL` bằng URL gốc frontend để `GET /` của Lambda chuyển hướng tới `/portal`; nếu chưa đặt, nó trả thông tin JSON của service. Token phiên được giữ trong sessionStorage; logout/hết hạn xóa phiên phía giao diện và cache portal. Secret API key chỉ hiện sau khi tạo và bị ẩn khi đổi tab. Proxy gateway, key scope và telemetry vẫn chưa triển khai.
+
+Monitoring có nguồn dữ liệu/cấu hình độc lập; bật demo ở Settings không tạo dữ liệu giả cho portal. Backend monitoring và phân quyền quản trị chưa triển khai.
 
 Trước khi mở pull request, chạy:
 
@@ -370,6 +387,7 @@ Nhớ tắt `HEALTH_FORCE_FAIL` sau kiểm tra số 5.
 
 | Đường dẫn | Trang | Endpoint backend dùng |
 |---|---|---|
+| `/portal` | Cổng doanh nghiệp | `/api/me`, `/api/signup`, `/api/login`, `/api/logout`, `/api/apis`, `/api/keys`, `/api/usage`, `/api/status` |
 | `/` | System Overview | `/monitoring/snapshot` |
 | `/regions` | Multi-Region | `/monitoring/snapshot` |
 | `/apis` | API Monitoring | `/monitoring/endpoints` |

@@ -1,6 +1,5 @@
-// Hàm dashboard: trang web cho doanh nghiệp và API của nó (tài khoản, API key, thống kê, trạng thái region).
+// API doanh nghiệp. Giao diện React dùng chung nằm trong monitoring-web/.
 import { randomBytes, scryptSync } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { GetHealthCheckStatusCommand, ListHealthChecksCommand, Route53Client } from "@aws-sdk/client-route-53";
 import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { CONTROL_TABLE, db, json, keyRef, parseBody, routeOf, sameHex, sha256, text } from "../shared/lib.mjs";
@@ -15,9 +14,6 @@ const RANGES = {
   "7d": { buckets: 7, minutes: 1440, chars: 10 },
 };
 const HEALTH_CHECK_PREFIX = `${process.env.PROJECT}-hc-`;
-
-// Đọc một lần lúc Lambda khởi động.
-const PAGE = readFileSync(new URL("./page.html", import.meta.url), "utf8");
 
 // Route 53 là dịch vụ toàn cục, API của nó đặt tại us-east-1.
 const route53 = new Route53Client({ region: "us-east-1", maxAttempts: 1 });
@@ -273,17 +269,18 @@ async function portalApi(method, [action, id, ...extra], headers, event) {
   return json(404, { error: "Không tìm thấy" });
 }
 
-export const handler = async (event) => {
+const dispatch = async (event) => {
   const { method, parts, headers } = routeOf(event);
   const [resource, ...rest] = parts;
 
   try {
     if (!resource && method === "GET") {
-      return {
-        statusCode: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
-        body: PAGE,
+      if (process.env.FRONTEND_URL) return {
+        statusCode: 302,
+        headers: { Location: `${process.env.FRONTEND_URL.replace(/\/+$/, '')}/portal`, 'Cache-Control': 'no-store' },
+        body: '',
       };
+      return json(200, { service: 'portal-api', frontend: '/portal' });
     }
     if (resource === "api") return await portalApi(method, rest, headers, event);
     return json(404, { error: "Không tìm thấy" });
@@ -291,4 +288,20 @@ export const handler = async (event) => {
     console.error("unhandled error", err);
     return json(500, { error: "Lỗi hệ thống" });
   }
+};
+
+// Origin cố định theo deployment; không phản chiếu Origin tùy ý từ request.
+export const handler = async event => {
+  const origin = process.env.PORTAL_ALLOWED_ORIGIN;
+  const response = event.httpMethod === 'OPTIONS'
+    ? { statusCode: 204, headers: {}, body: '' }
+    : await dispatch(event);
+  if (!origin) return response;
+  return { ...response, headers: {
+    ...response.headers,
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    Vary: 'Origin',
+  } };
 };

@@ -9,7 +9,7 @@
 | Thư mục | Nội dung | Owner |
 |---|---|---|
 | src/ | Lambda api, dashboard doanh nghiệp, authorizer, shared; monitoring chưa triển khai | B, L |
-| monitoring-web/ | Frontend giám sát React; backend monitoring ở src/monitoring do L làm | C |
+| monitoring-web/ | Frontend React dùng chung: portal doanh nghiệp và giám sát; backend monitoring chưa triển khai | C |
 | config/demo/ | Tên, ID và URL tài nguyên từng Region, không có secret | A/B/C/L |
 | infra/ | Cấu hình dịch vụ, schema và IAM policy để dựng lại | Theo dịch vụ |
 | scripts/ | Đóng gói Lambda và so sánh cấu hình Region | L, B |
@@ -21,7 +21,7 @@
 
 [Giải thích toàn bộ thư mục và cách tích hợp](docs/PROJECT_STRUCTURE_AND_INTEGRATION.md).
 
-[Phân công hiện hành theo cụm dịch vụ](docs/WORK_ASSIGNMENT.md).
+[Phân công theo dịch vụ AWS và hướng dẫn tích hợp](docs/WORK_ASSIGNMENT.md).
 
 1. Đọc [đăng nhập và MFA](docs/MEMBER_LOGIN_MFA.md).
 2. Làm theo [bốn phần đầu](docs/runbooks/FIRST_FOUR_PARTS.md).
@@ -40,14 +40,16 @@ E2E cần API thật và baseUrl trong config/demo/ap-southeast-1.json. Script t
 
 Control plane dùng bảng mrapi-control, khóa PK/SK. Portal dùng REST Lambda proxy integration và tự kiểm tra Bearer phiên; không gắn authorizer API key vào portal. REQUEST authorizer dùng x-api-key sẽ nối cho route proxy sau khi key scope/proxy hoàn tất. Một bản code dùng cho cả hai Region.
 
-## Dashboard giám sát
+## Frontend dùng chung
 
 ```powershell
 npm ci --prefix monitoring-web
 npm run dev --prefix monitoring-web
 ```
 
-[Hướng dẫn frontend và tích hợp](monitoring-web/README.md). Cổng doanh nghiệp tại src/dashboard/page.html là giao diện khác, do Lambda dashboard phục vụ.
+[Hướng dẫn frontend và tích hợp](monitoring-web/README.md). Mở `/portal` để đăng nhập, quản lý API đích và key; các trang giám sát dùng chung sidebar. Lambda `src/dashboard/` chỉ phục vụ API; giao diện HTML cũ đã chuyển sang React.
+
+Portal cần cấu hình `VITE_PORTAL_API_URL` hoặc proxy dev `PORTAL_API_TARGET` trong `monitoring-web/.env.local`. Đây là URL API Gateway bao gồm stage, không thêm `/api`. Monitoring vẫn dùng `VITE_MONITORING_API_URL` riêng. Dữ liệu demo chỉ áp dụng cho monitoring.
 
 ## Tài liệu và trạng thái
 

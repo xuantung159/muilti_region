@@ -24,7 +24,7 @@ IAM user đã có; các bước dưới chưa được agent xác minh trên AWS
 3. Chạy `npm ci --prefix src`, `npm test --prefix src`, `npm run package --prefix src`.
 4. Lambda mrapi-dashboard: Node.js 22.x, role trên, ZIP artifacts/lambda/dashboard.zip, handler dashboard/index.handler; CONTROL_TABLE=mrapi-control, PROJECT=mrapi. Memory 256 MB, timeout 10 giây ban đầu. Log retention 14 ngày.
 5. REST API: GET / → dashboard; /api/{proxy+} ANY → dashboard, Lambda proxy integration. Portal tự kiểm tra Bearer phiên; không gắn authorizer API key vào các route portal. Cho API Gateway invoke Lambda.
-6. Deploy stage demo; điền baseUrl có stage, ví dụ https://API_ID.execute-api.ap-southeast-1.amazonaws.com/demo. Mở URL kết thúc bằng /; frontend dùng relative base để giữ stage.
+6. Deploy stage demo; điền baseUrl có stage, ví dụ https://API_ID.execute-api.ap-southeast-1.amazonaws.com/demo. Frontend đã gộp vào `monitoring-web/`: cấu hình `PORTAL_API_TARGET` bằng URL stage trong `.env.local`, chạy `npm run dev --prefix monitoring-web` rồi mở `/portal`. Khi deploy frontend tĩnh, dùng `VITE_PORTAL_API_URL`, đặt `PORTAL_ALLOWED_ORIGIN` trên Lambda và mở OPTIONS qua Lambda/CORS ở API Gateway. Đặt `FRONTEND_URL` trên Lambda nếu muốn URL gốc API chuyển hướng tới frontend. Xem [README frontend](../../monitoring-web/README.md).
 7. Thử đăng ký/đăng nhập; tab API đích: tạo HTTPS backend, sửa tên/timeout/URL, tắt rồi bật API. Logout và kiểm tra token cũ bị từ chối.
 8. Tạo tài khoản thứ hai: không thấy API của tài khoản đầu; gọi GET/PATCH ID của tài khoản đầu phải 404. Thử URL IP/HTTP, timeout sai phải 400.
 9. Chạy `node tests/e2e/control-plane.mjs` khi URL đã điền. Script tạo dữ liệu thử thật, giữ API ở trạng thái tắt; tài khoản/cấu hình vẫn còn để kiểm tra và dọn thủ công.

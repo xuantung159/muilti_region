@@ -1,12 +1,13 @@
 import { Activity, Database, FlaskConical, Globe2, LayoutDashboard, type LucideIcon, Menu, Moon, PlugZap, Settings as SettingsIcon, Siren, Sun, Unplug, X } from 'lucide-react';
 import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useProvider } from '../app/data';
 import { useSettings } from '../app/settings';
 import type { MonitoringProvider } from '../data/provider';
 import { Tag } from './ui';
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
+  { to: '/portal', label: 'Cổng doanh nghiệp', icon: PlugZap },
   { to: '/', label: 'System Overview', icon: LayoutDashboard },
   { to: '/regions', label: 'Multi-Region', icon: Globe2 },
   { to: '/apis', label: 'API Monitoring', icon: Activity },
@@ -40,6 +41,7 @@ export function DataModeBadge({ provider }: { provider: MonitoringProvider['id']
 }
 
 export function Layout() {
+  const portal = useLocation().pathname === '/portal';
   const [menuOpen, setMenuOpen] = useState(false);
   const provider = useProvider();
   const { settings, update, dark } = useSettings();
@@ -54,7 +56,7 @@ export function Layout() {
         }`}
       >
         <div className="flex h-14 items-center justify-between border-b border-line px-4">
-          <span className="text-sm font-semibold">Multi-Region Monitoring</span>
+          <span className="text-sm font-semibold">Multi-Region Platform</span>
           <button type="button" className="lg:hidden" onClick={() => setMenuOpen(false)} aria-label="Đóng menu">
             <X className="size-5" />
           </button>
@@ -84,7 +86,7 @@ export function Layout() {
             <Menu className="size-5" />
           </button>
           <div className="min-w-0 flex-1 truncate text-sm font-semibold">AWS Multi-Region Active-Active API Platform</div>
-          <DataModeBadge provider={provider.id} />
+          {portal ? <Tag tone="accent">Cổng doanh nghiệp</Tag> : <DataModeBadge provider={provider.id} />}
           <button
             type="button"
             onClick={() => update({ theme: dark ? 'light' : 'dark' })}
@@ -96,12 +98,12 @@ export function Layout() {
           </button>
         </header>
 
-        {provider.id === 'mock' && (
+        {!portal && provider.id === 'mock' && (
           <div className="border-b border-line bg-raised px-4 py-2 text-xs text-ink2">
             <strong className="font-semibold text-ink">DEMO DATA.</strong> Mọi số liệu trên trang được sinh trong trình duyệt để trình diễn, không lấy từ AWS.
           </div>
         )}
-        {provider.id === 'none' && (
+        {!portal && provider.id === 'none' && (
           <div className="border-b border-line bg-raised px-4 py-2 text-xs text-ink2">
             <strong className="font-semibold text-ink">NOT CONNECTED.</strong> Chế độ demo đang tắt và chưa cấu hình backend (<code>VITE_MONITORING_API_URL</code>), nên không có số liệu nào để hiển thị.
           </div>

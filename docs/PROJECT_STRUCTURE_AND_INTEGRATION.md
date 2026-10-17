@@ -1,6 +1,6 @@
 # Cấu trúc dự án và hướng dẫn tích hợp
 
-Cập nhật: 14/10/2026. Hướng sản phẩm hiện tại: doanh nghiệp đăng ký backend đích, lấy API key và gọi qua gateway của nền tảng; gateway chuyển tiếp request, ghi nhận kết quả và thống kê API/endpoint lỗi.
+Cập nhật: 17/10/2026. Portal và monitoring đã gộp vào một frontend React trong `monitoring-web/`; Lambda dashboard chỉ phục vụ API. Hướng sản phẩm hiện tại: doanh nghiệp đăng ký backend đích, lấy API key và gọi qua gateway của nền tảng; proxy và telemetry chưa triển khai.
 
 ## 1. Trạng thái và tài liệu cần dùng
 
@@ -28,8 +28,7 @@ aws/
 │   ├── package-lock.json
 │   ├── dashboard/
 │   │   ├── index.mjs
-│   │   ├── apis.mjs
-│   │   └── page.html
+│   │   └── apis.mjs
 │   ├── authorizer/index.mjs
 │   ├── api/index.mjs
 │   ├── monitoring/README.md
@@ -92,7 +91,7 @@ Thư mục có README chưa đồng nghĩa đã có chức năng. `src/monitorin
 |---|---|---|
 | `dashboard/index.mjs` | Handler portal, tài khoản, phiên, key cũ, usage cũ, trạng thái Region | Gọi module apis sau khi xác thực phiên |
 | `dashboard/apis.mjs` | Đăng ký/liệt kê/xem/sửa/bật/tắt API đích | Dùng tenant từ phiên; đọc/ghi API config trong control |
-| `dashboard/page.html` | Cổng doanh nghiệp, form tài khoản và API đích | Được dashboard đọc lúc khởi động và trả ở GET / |
+| `monitoring-web/src/pages/PortalPage.tsx` | Cổng doanh nghiệp trong frontend React dùng chung | Gọi API của Lambda dashboard; token Bearer trong sessionStorage |
 | `authorizer/index.mjs` | Xác thực key hiện tại từ bảng control | Chưa có quyền key theo apiId; cần nâng cấp trước khi mở proxy |
 | `api/index.mjs` | Health đọc bảng control, hỗ trợ giả lập health lỗi | Chưa có proxy; code orders đã bỏ |
 | `monitoring/` | Backend đọc metric cho giao diện giám sát | Chưa có index.mjs, chưa deploy được |
@@ -104,14 +103,13 @@ Thư mục có README chưa đồng nghĩa đã có chức năng. `src/monitorin
 ```text
 dashboard/index.mjs
     ├── ./apis.mjs
-    ├── ./page.html (đọc file)
     └── ../shared/lib.mjs
 dashboard/apis.mjs ──► ../shared/lib.mjs
 authorizer/index.mjs ──► ../shared/lib.mjs
 api/index.mjs ──► ../shared/lib.mjs
 ```
 
-Không chuyển `page.html` sang frontend React hoặc đổi vị trí shared mà không sửa đường dẫn và script đóng gói.
+Portal đã chuyển sang React; ZIP dashboard không còn cần file HTML. Không đổi vị trí shared mà không sửa đường dẫn và script đóng gói.
 
 ### Không nhầm hai loại key/token
 
@@ -123,15 +121,15 @@ Không chuyển `page.html` sang frontend React hoặc đổi vị trí shared m
 
 Không gắn authorizer API key vào route đăng ký/đăng nhập. Không đưa AWS credentials hoặc key bí mật vào frontend công khai.
 
-## 4. Hai giao diện khác nhau
+## 4. Một frontend dùng chung: `monitoring-web/`
 
-### Cổng doanh nghiệp: `src/dashboard/page.html`
+### Cổng doanh nghiệp: `/portal`
 
-HTML/JavaScript được Lambda phục vụ, không cần Vite build. Dùng token trong sessionStorage, gọi API portal cùng origin qua đường dẫn tương đối.
+React dùng chung Layout/sidebar/theme với monitoring. Dùng token trong sessionStorage; cấu hình `VITE_PORTAL_API_URL` khi build hoặc `PORTAL_API_TARGET` để proxy lúc dev.
 
-Với URL `https://API_ID.execute-api.ap-southeast-1.amazonaws.com/demo/`, frontend giữ `/demo` làm base rồi gọi `/demo/api/signup`, `/demo/api/apis`… Vì vậy phải mở portal ở gốc stage; không mở như file HTML local để kiểm thử AWS.
+Với backend `https://API_ID.execute-api.ap-southeast-1.amazonaws.com/demo`, client gọi `/demo/api/signup`, `/demo/api/apis`… Frontend tĩnh cần CORS: `PORTAL_ALLOWED_ORIGIN` trên Lambda và method OPTIONS ở API Gateway. Xem README frontend để cấu hình đầy đủ.
 
-Hiện đã có UI API đích. Tab key/usage vẫn là chức năng cũ, chưa chứng minh key scope và thống kê proxy mới. Dòng Region gọi `/health`; nếu chưa có route này, có thể báo không kết nối dù portal vẫn hoạt động.
+Portal có tài khoản, API đích, key, usage và trạng thái region qua `/api/status`. Key scope/proxy/telemetry chưa triển khai. `GET /` ở Lambda chuyển tới frontend `/portal` khi có `FRONTEND_URL`; nếu không, trả JSON thông tin service.
 
 ### Dashboard giám sát: `monitoring-web/`
 
@@ -141,7 +139,8 @@ Hiện đã có UI API đích. Tab key/usage vẫn là chức năng cũ, chưa c
 | `App.tsx` | Ghép ứng dụng và routing giao diện |
 | `app/data.tsx`, `app/settings.tsx` | Context dữ liệu/cài đặt |
 | `components/` | Layout, toolbar, chart và thành phần UI |
-| `pages/` | Overview, Regions, APIs, Incidents, Sources, Settings |
+| `pages/` | Portal, Overview, Regions, APIs, Incidents, Sources, Settings |
+| `portal/client.ts` | HTTP client của portal, sessionStorage và lỗi kết nối |
 | `data/provider.ts`, `providers.ts`, `sources.ts` | Lớp lấy dữ liệu và nguồn dữ liệu |
 | `data/mock/generator.ts` | Dữ liệu mẫu; không coi là kết quả AWS thật |
 | `domain/` | Kiểu dữ liệu, định dạng, time range và tính trạng thái |
@@ -225,7 +224,6 @@ ZIP dashboard có cấu trúc:
 dashboard.zip
 ├── dashboard/index.mjs
 ├── dashboard/apis.mjs
-├── dashboard/page.html
 ├── shared/lib.mjs
 ├── node_modules/...
 └── package.json
@@ -285,9 +283,9 @@ Các route cần cho giai đoạn này:
 ### Checklist điểm nối
 
 1. **Bảng ↔ Lambda:** env CONTROL_TABLE đúng tên; policy có ARN đúng Region/account/table.
-2. **ZIP ↔ Lambda:** handler dashboard/index.handler, có page.html/apis/shared/dependency.
+2. **ZIP ↔ Lambda:** handler dashboard/index.handler, có apis/shared/dependency; frontend build riêng.
 3. **API Gateway ↔ Lambda:** REST proxy integration, đúng function, có resource permission invoke.
-4. **Stage ↔ frontend:** URL có /demo/, frontend giữ stage; route đổi phải deploy lại.
+4. **Stage ↔ frontend:** cấu hình URL API có /demo, CORS/OPTIONS nếu khác origin; route đổi phải deploy lại.
 5. **Phiên ↔ API đích:** request quản trị có Bearer; tenant chỉ lấy từ phiên; tenant chéo trả 404.
 6. **Config ↔ E2E:** baseUrl đúng API/stage; kiểm tra bằng response thật.
 
@@ -324,7 +322,7 @@ Thứ tự làm:
 
 ## 12. Quy tắc bàn giao để dễ tích hợp
 
-Áp dụng [WORK_ASSIGNMENT.md](WORK_ASSIGNMENT.md): L làm portal/backend monitoring/vận hành; A làm DynamoDB/S3/role dữ liệu; B làm proxy/authorizer; C làm API Gateway/DNS/ACM/frontend giám sát. Owner và mốc nghiệm thu lấy từ phân công hiện hành.
+Owner, phạm vi, điểm nối và mốc nghiệm thu chỉ được quy định tại [WORK_ASSIGNMENT.md](WORK_ASSIGNMENT.md). Tài liệu này mô tả cấu trúc và cách tích hợp, không phải bản phân công riêng.
 
 - Một bản code dùng cho hai Region, cấu hình khác nhau ở env/config; không tách src/singapore và src/tokyo.
 - Mỗi thay đổi contract phải cập nhật caller, handler, test và hướng dẫn trong cùng PR.
