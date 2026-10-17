@@ -1,0 +1,7 @@
+{
+  "TableName": "mrapi-control",
+  "TimeToLiveSpecification": {
+    "Enabled": true,
+    "AttributeName": "expiresAt"
+  }
+}

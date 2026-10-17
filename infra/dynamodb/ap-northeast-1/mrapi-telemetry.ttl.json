@@ -1,0 +1,7 @@
+{
+  "TableName": "mrapi-telemetry",
+  "TimeToLiveSpecification": {
+    "Enabled": true,
+    "AttributeName": "expiresAt"
+  }
+}
