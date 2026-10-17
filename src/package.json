@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node --test ../tests/control-plane/*.test.mjs",
     "package": "node ../scripts/package-lambdas.mjs",
-    "test:e2e": "node ../tests/e2e/control-plane.mjs"
+    "test:e2e": "node ../tests/e2e/control-plane.mjs",
+    "test:e2e:proxy": "node ../tests/e2e/proxy.mjs",
+    "test:telemetry": "node ../tests/telemetry/telemetry-table.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.0.0",

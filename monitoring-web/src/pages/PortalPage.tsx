@@ -9,7 +9,7 @@ import { DemoRequest } from '../portal/DemoRequest';
 
 type Account = { orgName: string; email: string; tenantId: string };
 type Api = { apiId: string; name: string; baseUrl: string; timeoutMs: number; enabled: boolean };
-type Key = { keyId: string; name: string; status: string; createdAt: string };
+type Key = { keyId: string; name: string; status: string; apiIds?: string[]; createdAt: string };
 type Counts = { requests: number; errors: number };
 type Usage = { totals: Counts & { totalMs: number }; byRegion: Record<string, Counts>; byKey: Record<string, Counts>; series: (Counts & { bucket: string; servedRegion: string })[] };
 type Tab = 'overview' | 'apis' | 'keys' | 'guide' | 'request';
@@ -114,7 +114,7 @@ function PortalContent({ token, tab, onExpired }: { token: string; tab: Tab; onE
   const [secret, setSecret] = useState(''); const [copied, setCopied] = useState(false);
   const [range, setRange] = useState('24h'); const client = useQueryClient();
   const queryKey = ['portal', token];
-  const apiQuery = useQuery({ queryKey: [...queryKey, 'apis'], enabled: tab === 'apis' || tab === 'request', retry: false, queryFn: ({ signal }) => portalCall<{ apis: Api[] }>('apis', token, 'GET', undefined, signal) });
+  const apiQuery = useQuery({ queryKey: [...queryKey, 'apis'], enabled: tab === 'apis' || tab === 'request' || tab === 'keys', retry: false, queryFn: ({ signal }) => portalCall<{ apis: Api[] }>('apis', token, 'GET', undefined, signal) });
   const keysQuery = useQuery({ queryKey: [...queryKey, 'keys'], enabled: tab === 'keys' || tab === 'overview', retry: false, queryFn: ({ signal }) => portalCall<{ keys: Key[] }>('keys', token, 'GET', undefined, signal) });
   const usageQuery = useQuery({ queryKey: [...queryKey, 'usage', range], enabled: tab === 'overview', retry: false, queryFn: ({ signal }) => portalCall<Usage>(`usage?range=${range}`, token, 'GET', undefined, signal) });
   const statusQuery = useQuery({ queryKey: [...queryKey, 'status'], enabled: tab === 'overview', retry: false, queryFn: ({ signal }) => portalCall<{ regions: { region: string; status: string }[] }>('status', token, 'GET', undefined, signal) });
@@ -152,13 +152,16 @@ function PortalContent({ token, tab, onExpired }: { token: string; tab: Tab; onE
       </Card>)}</div>}</QueryBoundary>
     </>}
     {tab === 'keys' && <Card>
-      <h2 className="mb-2 font-semibold">API key</h2><p className="mb-4 text-sm text-ink2">Dùng một key cho mỗi ứng dụng để có thể thu hồi độc lập. Phân quyền key theo API chưa triển khai.</p>
-      <form className="flex flex-wrap items-end gap-3" onSubmit={event => {
-        event.preventDefault(); const form = event.currentTarget; const name = new FormData(form).get('name');
-        void mutate(async () => { setSecret(''); setCopied(false); const result = await portalCall<{ apiKey: string }>('keys', token, 'POST', { name }); setSecret(result.apiKey); form.reset(); });
-      }}><label className="min-w-48 flex-1 text-sm">Tên ứng dụng<input className={input} name="name" maxLength={60} required /></label><button className={button} disabled={busy}>Tạo key</button></form>
+      <h2 className="mb-2 font-semibold">API key</h2><p className="mb-4 text-sm text-ink2">Dùng một key cho mỗi ứng dụng để có thể thu hồi độc lập. Key chỉ gọi được các API được chọn khi tạo; muốn đổi phạm vi thì tạo key mới.</p>
+      <form className="space-y-3" onSubmit={event => {
+        event.preventDefault(); const form = event.currentTarget; const values = new FormData(form); const apiIds = values.getAll('apiIds');
+        if (!apiIds.length) { setError('Chọn ít nhất một API mà key được phép gọi'); return; }
+        void mutate(async () => { setSecret(''); setCopied(false); const result = await portalCall<{ apiKey: string }>('keys', token, 'POST', { name: values.get('name'), apiIds }); setSecret(result.apiKey); form.reset(); });
+      }}><label className="block text-sm">Tên ứng dụng<input className={input} name="name" maxLength={60} required /></label>
+        <QueryBoundary query={apiQuery}>{({ apis }) => <fieldset className="text-sm"><legend className="mb-1">API được phép gọi</legend>{!apis.length && <p className="text-muted">Đăng ký API đích trước khi tạo key.</p>}{apis.map(api => <label key={api.apiId} className="mr-4 inline-flex items-center gap-2"><input type="checkbox" name="apiIds" value={api.apiId} />{api.name}</label>)}</fieldset>}</QueryBoundary>
+        <button className={button} disabled={busy}>Tạo key</button></form>
       {secret && <div className="my-4 space-y-2 rounded-md border border-good p-3"><p className="text-sm font-semibold">Sao chép ngay — key chỉ hiển thị một lần.</p><code className="block break-all text-sm">{secret}</code><button className={button} onClick={async () => { try { await navigator.clipboard.writeText(secret); setCopied(true); } catch { setError('Không sao chép tự động được. Hãy sao chép key ở trên.'); } }}>{copied ? 'Đã sao chép' : 'Sao chép'}</button><button className={`${button} ml-2`} onClick={() => setSecret('')}>Ẩn key</button></div>}
-      <QueryBoundary query={keysQuery}>{({ keys }) => <div className="mt-4 space-y-3">{!keys.length && <p className="text-sm text-muted">Chưa có key nào.</p>}{keys.map(key => <div key={key.keyId} className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3"><div><p className="text-sm font-semibold">{key.name} · {key.status === 'active' ? 'Đang dùng' : 'Đã thu hồi'}</p><p className="text-xs text-muted">{key.keyId} · {new Date(key.createdAt).toLocaleString('vi-VN')}</p></div>{key.status === 'active' && <button className={button} disabled={busy} onClick={() => { if (window.confirm(`Thu hồi key của ${key.name}? Ứng dụng dùng key này sẽ mất quyền truy cập.`)) void mutate(async () => { await portalCall(`keys/${key.keyId}`, token, 'DELETE'); setSecret(''); }); }}>Thu hồi</button>}</div>)}</div>}</QueryBoundary>
+      <QueryBoundary query={keysQuery}>{({ keys }) => <div className="mt-4 space-y-3">{!keys.length && <p className="text-sm text-muted">Chưa có key nào.</p>}{keys.map(key => <div key={key.keyId} className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3"><div><p className="text-sm font-semibold">{key.name} · {key.status === 'active' ? 'Đang dùng' : 'Đã thu hồi'}</p><p className="text-xs text-muted">{key.keyId} · {new Date(key.createdAt).toLocaleString('vi-VN')} · {key.apiIds?.length ? `API: ${key.apiIds.map(id => apiQuery.data?.apis.find(api => api.apiId === id)?.name ?? id).join(', ')}` : 'Chưa có phạm vi API (key cũ, không gọi được proxy)'}</p></div>{key.status === 'active' && <button className={button} disabled={busy} onClick={() => { if (window.confirm(`Thu hồi key của ${key.name}? Ứng dụng dùng key này sẽ mất quyền truy cập.`)) void mutate(async () => { await portalCall(`keys/${key.keyId}`, token, 'DELETE'); setSecret(''); }); }}>Thu hồi</button>}</div>)}</div>}</QueryBoundary>
     </Card>}
     {tab === 'overview' && <>
       <div className="flex flex-wrap items-center gap-3"><label className="text-sm">Khoảng thời gian <select className={input} value={range} onChange={event => setRange(event.target.value)}><option value="1h">1 giờ</option><option value="24h">24 giờ</option><option value="7d">7 ngày</option></select></label><button className={button} onClick={() => void client.invalidateQueries({ queryKey })}>Làm mới</button></div>

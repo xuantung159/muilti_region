@@ -5,11 +5,13 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 export const REGION = process.env.AWS_REGION;
 export const CONTROL_TABLE = process.env.CONTROL_TABLE;
+export const TELEMETRY_TABLE = process.env.TELEMETRY_TABLE;
 
 // Bảng control:
 //   USER#<email>      / META                            tài khoản doanh nghiệp (mật khẩu đã băm)
 //   SESSION#<hash>    / META                            phiên đăng nhập
-//   TENANT#<tenantId> / KEY#<keyId>                     API key (chỉ lưu bản băm)
+//   TENANT#<tenantId> / API#<apiId>                     cấu hình API đích
+//   TENANT#<tenantId> / KEY#<keyId>                     API key (chỉ lưu bản băm) và apiIds được phép gọi
 //   TENANT#<tenantId> / USAGE#<phút>#<region>#<keyId>   bộ đếm lượt gọi theo phút
 export const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -53,3 +55,5 @@ export const text = (value, max) =>
 // chỉ để tra đúng bản ghi bằng một lần GetItem; bảng lưu SHA-256 của cả key.
 export const KEY_PATTERN = /^mrk_(t[a-f0-9]{10})_([a-f0-9]{12})_[a-f0-9]{48}$/;
 export const keyRef = (tenantId, keyId) => ({ PK: `TENANT#${tenantId}`, SK: `KEY#${keyId}` });
+export const API_ID_PATTERN = /^a[0-9a-f]{32}$/;
+export const apiRef = (tenantId, apiId) => ({ PK: `TENANT#${tenantId}`, SK: `API#${apiId}` });

@@ -22,6 +22,10 @@
 - Ghi log CloudWatch cho log group `/aws/lambda/mrapi-authorizer`.
 - Chưa có quyền ghi `mrapi-telemetry`. Nếu nhóm chốt authorizer ghi telemetry khi từ chối key thì thêm `dynamodb:PutItem` cho bảng telemetry và cập nhật cả file này lẫn Console.
 
+## Đối chiếu với code authorizer (17/10/2026)
+
+Code `src/authorizer/index.mjs` chỉ gọi `GetItem` trên control (đọc bản ghi key, gồm `apiIds`), nằm trong quyền đã cấp; `Query` hiện chưa dùng, giữ lại không ảnh hưởng. Authorizer **không ghi telemetry**: request bị từ chối ở authorizer (401/403) không có dòng trong `mrapi-telemetry`, chỉ có log `AUTHORIZER_DENY` trong CloudWatch. Vì vậy không cần thêm `PutItem` telemetry.
+
 ## Kiểm thử và bằng chứng
 
 - Thực tế: NOT TESTED (chưa chạy Lambda thật với role này)

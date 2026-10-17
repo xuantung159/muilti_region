@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { CONTROL_TABLE, db, json, parseBody } from '../shared/lib.mjs';
+import { API_ID_PATTERN, CONTROL_TABLE, apiRef as ref, db, json, parseBody } from '../shared/lib.mjs';
 
 export function validateApi(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('Body phải là JSON object');
@@ -27,11 +27,10 @@ export function validateApi(body) {
   return { name: body.name.trim(), baseUrl: url.href.replace(/\/+$/, ''), timeoutMs, enabled: body.enabled ?? true };
 }
 
-const ref = (tenantId, apiId) => ({ PK: `TENANT#${tenantId}`, SK: `API#${apiId}` });
 const publicApi = ({ PK, SK, ...api }) => api;
 
 export async function apis(method, id, session, event) {
-  if (id && !/^a[0-9a-f]{32}$/.test(id)) return json(404, { error: 'Không tìm thấy API' });
+  if (id && !API_ID_PATTERN.test(id)) return json(404, { error: 'Không tìm thấy API' });
   if (!id && method === 'GET') {
     const items = [];
     let cursor;

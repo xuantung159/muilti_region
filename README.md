@@ -1,6 +1,6 @@
 # Multi-Region API Platform
 
-**Hướng hiện tại: gateway chuyển tiếp request của doanh nghiệp.** Đọc [thiết kế mới](docs/GATEWAY_DESIGN.md) và [bốn phần đầu](docs/runbooks/FIRST_FOUR_PARTS.md). Lambda api hiện chỉ có health; proxy chưa triển khai. `npm run test:e2e --prefix src` hiện kiểm tra tài khoản/API đích.
+**Hướng hiện tại: gateway chuyển tiếp request của doanh nghiệp.** Đọc [thiết kế mới](docs/GATEWAY_DESIGN.md) và [bốn phần đầu](docs/runbooks/FIRST_FOUR_PARTS.md). Proxy, authorizer có scope và telemetry đã có code/test local, chưa deploy ([giải thích](docs/GIAI_THICH_UU_TIEN_2.md)). `npm run test:e2e --prefix src` kiểm tra tài khoản/API đích; `npm run test:e2e:proxy --prefix src` kiểm tra proxy sau khi nối API Gateway.
 
 Đồ án API đa doanh nghiệp chạy tại Singapore và Tokyo.
 

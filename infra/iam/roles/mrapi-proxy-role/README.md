@@ -13,7 +13,7 @@
 | Permissions boundary | `mrapi-workload-boundary` (`arn:aws:iam::138150704839:policy/mrapi-workload-boundary`) |
 | Inline policy | Nội dung trong `permission.json`; tên policy điền theo Console |
 | Managed policy gắn thêm | Không (điền lại nếu Console khác) |
-| Lambda gắn role | mrapi-proxy (tên Lambda chưa chốt với B) (chưa gắn / chưa xác nhận) |
+| Lambda gắn role | `mrapi-proxy`, chạy gói `api.zip` (handler `api/index.handler`); chưa deploy — xem [mrapi-proxy.md](../../../lambda/ap-southeast-1/mrapi-proxy.md) |
 
 ## Quyền
 
@@ -21,6 +21,12 @@
 - Ghi `mrapi-telemetry`: `PutItem`.
 - Ghi log CloudWatch cho log group `/aws/lambda/mrapi-proxy` (tên Lambda do B chốt).
 - Chưa cấp X-Ray vì chưa có yêu cầu từ B.
+
+## Đối chiếu với code proxy (17/10/2026)
+
+Code `src/api/proxy.mjs` chỉ gọi `GetItem` trên control (đọc cấu hình API) và `PutItem` trên telemetry (ghi một dòng mỗi request), khớp với `permission.json`; không cần sửa policy. Gọi backend doanh nghiệp đi qua Internet nên không cần quyền IAM, nhưng Lambda **không được đặt trong VPC** (nếu đặt thì cần NAT). Health `/health` cũng chạy được bằng role này vì chỉ cần `GetItem` trên control.
+
+Đặt tên function đúng `mrapi-proxy`, nếu không dòng log group trong policy không khớp và Lambda không ghi được log.
 
 ## Kiểm thử và bằng chứng
 
