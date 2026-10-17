@@ -1,0 +1,24 @@
+{
+    "ReplicationConfiguration": {
+        "Role": "arn:aws:iam::138150704839:role/service-role/s3crr_role_for_mrapi-exports-sg",
+        "Rules": [
+            {
+                "ID": "mrapi-sg-to-tyo",
+                "Priority": 0,
+                "Filter": {
+                    "Prefix": "exports/"
+                },
+                "Status": "Enabled",
+                "Destination": {
+                    "Bucket": "arn:aws:s3:::mrapi-exports-tyo",
+                    "Metrics": {
+                        "Status": "Enabled"
+                    }
+                },
+                "DeleteMarkerReplication": {
+                    "Status": "Disabled"
+                }
+            }
+        ]
+    }
+}
