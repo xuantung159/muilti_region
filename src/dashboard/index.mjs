@@ -2,11 +2,12 @@
 import { randomBytes, scryptSync } from "node:crypto";
 import { GetHealthCheckStatusCommand, ListHealthChecksCommand, Route53Client } from "@aws-sdk/client-route-53";
 import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { CONTROL_TABLE, db, json, keyRef, parseBody, routeOf, sameHex, sha256, text } from "../shared/lib.mjs";
+import { API_ID_PATTERN, CONTROL_TABLE, apiRef, db, json, keyRef, parseBody, routeOf, sameHex, sha256, text } from "../shared/lib.mjs";
 import { apis } from './apis.mjs';
 
 const SESSION_HOURS = 8;
 const MAX_KEYS = 20;
+const MAX_KEY_APIS = 20;
 // Khoảng thời gian xem thống kê: số ô trên biểu đồ, độ dài một ô (phút), số ký tự ISO xác định một ô.
 const RANGES = {
   "1h": { buckets: 60, minutes: 1, chars: 16 },
@@ -124,21 +125,30 @@ async function listKeyItems(tenantId) {
 async function listKeys(session) {
   const items = await listKeyItems(session.tenantId);
   const keys = items
-    .map(({ keyId, name, status, createdAt, revokedAt }) => ({ keyId, name, status, createdAt, revokedAt }))
+    .map(({ keyId, name, status, apiIds = [], createdAt, revokedAt }) => ({ keyId, name, status, apiIds, createdAt, revokedAt }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return json(200, { keys });
 }
 
+// Scope của key: danh sách API của chính doanh nghiệp mà key được phép gọi qua proxy.
 async function createKey(session, event) {
-  const name = text(parseBody(event).name, 60);
+  const body = parseBody(event);
+  const name = text(body.name, 60);
   if (!name) return json(400, { error: "Cần nhập tên ứng dụng (tối đa 60 ký tự)" });
+  const apiIds = Array.isArray(body.apiIds) ? [...new Set(body.apiIds)] : [];
+  if (!apiIds.length || apiIds.length > MAX_KEY_APIS || !apiIds.every((id) => typeof id === "string" && API_ID_PATTERN.test(id))) {
+    return json(400, { error: `Chọn từ 1 đến ${MAX_KEY_APIS} API mà key được phép gọi` });
+  }
+  const owned = await Promise.all(apiIds.map((apiId) =>
+    db.send(new GetCommand({ TableName: CONTROL_TABLE, Key: apiRef(session.tenantId, apiId), ConsistentRead: true }))));
+  if (owned.some(({ Item }) => !Item)) return json(400, { error: "Có API không tồn tại hoặc không thuộc doanh nghiệp này" });
   if ((await listKeyItems(session.tenantId)).length >= MAX_KEYS) {
     return json(400, { error: `Mỗi doanh nghiệp tối đa ${MAX_KEYS} key` });
   }
 
   const keyId = randomBytes(6).toString("hex");
   const apiKey = `mrk_${session.tenantId}_${keyId}_${randomBytes(24).toString("hex")}`;
-  const key = { keyId, name, status: "active", createdAt: new Date().toISOString() };
+  const key = { keyId, name, status: "active", apiIds, createdAt: new Date().toISOString() };
   await db.send(
     new PutCommand({
       TableName: CONTROL_TABLE,

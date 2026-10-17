@@ -4,7 +4,7 @@ import type { portalCall } from './client';
 export function createDemoClient(): typeof portalCall {
   let next = 1;
   const apis = [{ apiId: 'demo-orders', name: 'API đơn hàng mẫu', baseUrl: 'https://backend.company.example/v1', timeoutMs: 5000, enabled: true }];
-  const keys = [{ keyId: 'demo-key', name: 'Ứng dụng bán hàng mẫu', status: 'active', createdAt: new Date().toISOString() }];
+  const keys = [{ keyId: 'demo-key', name: 'Ứng dụng bán hàng mẫu', status: 'active', apiIds: ['demo-orders'], createdAt: new Date().toISOString() }];
   const secrets = new Map([['DEMO_ONLY_SAMPLE_KEY', 'demo-key']]);
   let requests = 0;
   return async <T>(path: string, _token: string | null, method = 'GET', body?: unknown): Promise<T> => {
@@ -29,7 +29,7 @@ export function createDemoClient(): typeof portalCall {
       } else result = { apis };
     } else if (resource === 'keys') {
       if (method === 'POST') {
-        const key = { keyId: `demo-key-${next++}`, name: String(data?.name), status: 'active', createdAt: new Date().toISOString() };
+        const key = { keyId: `demo-key-${next++}`, name: String(data?.name), status: 'active', apiIds: (data?.apiIds as string[] | undefined) ?? [], createdAt: new Date().toISOString() };
         const apiKey = `DEMO_ONLY_${key.keyId}_NOT_A_REAL_KEY`;
         keys.push(key); secrets.set(apiKey, key.keyId); result = { key, apiKey };
       } else if (method === 'DELETE') {
@@ -40,12 +40,12 @@ export function createDemoClient(): typeof portalCall {
       const api = apis.find(item => item.apiId === data?.apiId);
       const keyId = secrets.get(String(data?.apiKey ?? ''));
       const key = keys.find(item => item.keyId === keyId);
-      const status = !key ? 401 : key.status !== 'active' ? 403 : !api ? 404 : !api.enabled ? 403 : data?.upstreamError ? 502 : 200;
+      const status = !key ? 401 : key.status !== 'active' || !key.apiIds.includes(String(data?.apiId)) ? 403 : !api ? 404 : !api.enabled ? 403 : data?.upstreamError ? 502 : 200;
       if (status === 200) requests++;
       result = { status, simulated: true, region: 'ap-southeast-1',
         steps: ['Server gửi request đến gateway (mô phỏng)', status === 401 || (status === 403 && key?.status !== 'active') ? 'Gateway từ chối key' : 'Gateway kiểm tra key', status === 200 ? 'Chuyển tiếp tới API đích và nhận JSON mẫu' : 'Dừng request tại lỗi mô phỏng'],
         body: status === 200 ? { orders: [{ id: 'ORDER-DEMO-001', total: 250000, currency: 'VND' }] }
-          : { error: status === 401 ? 'Thiếu hoặc sai API key demo' : status === 403 ? 'Key đã thu hồi hoặc API đang tắt' : status === 404 ? 'Không tìm thấy API demo' : 'Backend đích lỗi (mô phỏng)' } };
+          : { error: status === 401 ? 'Thiếu hoặc sai API key demo' : status === 403 ? 'Key đã thu hồi, không có quyền với API này hoặc API đang tắt' : status === 404 ? 'Không tìm thấy API demo' : 'Backend đích lỗi (mô phỏng)' } };
     } else if (resource === 'status') result = { regions: [{ region: 'ap-southeast-1', status: 'healthy (mô phỏng)' }, { region: 'ap-northeast-1', status: 'healthy (mô phỏng)' }] };
     else if (resource === 'usage') {
       const scale = path.includes('range=1h') ? 1 : path.includes('range=7d') ? 7 : 3;

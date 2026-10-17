@@ -69,3 +69,22 @@ test('reject unsafe URL syntax and invalid timeout before storing configuration'
   assert.equal((await call('POST', '/api/apis', { name: 'Test', baseUrl: 'https://backend.company.com', timeoutMs: 20000 }, token)).status, 400);
   assert.deepEqual((await call('GET', '/api/apis', undefined, token)).data.apis, []);
 });
+
+test('API keys are scoped to the tenant own APIs and returned only once', async () => {
+  const x = (await account('x@company.com')).data.token;
+  const y = (await account('y@company.com')).data.token;
+  const mine = (await call('POST', '/api/apis', { name: 'Payments', baseUrl: 'https://backend.company.com' }, x)).data.api.apiId;
+  const theirs = (await call('POST', '/api/apis', { name: 'Other', baseUrl: 'https://other.company.com' }, y)).data.api.apiId;
+  assert.equal((await call('POST', '/api/keys', { name: 'App' }, x)).status, 400);
+  assert.equal((await call('POST', '/api/keys', { name: 'App', apiIds: ['bad'] }, x)).status, 400);
+  assert.equal((await call('POST', '/api/keys', { name: 'App', apiIds: [theirs] }, x)).status, 400);
+  const created = await call('POST', '/api/keys', { name: 'App', apiIds: [mine, mine] }, x);
+  assert.equal(created.status, 201);
+  assert.deepEqual(created.data.key.apiIds, [mine]);
+  const stored = items.get(`TENANT#${created.data.apiKey.split('_')[1]}|KEY#${created.data.key.keyId}`);
+  assert.equal(stored.apiKey, undefined); assert.ok(stored.keyHash);
+  const listed = (await call('GET', '/api/keys', undefined, x)).data.keys;
+  assert.deepEqual(listed[0].apiIds, [mine]); assert.equal(listed[0].keyHash, undefined);
+  assert.equal((await call('DELETE', `/api/keys/${created.data.key.keyId}`, undefined, y)).status, 404);
+  assert.equal((await call('DELETE', `/api/keys/${created.data.key.keyId}`, undefined, x)).data.status, 'revoked');
+});

@@ -22,7 +22,7 @@ const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
   if (path === 'apis' && method === 'POST') { apis.push({ apiId: 'api-1', enabled: true, ...body }); return reply({ api: apis[0] }, 201); }
   if (path === 'apis/api-1' && method === 'PATCH') { Object.assign(apis[0], body); return reply({ api: apis[0] }); }
   if (path === 'apis') return reply({ apis });
-  if (path === 'keys' && method === 'POST') { keys.push({ keyId: 'key-1', name: body.name, status: 'active', createdAt: '2026-10-17T00:00:00Z' }); return reply({ apiKey: 'mrk_secret_once' }, 201); }
+  if (path === 'keys' && method === 'POST') { expect(body.apiIds).toEqual(['api-1']); keys.push({ keyId: 'key-1', name: body.name, status: 'active', createdAt: '2026-10-17T00:00:00Z' }); return reply({ apiKey: 'mrk_secret_once' }, 201); }
   if (path === 'keys/key-1' && method === 'DELETE') { keys[0].status = 'revoked'; return reply({}); }
   if (path === 'keys') return reply({ keys });
   if (path.startsWith('usage?')) return reply({ totals: { requests: 0, errors: 0, totalMs: 0 }, series: [], byRegion: {}, byKey: {} });
@@ -58,6 +58,7 @@ it('đăng nhập, tạo/sửa/tắt API và đăng xuất trong frontend dùng 
 });
 
 it('đăng ký, tạo và thu hồi key; không giữ secret khi đổi tab', async () => {
+  apis.push({ apiId: 'api-1', name: 'Payments', baseUrl: 'https://backend.company.com', timeoutMs: 5000, enabled: true });
   const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
   await user.click(screen.getByRole('button', { name: /Chưa có tài khoản/ }));
   await user.type(screen.getByLabelText('Tên doanh nghiệp'), account.orgName);
@@ -67,6 +68,9 @@ it('đăng ký, tạo và thu hồi key; không giữ secret khi đổi tab', as
   await screen.findByText(account.orgName);
   await user.click(screen.getByRole('button', { name: 'API key' }));
   await user.type(screen.getByLabelText('Tên ứng dụng'), 'Website');
+  await user.click(screen.getByRole('button', { name: 'Tạo key' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Chọn ít nhất một API');
+  await user.click(await screen.findByRole('checkbox', { name: 'Payments' }));
   await user.click(screen.getByRole('button', { name: 'Tạo key' }));
   expect(await screen.findByText('mrk_secret_once')).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Hướng dẫn' }));
@@ -99,6 +103,7 @@ it('demo tạo key, gửi request, từ chối key thu hồi và không gọi AW
   expect(await screen.findByText('Doanh nghiệp mẫu · Demo')).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'API key' }));
   await user.type(screen.getByLabelText('Tên ứng dụng'), 'Demo shop');
+  await user.click(await screen.findByRole('checkbox', { name: 'API đơn hàng mẫu' }));
   await user.click(screen.getByRole('button', { name: 'Tạo key' }));
   const key = await screen.findByText(/^DEMO_ONLY_demo-key-/);
   const secret = key.textContent!;
