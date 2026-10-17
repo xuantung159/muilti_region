@@ -46,6 +46,16 @@ Bốn phần đầu chỉ cần `mrapi-control`, PK/SK String, on-demand, TTL `e
 
 Key hiện tại vẫn có KEY# trong control nhưng chưa có quyền theo apiId; sẽ nâng cấp ở phần 5. Usage hiện tại là bộ đếm cũ; chưa chứng minh thống kê proxy. Không cần bảng orders. Nếu orders đã tồn tại, giữ nguyên dữ liệu cho đến khi chốt dọn dẹp. Bảng telemetry/log request sẽ thiết kế ở phần 9.
 
+## Contract key scope và proxy (nhánh feature/gateway-proxy, 17/10/2026)
+
+Code và test local xong, chưa deploy. Giải thích bằng lời thường: [GIAI_THICH_UU_TIEN_2.md](GIAI_THICH_UU_TIEN_2.md).
+
+- **Tạo key:** `POST /api/keys` body `{"name":"App","apiIds":["a…"]}`; 1–20 API, mỗi API phải thuộc tenant của phiên, nếu không trả 400. Item `KEY#` thêm `apiIds`. `GET /api/keys` trả kèm `apiIds`. Không sửa scope; muốn đổi thì tạo key mới. Key cũ không có `apiIds` bị từ chối khi gọi proxy.
+- **Authorizer (REQUEST, identity source `x-api-key`):** sai/thiếu key → 401; key thu hồi → 403 `KEY_REVOKED`; API ngoài scope → 403 `KEY_SCOPE_DENIED`. Allow liệt kê mọi API trong scope; context `{tenant_id, key_id}`. Cache TTL 0 khi test thu hồi.
+- **Proxy `ANY /proxy/{apiId}/{proxy+}`:** đọc API theo `tenant_id` của authorizer; chuyển method, đường dẫn con, query, body; gỡ `x-api-key`, `authorization`, `cookie`, hop-by-hop, header AWS/CloudFront; thêm `x-request-id`. Không theo redirect. Trả nguyên status/header/body của backend với `X-Mrapi-Source: upstream`.
+- **Lỗi gateway:** `{"error","code","requestId"}`, `X-Mrapi-Source: gateway`; mã: 400 `BAD_PATH`, 403 `API_DISABLED`/`TARGET_BLOCKED`, 404 `API_NOT_FOUND`, 413 `PAYLOAD_TOO_LARGE`, 502 `UPSTREAM_UNREACHABLE`/`UPSTREAM_TOO_LARGE`, 504 `UPSTREAM_TIMEOUT`, 500 `GATEWAY_INTERNAL`. Giới hạn body request 1 MB, response 4 MB.
+- **Telemetry:** đúng schema [mrapi-telemetry.md](../infra/dynamodb/ap-southeast-1/mrapi-telemetry.md); `errorType` thêm `BAD_PATH`, `PAYLOAD_TOO_LARGE`, `UPSTREAM_TOO_LARGE`; backend 5xx → `UPSTREAM_5XX`, backend 4xx không có `errorType`. Request bị authorizer từ chối không ghi telemetry (chỉ log `AUTHORIZER_DENY`). Ghi thất bại → log `TELEMETRY_WRITE_FAILED`, response vẫn trả.
+
 ## Điều kiện trước khi proxy được mở
 
 - Resolve DNS và chặn mọi địa chỉ private/link-local/loopback/reserved ở IPv4/IPv6; chống DNS rebinding tại kết nối. Validation URL trong control plane không đủ bảo vệ SSRF.
