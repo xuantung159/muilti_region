@@ -1,5 +1,7 @@
 # docs/evidence
 
-Thư mục dành cho cấu hình, hướng dẫn hoặc bằng chứng thực tế theo docs/GATEWAY_DESIGN.md. Chưa có kết quả triển khai/kiểm thử trong thư mục này. Không lưu secret.
+Lưu kết quả kiểm thử thực tế và ảnh đã che thông tin nhạy cảm theo hướng dẫn trong runbook. Không lưu password, token, API key, MFA secret hoặc dữ liệu secret.
+
+- [API Gateway Singapore smoke test — 2026-10-18](apigateway/singapore-smoke-2026-10-18.md)
 
 
