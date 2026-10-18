@@ -131,7 +131,7 @@ function PortalContent({ token, tab, onExpired }: { token: string; tab: Tab; onE
     {error && <p role="alert" className="text-sm text-critical">{error}</p>}
     {tab === 'apis' && <>
       <Card><h2 className="mb-2 font-semibold">{editing ? 'Chỉnh sửa API đích' : 'Đăng ký API đích'}</h2>
-        <p className="mb-4 text-sm text-ink2">Khai báo backend HTTPS. Chức năng chuyển tiếp request chưa triển khai.</p>
+        <p className="mb-4 text-sm text-ink2">Khai báo backend HTTPS. Proxy đã sẵn sàng; sau khi tạo API key có phạm vi, gửi request tới <code>/proxy/{'{apiId}'}/{'{proxy+}'}</code> bằng ứng dụng khách.</p>
         <form key={editing?.apiId ?? 'new'} className="grid gap-3 sm:grid-cols-2" onSubmit={event => {
           event.preventDefault(); const form = event.currentTarget; const values = new FormData(form);
           void mutate(async () => {
