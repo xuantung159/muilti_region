@@ -39,13 +39,7 @@ export function SettingsPage() {
 
         <Card className="space-y-4">
           <h2 className="text-sm font-semibold text-ink">Nguồn dữ liệu</h2>
-          <label className="flex items-start gap-3 text-sm text-ink">
-            <input type="checkbox" className="mt-0.5 size-4" checked={settings.demoMode} onChange={(e) => update({ demoMode: e.target.checked })} />
-            <span>
-              <span className="font-medium">Chế độ dữ liệu demo</span>
-              <span className="block text-xs text-ink2">Bật: dùng dữ liệu mẫu sinh trong trình duyệt. Tắt: chỉ hiển thị dữ liệu từ backend; nếu chưa cấu hình backend, mọi metric hiện "Not connected".</span>
-            </span>
-          </label>
+          <p className="text-sm text-ink2">Chỉ hiển thị dữ liệu backend thật. Chưa kết nối thì không có số liệu.</p>
 
           <div className="text-xs">
             <div className="font-medium text-ink2">Endpoint backend (biến môi trường VITE_MONITORING_API_URL)</div>

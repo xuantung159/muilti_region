@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { MockProvider } from '../data/providers';
+import { MockProvider } from '../test/fixtures/MockProvider';
 import { renderApp } from '../test/render';
 import { TOKEN_KEY } from '../portal/client';
 
@@ -97,51 +97,81 @@ it('API chưa nối không dùng dữ liệu demo hay coi HTML là đăng nhập
   expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
 });
 
-it('demo tạo key, gửi request, từ chối key thu hồi và không gọi AWS', async () => {
-  const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
-  await user.click(screen.getByRole('button', { name: 'Trải nghiệm demo' }));
-  expect(await screen.findByText('Doanh nghiệp mẫu · Demo')).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'API key' }));
-  await user.type(screen.getByLabelText('Tên ứng dụng'), 'Demo shop');
-  await user.click(await screen.findByRole('checkbox', { name: 'API đơn hàng mẫu' }));
-  await user.click(screen.getByRole('button', { name: 'Tạo key' }));
-  const key = await screen.findByText(/^DEMO_ONLY_demo-key-/);
-  const secret = key.textContent!;
-  await user.click(screen.getByRole('button', { name: 'Thử request demo' }));
-  await user.clear(screen.getByLabelText('API key demo')); await user.type(screen.getByLabelText('API key demo'), secret);
-  await user.click(screen.getByRole('button', { name: 'Gửi request mô phỏng' }));
-  expect(await screen.findByText('HTTP 200 · Kết quả mô phỏng')).toBeInTheDocument();
-  await user.selectOptions(screen.getByLabelText('Tình huống'), 'missing');
-  await user.click(screen.getByRole('button', { name: 'Gửi request mô phỏng' }));
-  expect(await screen.findByText('HTTP 401 · Kết quả mô phỏng')).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'API key' }));
-  vi.spyOn(window, 'confirm').mockReturnValue(true);
-  const row = screen.getByText('Demo shop · Đang dùng').parentElement!.parentElement!;
-  const revoke = row.querySelector('button')!;
-  await user.click(revoke);
-  expect(await screen.findByText('Demo shop · Đã thu hồi')).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Thử request demo' }));
-  await user.clear(screen.getByLabelText('API key demo')); await user.type(screen.getByLabelText('API key demo'), secret);
-  await user.click(screen.getByRole('button', { name: 'Gửi request mô phỏng' }));
-  expect(await screen.findByText('HTTP 403 · Kết quả mô phỏng')).toBeInTheDocument();
-  expect(fetchMock).not.toHaveBeenCalled();
-  expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
-  await user.click(screen.getByRole('button', { name: 'Thoát demo, dùng tài khoản thật' }));
-  expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Trải nghiệm demo' }));
-  await screen.findByText('Doanh nghiệp mẫu · Demo');
-  await user.click(screen.getByRole('button', { name: 'API key' }));
-  expect(screen.queryByText('Demo shop · Đã thu hồi')).not.toBeInTheDocument();
-});
-
 it('hướng dẫn tích hợp đọc được trước đăng nhập và có mẫu cho ba nền tảng', async () => {
   const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
   expect(screen.getByRole('heading', { name: '2. Lấy API key' })).toBeInTheDocument();
-  expect(screen.getByText(/Proxy chuyển tiếp và cấp quyền key theo API chưa triển khai/)).toBeInTheDocument();
+  expect(screen.getByText(/Đăng ký API đích, cấp key có quyền/)).toBeInTheDocument();
   expect(screen.getByText(/const response = await fetch/)).toBeInTheDocument();
   await user.selectOptions(screen.getByLabelText('Ngôn ngữ mẫu'), 'python');
   expect(screen.getByText(/from urllib.request import Request/)).toBeInTheDocument();
   await user.selectOptions(screen.getByLabelText('Ngôn ngữ mẫu'), 'curl');
   expect(screen.getByText(/curl --fail-with-body/)).toBeInTheDocument();
   expect(fetchMock).not.toHaveBeenCalled();
+});
+
+
+it('cấu hình tích hợp dùng API của doanh nghiệp và kiểm tra URL gateway', async () => {
+  sessionStorage.setItem(TOKEN_KEY, token);
+  apis.push({ apiId: 'api-orders', name: 'Orders integration', baseUrl: 'https://backend.company.com', timeoutMs: 5000, enabled: true });
+  apis.push({ apiId: 'api-disabled', name: 'Disabled integration', baseUrl: 'https://backend.company.com', timeoutMs: 5000, enabled: false });
+  const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
+  await screen.findByText(account.orgName);
+  await user.click(screen.getByRole('button', { name: 'Hướng dẫn' }));
+  expect(await screen.findByLabelText('API tích hợp')).toHaveValue('api-orders');
+  expect(screen.queryByRole('option', { name: 'Disabled integration' })).not.toBeInTheDocument();
+  const gateway = screen.getByLabelText('URL gateway đã triển khai');
+  await user.type(gateway, 'https://gateway.company.com/demo/');
+  expect(screen.getByText(/MRAPI_GATEWAY_URL=https:\/\/gateway.company.com\/demo/)).toHaveTextContent('MRAPI_API_ID=api-orders');
+  await user.clear(gateway);
+  await user.type(gateway, 'http://gateway.company.com');
+  expect(screen.getByRole('alert')).toHaveTextContent('Nhập URL HTTPS');
+  expect(screen.getByText(/MRAPI_GATEWAY_URL=https:\/\/YOUR_GATEWAY_HOST/)).toBeInTheDocument();
+});
+
+
+it('request thật dùng gateway riêng, không gửi Bearer token và hiển thị lỗi CORS trung thực', async () => {
+  sessionStorage.setItem(TOKEN_KEY, token);
+  apis.push({ apiId: 'api-live', name: 'Live API', baseUrl: 'https://backend.company.com', timeoutMs: 5000, enabled: true });
+  const liveFetch = vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.startsWith('https://gateway.company.com/')) {
+      expect(init?.headers).toEqual({ 'x-api-key': 'mrk_live_test' });
+      return new Response('{"orders":[]}', { status: 200, headers: { 'x-served-region': 'ap-southeast-1' } });
+    }
+    return fetchMock(url, init);
+  });
+  vi.stubGlobal('fetch', liveFetch);
+  const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
+  await screen.findByText(account.orgName);
+  await user.click(screen.getByRole('button', { name: 'Tích hợp project' }));
+  await user.type(await screen.findByLabelText('Gateway URL'), 'https://gateway.company.com/demo');
+  await user.type(screen.getByLabelText('API key tích hợp'), 'mrk_live_test');
+  await user.click(screen.getByRole('button', { name: 'Gửi GET tới gateway' }));
+  expect(await screen.findByText(/HTTP 200 ·/)).toBeInTheDocument();
+  expect(screen.getByText(/Region: ap-southeast-1/)).toBeInTheDocument();
+  liveFetch.mockImplementationOnce(async () => { throw new TypeError('Failed to fetch'); });
+  await user.click(screen.getByRole('button', { name: 'Gửi GET tới gateway' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Không thể xác định HTTP status');
+  expect(screen.queryByText(/HTTP 200 ·/)).not.toBeInTheDocument();
+});
+
+
+it('chuyển key thật vừa tạo sang cấu hình, sao chép env rồi xóa khi rời bước', async () => {
+  sessionStorage.setItem(TOKEN_KEY, token);
+  apis.push({ apiId: 'api-1', name: 'Orders', baseUrl: 'https://backend.company.com', timeoutMs: 5000, enabled: true });
+  const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
+  await screen.findByText(account.orgName);
+  expect(screen.queryByRole('button', { name: 'Trải nghiệm demo' })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'API key' }));
+  await user.type(screen.getByLabelText('Tên ứng dụng'), 'Go client');
+  await user.click(await screen.findByRole('checkbox', { name: 'Orders' }));
+  await user.click(screen.getByRole('button', { name: 'Tạo key' }));
+  await screen.findByText('mrk_secret_once');
+  await user.click(screen.getByRole('button', { name: 'Dùng key này để tích hợp' }));
+  expect(await screen.findByLabelText('API key tích hợp')).toHaveValue('mrk_secret_once');
+  await user.type(screen.getByLabelText('Gateway URL'), 'https://gateway.company.com/demo');
+  await user.click(screen.getByRole('button', { name: 'Sao chép .env có key' }));
+  expect(await navigator.clipboard.readText()).toContain('MRAPI_API_KEY=mrk_secret_once');
+  await user.click(screen.getByRole('button', { name: 'Tổng quan' }));
+  await user.click(screen.getByRole('button', { name: 'Tích hợp project' }));
+  expect(await screen.findByLabelText('API key tích hợp')).toHaveValue('');
 });
