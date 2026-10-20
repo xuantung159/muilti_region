@@ -2,7 +2,8 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { MonitoringProvider } from '../data/provider';
-import { MockProvider, NotConnectedProvider } from '../data/providers';
+import { MockProvider } from '../test/fixtures/MockProvider';
+import { NotConnectedProvider } from '../data/providers';
 import { renderApp } from '../test/render';
 
 const mock = () => new MockProvider(0, () => Date.UTC(2026, 9, 13, 5, 7, 30));
@@ -123,4 +124,13 @@ describe('Data Sources', () => {
     expect(screen.getByText(/0 trên 6/)).toBeInTheDocument();
     expect(screen.queryByText('Connected')).not.toBeInTheDocument();
   });
+});
+
+
+it('bỏ qua cấu hình demo cũ và không còn công tắc dữ liệu mẫu', async () => {
+  localStorage.setItem('monitoring-web.settings', JSON.stringify({ demoMode: true }));
+  renderApp(new NotConnectedProvider(), '/settings');
+  expect(await screen.findByText('Chỉ hiển thị dữ liệu backend thật. Chưa kết nối thì không có số liệu.')).toBeInTheDocument();
+  expect(screen.queryByRole('checkbox', { name: /demo/ })).not.toBeInTheDocument();
+  expect(JSON.parse(localStorage.getItem('monitoring-web.settings')!).demoMode).toBeUndefined();
 });

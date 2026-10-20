@@ -105,7 +105,7 @@ export function Layout() {
         )}
         {!portal && provider.id === 'none' && (
           <div className="border-b border-line bg-raised px-4 py-2 text-xs text-ink2">
-            <strong className="font-semibold text-ink">NOT CONNECTED.</strong> Chế độ demo đang tắt và chưa cấu hình backend (<code>VITE_MONITORING_API_URL</code>), nên không có số liệu nào để hiển thị.
+            <strong className="font-semibold text-ink">NOT CONNECTED.</strong> Chưa cấu hình backend (<code>VITE_MONITORING_API_URL</code>), nên không có số liệu nào để hiển thị.
           </div>
         )}
 

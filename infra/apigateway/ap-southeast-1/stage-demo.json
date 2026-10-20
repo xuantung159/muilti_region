@@ -1,0 +1,45 @@
+{
+  "restApi": {
+    "id": "43vakggyh5",
+    "name": "mrapi-api-sg",
+    "createdDate": "2026-10-16T10:24:57+00:00",
+    "apiKeySource": "HEADER",
+    "endpointConfiguration": {
+      "types": ["REGIONAL"],
+      "ipAddressType": "ipv4"
+    },
+    "disableExecuteApiEndpoint": false,
+    "rootResourceId": "z4gt2uyobh",
+    "securityPolicy": "SecurityPolicy_TLS13_1_2_2021_06",
+    "endpointAccessMode": "STRICT"
+  },
+  "stage": {
+    "stageName": "demo",
+    "deploymentId": "pcnum7",
+    "cacheClusterEnabled": false,
+    "methodSettings": {
+      "*/*": {
+        "metricsEnabled": true,
+        "loggingLevel": "INFO",
+        "dataTraceEnabled": false,
+        "throttlingBurstLimit": 5000,
+        "throttlingRateLimit": 10000.0,
+        "cachingEnabled": false
+      }
+    },
+    "accessLogSettings": {
+      "format": "{\"requestId\":\"$context.requestId\",\"extendedRequestId\":\"$context.extendedRequestId\",\"httpMethod\":\"$context.httpMethod\",\"resourcePath\":\"$context.resourcePath\",\"status\":\"$context.status\",\"responseLatency\":\"$context.responseLatency\",\"integrationLatency\":\"$context.integrationLatency\",\"responseLength\":\"$context.responseLength\"}",
+      "destinationArn": "arn:aws:logs:ap-southeast-1:138150704839:log-group:/mrapi/apigateway/sg/demo"
+    },
+    "tracingEnabled": false,
+    "createdDate": "2026-10-16T10:29:22+00:00",
+    "lastUpdatedDate": "2026-10-19T15:06:58+00:00"
+  },
+  "account": {
+    "cloudwatchRoleArn": "arn:aws:iam::138150704839:role/mrapi-apigateway-cloudwatch-role",
+    "throttleSettings": {
+      "burstLimit": 5000,
+      "rateLimit": 10000.0
+    }
+  }
+}

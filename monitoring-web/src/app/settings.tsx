@@ -10,7 +10,6 @@ export interface Settings {
   range: RangeKey;
   defaultRegion: RegionView;
   refreshSec: (typeof REFRESH_OPTIONS)[number];
-  demoMode: boolean;
   theme: ThemeSetting;
 }
 
@@ -19,14 +18,12 @@ const STORAGE_KEY = 'monitoring-web.settings';
 // Cấu hình lúc build. Chỉ chứa URL công khai, không bao giờ chứa thông tin xác thực.
 export const ENV = {
   backendUrl: (import.meta.env.VITE_MONITORING_API_URL ?? '').trim(),
-  defaultDemoMode: (import.meta.env.VITE_DEFAULT_DATA_MODE ?? 'mock') !== 'live',
 };
 
 export const DEFAULT_SETTINGS: Settings = {
   range: '6h',
   defaultRegion: 'compare',
   refreshSec: 30,
-  demoMode: ENV.defaultDemoMode,
   theme: 'system',
 };
 
@@ -38,7 +35,6 @@ function load(): Settings {
       range: RANGE_KEYS.includes(raw.range as RangeKey) ? (raw.range as RangeKey) : DEFAULT_SETTINGS.range,
       defaultRegion: regionViews.includes(raw.defaultRegion as RegionView) ? (raw.defaultRegion as RegionView) : DEFAULT_SETTINGS.defaultRegion,
       refreshSec: REFRESH_OPTIONS.includes(raw.refreshSec as 0) ? (raw.refreshSec as Settings['refreshSec']) : DEFAULT_SETTINGS.refreshSec,
-      demoMode: typeof raw.demoMode === 'boolean' ? raw.demoMode : DEFAULT_SETTINGS.demoMode,
       theme: raw.theme === 'light' || raw.theme === 'dark' ? raw.theme : 'system',
     };
   } catch {
