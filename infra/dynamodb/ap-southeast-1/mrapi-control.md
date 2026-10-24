@@ -15,7 +15,8 @@
 | Capacity mode | On-demand | Ảnh Console 15/10 |
 | Table status | Active | Ảnh Console 15/10 |
 | PITR | Off | Ảnh Console 15/10 |
-| Replica / Global Tables | 0 (chưa có Tokyo) | Ảnh Console 15/10 |
+| Replica / Global Tables | Replica Tokyo `ap-northeast-1`, ACTIVE, phiên bản 2019.11.21, Eventual consistency (trước 23/10: 0 replica) | `describe-table` ở Tokyo, 23/10/2026 |
+| Streams | Bật, `NEW_AND_OLD_IMAGES` | `describe-table` ở Tokyo, 23/10/2026 |
 | TTL | Thuộc tính `expiresAt` (theo thiết kế và code) | A báo TTL đã bật; tên thuộc tính cần đối chiếu |
 | Tag | `Project=mrapi` | A báo đã có tag; giá trị cần đối chiếu |
 

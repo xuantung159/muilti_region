@@ -2,7 +2,7 @@
 
 - Người thực hiện: A
 - Lần đối chiếu Console: ảnh Console 16/10/2026 (form tạo bảng, trang bảng, tab Indexes); các mục còn lại do A xác nhận bằng lời, cần đối chiếu bằng lệnh ở README
-- Trạng thái: Đã cấu hình. Chưa test ghi/đọc/query/TTL (NOT TESTED)
+- Trạng thái: Đã cấu hình. Test ghi/query/GSI1/tách tenant/`expiresAt`: PASS ngày 23/10/2026 (TTL xóa thật chưa kiểm tra được ngay). Replica Tokyo Active
 - ARN: `arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-telemetry`
 - Tag: `Project=mrapi`, `Owner=A`
 
@@ -16,7 +16,9 @@
 | Index `GSI1` | PK `GSI1PK` (String), SK `GSI1SK` (String), projection All | A báo Active |
 | TTL | Thuộc tính `expiresAt` (epoch giây) | A báo đã bật |
 | Tag | `Project=mrapi`, `Owner=A` | A báo đã thêm; cần đối chiếu |
-| Replica / Global Tables | Chưa có (Tokyo làm sau nghiệm thu Singapore) | Theo kế hoạch |
+| Replica / Global Tables | Replica Tokyo `ap-northeast-1`, ACTIVE, Global Tables phiên bản 2019.11.21, Eventual consistency (last-writer-wins) | `describe-table` ở Tokyo, 23/10/2026 |
+| Streams | Bật, `NEW_AND_OLD_IMAGES` (bắt buộc cho Global Tables 2019.11.21) | `describe-table` ở Tokyo, 23/10/2026 |
+| PITR (Singapore) | Bật, giữ 35 ngày (cần cho Export to S3) | Output `update-continuous-backups`, 23/10/2026 |
 
 ## Thiết kế dữ liệu (đề xuất của A, CHƯA được L/B xác nhận)
 
@@ -80,11 +82,13 @@ Quy tắc ghi: không ghi API key hay hash của key (chỉ `keyId`), không ghi
 
 ## Kiểm thử và bằng chứng
 
-- Thao tác cần chạy: ghi item mẫu của hai tenant (có và không có `GSI1PK`), query theo tenant và khoảng thời gian, query `GSI1`, kiểm tra tenant A không đọc được dữ liệu tenant B, kiểm tra `expiresAt` là epoch giây
+- Thao tác đã chạy: `npm run test:telemetry --prefix src` (CloudShell Singapore, 23/10/2026): ghi 4 item cho 2 tenant thử (có và không có `GSI1PK`), query theo tenant và khoảng thời gian, query `GSI1`, kiểm tra tenant B không thấy dữ liệu tenant A, kiểm tra `expiresAt` là epoch giây
 - Mong đợi: query chỉ trả đúng tenant; `GSI1` chỉ chứa request lỗi
-- Thực tế: NOT TESTED
-- Bằng chứng: chưa có (đặt tại docs/evidence/dynamodb/)
-- Hạn chế: TTL xóa không tức thời, code đọc vẫn phải lọc theo thời gian; Tokyo chưa làm
+- Thực tế: PASS cả 5 kiểm tra. Test này dùng credentials của thành viên, không dùng role Lambda, nên chưa chứng minh quyền của role proxy
+- Replication Singapore ↔ Tokyo (R2): xem [../ap-northeast-1/mrapi-telemetry.md](../ap-northeast-1/mrapi-telemetry.md)
+- Export sang S3 (R6): 30 item, trạng thái COMPLETED, xem [../../s3/README.md](../../s3/README.md)
+- Bằng chứng: `docs/evidence/dynamodb/replication-latency-2026-10-23.json`; ảnh output CloudShell của test cần bổ sung vào `docs/evidence/dynamodb/`
+- Hạn chế: TTL xóa không tức thời, code đọc vẫn phải lọc theo thời gian; chưa test TTL xóa thật
 
 ## Bàn giao
 
