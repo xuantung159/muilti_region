@@ -1,37 +1,47 @@
-# mrapi-proxy — Singapore (CHƯA DEPLOY)
+# mrapi-proxy — Singapore (ap-southeast-1)
 
-Trạng thái 17/10/2026: code và test local đã xong trên nhánh `feature/gateway-proxy`; **chưa tạo function trên AWS**. Các giá trị dưới đây là cấu hình cần đặt, không phải cấu hình đã quan sát. Sau khi tạo, sửa file này theo Console thực tế.
+## Trạng thái và nguồn ghi nhận
 
-## Cấu hình cần đặt
+- Người thực hiện: B
+- Trạng thái AWS: ACTIVE
+- Cập nhật hồ sơ: 25/10/2026.
+- Source: src/api/index.mjs, src/api/proxy.mjs, src/api/target.mjs, src/shared/lib.mjs.
+- Bản ghi cũ ghi ngày 17/10/2026.
 
-| Thuộc tính | Giá trị | Ghi chú |
-|---|---|---|
-| Tên | `mrapi-proxy` | Khớp log group trong `mrapi-proxy-role` |
-| Gói | `artifacts/lambda/api.zip` | `npm run package --prefix src` |
-| Handler | `api/index.handler` | Một hàm phục vụ cả `/health` và `/proxy/...` |
-| Runtime / kiến trúc | Node.js 24.x / arm64 | Giống `mrapi-dashboard` |
-| Role | `mrapi-proxy-role` | Có sẵn, boundary `mrapi-workload-boundary` |
-| Memory | 256 MB | |
-| Timeout | 15 giây | Lớn hơn timeout tối đa của API đích (10 giây) cộng thời gian ghi telemetry |
-| VPC | Không | Cần ra Internet để gọi backend doanh nghiệp |
-| `CONTROL_TABLE` | `mrapi-control` | |
-| `TELEMETRY_TABLE` | `mrapi-telemetry` | |
-| `TELEMETRY_RETENTION_DAYS` | `30` (mặc định nếu bỏ trống) | Số ngày trước khi TTL xóa dòng telemetry |
-| `HEALTH_FORCE_FAIL` | không đặt | Chỉ đặt `true` khi test failover |
+## Cấu hình source/thiết kế cần đối chiếu
 
-## Test trên Console trước khi nối API Gateway
+| Thuộc tính                   | Giá trị tham chiếu                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Function name                | mrapi-proxy (phân công B)                                                                               |
+| Function ARN                 | arn:aws:lambda:ap-southeast-1::runtime:b7778d7d9d048df4a9bce496d1cc9424fe9844534468d732394872ce927254bc |
+| Package                      | artifacts/lambda/api.zip; script chuẩn npm run package --prefix src                                     |
+| Handler                      | api/index.handler                                                                                       |
+| Runtime / architecture       | Node.js 24.x / arm64 theo phân công mới                                                                 |
+| Execution role               | mrapi-proxy-role theo thiết kế; ARN thật phải xác nhận ở Lambda/IAM                                     |
+| Memory / timeout             | 256 MB / 15 giây theo runbook proxy                                                                     |
+| VPC / layers                 | Không gắn VPC theo runbook vì proxy gọi backend HTTPS công khai; layer cần ghi nếu có                   |
+| Version / alias / CodeSha256 | Ghi phiên bản/alias mà API Gateway invoke và CodeSha256 trước/sau deploy                                |
+| Log group                    | /aws/lambda/mrapi-proxy                                                                                 |
+| X-Ray Active tracing         | Đã bật                                                                                                  |
 
-Tab Test, event (giả lập request đã qua authorizer, API không tồn tại):
+## Environment variables
 
-```json
-{"httpMethod":"GET","path":"/proxy/a00000000000000000000000000000000/x","headers":{},
- "requestContext":{"requestId":"console-test-1","authorizer":{"tenant_id":"t0000000000","key_id":"000000000000"}}}
-```
+| Tên                      | Giá trị                                            | Source sử dụng                                                   |
+| ------------------------ | -------------------------------------------------- | ---------------------------------------------------------------- |
+| CONTROL_TABLE            | mrapi-control theo config/demo/ap-southeast-1.json | Có; health GetItem và đọc cấu hình API                           |
+| TELEMETRY_TABLE          | mrapi-telemetry theo config                        | Có; ghi một record telemetry mỗi request proxy                   |
+| PROJECT                  | mrapi theo phân công B                             | Hiện source proxy không đọc biến này; giữ theo yêu cầu phân công |
+| TELEMETRY_RETENTION_DAYS | source mặc định 30                                 | Có; dùng tính expiresAt                                          |
+| HEALTH_FORCE_FAIL        | unset hoặc false trong trạng thái bình thường      | Có; true làm GET /health trả 503, chỉ bật theo lịch test với L   |
 
-Mong đợi: statusCode 404, body có `"code":"API_NOT_FOUND"`, header `X-Mrapi-Source: gateway`; bảng `mrapi-telemetry` có dòng `PK = TENANT#t0000000000`, `requestId = console-test-1`. Event không có `requestContext.authorizer` phải trả 500 và không gọi backend.
+## Quyền và dependency
 
-Event `{"httpMethod":"GET","path":"/health"}` phải trả 200 `status: ok`.
+- Source cần DynamoDB GetItem trên bảng control; proxy đọc API record theo tenant/API.
+- Source cần DynamoDB PutItem trên bảng telemetry; lỗi ghi telemetry được log và không nhất thiết làm hỏng response upstream.
+- Cần quyền CloudWatch Logs CreateLogGroup/CreateLogStream/PutLogEvents theo log group thực tế.
+- Role JSON trong infra/iam/roles/mrapi-proxy-role/permission.json là cấu hình repo theo ap-southeast-1.
+- Function name trong config hiện là functions.api=mrapi-api, còn phân công/runbook nhắc mrapi-proxy. C/L phải xác nhận function/alias integration trước khi đổi tên hoặc tạo trùng.
 
-## Bàn giao cho C (API Gateway)
+## Bàn giao
 
-Xem mục "Nối vào API Gateway" trong [mrapi-authorizer.md](mrapi-authorizer.md). Sau khi deploy, ghi function ARN, SHA-256 gói, ngày giờ và kết quả test vào file này.
+Bàn giao ARN, Region, handler, role, env không secret, artifact/hash/commit, test/log evidence cho C và reviewer A. C xác nhận API Gateway target; L xác nhận IAM; A xác nhận table dependency. Không ghi secret hoặc key vào repository.
