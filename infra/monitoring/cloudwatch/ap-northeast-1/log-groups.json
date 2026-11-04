@@ -1,0 +1,26 @@
+[
+  {
+    "logGroupName": "/aws/lambda/mrapi-authorizer",
+    "retentionInDays": 14
+  },
+  {
+    "logGroupName": "/aws/lambda/mrapi-dashboard",
+    "retentionInDays": 14
+  },
+  {
+    "logGroupName": "/aws/lambda/mrapi-monitoring",
+    "retentionInDays": 14
+  },
+  {
+    "logGroupName": "/aws/lambda/mrapi-proxy",
+    "retentionInDays": 14
+  },
+  {
+    "logGroupName": "/mrapi/apigateway/tyo/demo",
+    "retentionInDays": 14
+  },
+  {
+    "logGroupName": "API-Gateway-Execution-Logs_n39r5pits8/demo",
+    "retentionInDays": 14
+  }
+]

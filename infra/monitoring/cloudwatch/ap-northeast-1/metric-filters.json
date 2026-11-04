@@ -1,0 +1,17 @@
+[
+  {
+    "filterName": "mrapi-telemetry-write-failed",
+    "filterPattern": "{ $.event = \"TELEMETRY_WRITE_FAILED\" }",
+    "metricTransformations": [
+      {
+        "metricName": "TelemetryWriteFailed",
+        "metricNamespace": "MRAPI",
+        "metricValue": "1",
+        "defaultValue": 0.0
+      }
+    ],
+    "creationTime": 1793494990297,
+    "logGroupName": "/aws/lambda/mrapi-proxy",
+    "applyOnTransformedLogs": false
+  }
+]
