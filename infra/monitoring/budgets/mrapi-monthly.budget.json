@@ -2,18 +2,6 @@
   "BudgetName": "mrapi-monthly",
   "BudgetType": "COST",
   "TimeUnit": "MONTHLY",
-  "BudgetLimit": { "Amount": "40", "Unit": "USD" },
-  "CostTypes": {
-    "IncludeTax": true,
-    "IncludeSubscription": true,
-    "UseBlended": false,
-    "IncludeRefund": false,
-    "IncludeCredit": false,
-    "IncludeUpfront": true,
-    "IncludeRecurring": true,
-    "IncludeOtherSubscription": true,
-    "IncludeSupport": true,
-    "IncludeDiscount": true,
-    "UseAmortized": false
-  }
+  "BudgetLimit": { "Amount": "10.0", "Unit": "USD" },
+  "Metrics": ["UnblendedCost"]
 }
