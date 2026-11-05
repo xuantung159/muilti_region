@@ -1,0 +1,5 @@
+{
+  "CONTROL_TABLE": "mrapi-control",
+  "Project": "mrapi",
+  "TELEMETRY_TABLE": "mrapi-telemetry"
+}

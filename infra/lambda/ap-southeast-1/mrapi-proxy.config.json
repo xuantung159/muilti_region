@@ -1,0 +1,37 @@
+{
+  "FunctionName": "mrapi-proxy",
+  "FunctionArn": "arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-proxy",
+  "Runtime": "nodejs24.x",
+  "Role": "arn:aws:iam::138150704839:role/mrapi-proxy-role",
+  "Handler": "api/index.handler",
+  "CodeSize": 3890590,
+  "Description": "",
+  "Timeout": 15,
+  "MemorySize": 256,
+  "CodeSha256": "Ot7hINFMLTRDaFPXDvOFw+lXiH1lHHQK6kERyUu/HIA=",
+  "Version": "$LATEST",
+  "TracingConfig": {
+    "Mode": "Active"
+  },
+  "PackageType": "Zip",
+  "Architectures": [
+    "arm64"
+  ],
+  "EphemeralStorage": {
+    "Size": 512
+  },
+  "SnapStart": {
+    "ApplyOn": "None",
+    "OptimizationStatus": "Off"
+  },
+  "LoggingConfig": {
+    "LogFormat": "Text",
+    "LogGroup": "/aws/lambda/mrapi-proxy"
+  },
+  "EnvironmentVariableNames": [
+    "CONTROL_TABLE",
+    "PROJECT",
+    "TELEMETRY_RETENTION_DAYS",
+    "TELEMETRY_TABLE"
+  ]
+}
