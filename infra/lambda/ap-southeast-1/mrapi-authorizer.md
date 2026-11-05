@@ -1,45 +1,53 @@
-# mrapi-authorizer — Singapore (ap-southeast-1)
+# mrapi-authorizer
 
-## Trạng thái và nguồn ghi nhận
+## Chức năng
 
-- Người thực hiện: B
-- Trạng thái AWS: ACTIVE
-- Cập nhật hồ sơ: 25/10/2026.
-- Source: src/authorizer/index.mjs và src/shared/lib.mjs.
-- Bản ghi cũ ngày 17/10/2026.
+Xác thực API key và kiểm tra quyền gọi từng API.
 
-## Cấu hình source/thiết kế cần đối chiếu
+## Ứng dụng trong project
 
-| Thuộc tính                   | Giá trị tham chiếu                                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Function name                | mrapi-authorizer                                                                                        |
-| Function ARN                 | arn:aws:lambda:ap-southeast-1::runtime:b7778d7d9d048df4a9bce496d1cc9424fe9844534468d732394872ce927254bc |
-| Package                      | artifacts/lambda/authorizer.zip; npm run package --prefix src                                           |
-| Handler                      | authorizer/index.handler                                                                                |
-| Runtime / architecture       | Node.js 24.x / arm64 theo phân công mới                                                                 |
-| Execution role               | mrapi-authorizer-role theo thiết kế                                                                     |
-| Memory / timeout             | 128–256 MB / 5 giây theo runbook                                                                        |
-| VPC / layers                 | Đối chiếu live; source không yêu cầu VPC                                                                |
-| Version / alias / CodeSha256 | Ghi caller/API Gateway đang invoke                                                                      |
-| Log group                    | /aws/lambda/mrapi-authorizer dự kiến                                                                    |
-| X-Ray Active tracing         | đã bật                                                                                                  |
+Đứng trước route proxy, đọc trạng thái key và danh sách API được phép gọi; từ chối key sai, bị thu hồi hoặc ngoài scope trước khi proxy chạy.
 
-## Environment variables
+## Ý nghĩa các file cấu hình
 
-| Tên             | Giá trị                                            |
-| --------------- | -------------------------------------------------- |
-| CONTROL_TABLE   | mrapi-control theo config/demo/ap-southeast-1.json |
-| TELEMETRY_TABLE | mrapi-telemetry theo phân công B                   |
-| PROJECT         | mrapi theo phân công B                             |
+| File | Mục đích |
+|---|---|
+| `mrapi-authorizer.config.json` | Thông số chạy của hàm: handler, runtime, role, tài nguyên, tracing và tên env. |
+| `mrapi-authorizer.resource-policy.json` | Quyền API Gateway hoặc EventBridge gọi hàm; giới hạn bằng service principal và SourceArn. |
+| `mrapi-authorizer.tags.json` | Tag quản lý tài nguyên. Không chứa secret hay mã nguồn. |
 
-## Quyền và dependency
+## Cấu hình và chi tiết
 
-- Source hiện gọi DynamoDB GetItem trên control table, key PK=TENANT#<tenantId>, SK=KEY#<keyId>, ConsistentRead=true.
-- Source không ghi telemetry; các lần từ chối ghi sự kiện AUTHORIZER_DENY vào CloudWatch Logs nhưng không ghi API key hoặc hash.
-- Role JSON trong infra/iam/roles/mrapi-authorizer-role/permission.json là cấu hình repo tham chiếu ap-southeast-1; chưa chứng minh role/policy được gắn trên AWS.
-- Cần CloudWatch Logs CreateLogGroup/CreateLogStream/PutLogEvents theo log group thực tế. L xác nhận role, trust, boundary và policy.
-- API Gateway authorizer, invoke permission, route/cache/stage do C quản lý. Cần xác nhận API target thực tế do config/demo dùng mrapi-api, còn phân công đề cập mrapi-proxy.
+Kiểm tra API key và phạm vi API được gọi. Chạy ở Singapore và Tokyo.
 
-## Bàn giao
+| Mục | Giá trị |
+|---|---|
+| Gói | `artifacts/lambda/authorizer.zip` |
+| Handler | `authorizer/index.handler` |
+| Runtime / kiến trúc | Node.js 24.x / arm64 |
+| Role | `mrapi-authorizer-role` |
+| Memory / timeout | 128 MB / 5 giây |
+| Env | `CONTROL_TABLE=mrapi-control`, `TELEMETRY_TABLE=mrapi-telemetry`, `PROJECT` |
 
-Bàn giao ARN, Region, handler, role, cấu hình env không secret, ZIP/hash/commit, kết quả test/log cho C và reviewer A. C xác nhận authorizer REQUEST, identity source x-api-key, cache, routes và invoke permission; L xác nhận IAM.
+## Kết quả xác thực
+
+| Trường hợp | Client nhận |
+|---|---|
+| Thiếu key, sai định dạng, không tồn tại hoặc sai secret | 401 |
+| Key đã thu hồi | 403, lý do log `KEY_REVOKED` |
+| API ngoài scope, khác tenant hoặc key cũ chưa có scope | 403, lý do log `KEY_SCOPE_DENIED` |
+| Key hợp lệ | Chuyển tới proxy với `tenant_id`, `key_id` |
+
+Policy Allow chỉ áp dụng `/*/proxy/<apiId>` và `/*/proxy/<apiId>/*` cho các API trong scope. Log từ chối dùng `AUTHORIZER_DENY`, không ghi secret. Authorizer không ghi telemetry.
+
+## Nối API Gateway
+
+- REQUEST authorizer, identity source header `x-api-key`, cache TTL 0.
+- Gắn vào ANY `/proxy/{apiId}` và `/proxy/{apiId}/{proxy+}`; integration là `mrapi-proxy`.
+- `GET /health` không gắn authorizer.
+- Nếu cần trả file nhị phân, kiểm tra Binary media types `*/*`; proxy trả base64.
+- Deploy stage `demo`, rồi chạy `npm run test:e2e:proxy --prefix src`. Script tạo dữ liệu thật.
+
+Nếu bật cache, key thu hồi có thể tiếp tục dùng tới hết TTL. Template ACCESS_DENIED dùng `$context.authorizer.reason` chưa được kiểm chứng; lý do 403 vẫn xem được trong log.
+
+Thiếu/sai key đã trả 401 ở hai Region. Luồng key thật, scope và thu hồi xuyên Region còn cần nghiệm thu. Hash gói ở [README Lambda](../README.md).

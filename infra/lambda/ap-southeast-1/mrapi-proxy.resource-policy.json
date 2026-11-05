@@ -1,0 +1,48 @@
+{
+  "Version": "2012-10-17",
+  "Id": "default",
+  "Statement": [
+    {
+      "Sid": "c38e05c0-0e91-5895-9c3c-28ffa277f2b6",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "lambda:InvokeFunction",
+      "Resource": "arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-proxy",
+      "Condition": {
+        "ArnLike": {
+          "AWS:SourceArn": "arn:aws:execute-api:ap-southeast-1:138150704839:43vakggyh5/*/GET/health"
+        }
+      }
+    },
+    {
+      "Sid": "4e9a6b52-ead2-5689-bcbd-d3febafa39e5",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "lambda:InvokeFunction",
+      "Resource": "arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-proxy",
+      "Condition": {
+        "ArnLike": {
+          "AWS:SourceArn": "arn:aws:execute-api:ap-southeast-1:138150704839:43vakggyh5/*/*/proxy/*/*"
+        }
+      }
+    },
+    {
+      "Sid": "8677399e-3ec2-559f-94cf-20f3e4420096",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "lambda:InvokeFunction",
+      "Resource": "arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-proxy",
+      "Condition": {
+        "ArnLike": {
+          "AWS:SourceArn": "arn:aws:execute-api:ap-southeast-1:138150704839:43vakggyh5/*/*/proxy/*"
+        }
+      }
+    }
+  ]
+}

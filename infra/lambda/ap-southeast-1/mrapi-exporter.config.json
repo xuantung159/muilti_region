@@ -1,0 +1,36 @@
+{
+  "FunctionName": "mrapi-exporter",
+  "FunctionArn": "arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-exporter",
+  "Runtime": "nodejs24.x",
+  "Role": "arn:aws:iam::138150704839:role/mrapi-exporter-role",
+  "Handler": "exporter/index.handler",
+  "CodeSize": 3823382,
+  "Description": "Daily DynamoDB export of mrapi-telemetry to S3",
+  "Timeout": 15,
+  "MemorySize": 128,
+  "CodeSha256": "nHiw0jHpmulkE5b1gRCylVEURktHco3hyEh9ob66Bug=",
+  "Version": "$LATEST",
+  "TracingConfig": {
+    "Mode": "Active"
+  },
+  "PackageType": "Zip",
+  "Architectures": [
+    "arm64"
+  ],
+  "EphemeralStorage": {
+    "Size": 512
+  },
+  "SnapStart": {
+    "ApplyOn": "None",
+    "OptimizationStatus": "Off"
+  },
+  "LoggingConfig": {
+    "LogFormat": "Text",
+    "LogGroup": "/aws/lambda/mrapi-exporter"
+  },
+  "EnvironmentVariableNames": [
+    "EXPORT_BUCKET",
+    "EXPORT_PREFIX",
+    "TABLE_ARN"
+  ]
+}
