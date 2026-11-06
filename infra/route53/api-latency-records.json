@@ -1,0 +1,30 @@
+{
+  "source": "Observed AWS Route 53 Console after creation, 2026-10-27",
+  "hostedZoneId": "Z03093462BF2L4GV4FGRD",
+  "ResourceRecordSets": [
+    {
+      "Name": "api.multi-region.io.vn.",
+      "Type": "A",
+      "SetIdentifier": "mrapi-sg",
+      "Region": "ap-southeast-1",
+      "HealthCheckId": "c7764d38-b17d-44df-8d44-4f2791296adc",
+      "AliasTarget": {
+        "DNSName": "d-zd1hv50jn0.execute-api.ap-southeast-1.amazonaws.com",
+        "HostedZoneId": "ZL327KTPIQFUL",
+        "EvaluateTargetHealth": false
+      }
+    },
+    {
+      "Name": "api.multi-region.io.vn.",
+      "Type": "A",
+      "SetIdentifier": "mrapi-tokyo",
+      "Region": "ap-northeast-1",
+      "HealthCheckId": "bfa2df95-4abf-40d2-a240-dbd04acf735c",
+      "AliasTarget": {
+        "DNSName": "d-csqvriesoh.execute-api.ap-northeast-1.amazonaws.com",
+        "HostedZoneId": "Z1YSHQZHG15GKL",
+        "EvaluateTargetHealth": false
+      }
+    }
+  ]
+}
