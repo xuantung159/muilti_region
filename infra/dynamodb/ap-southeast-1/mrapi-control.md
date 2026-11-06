@@ -1,52 +1,57 @@
-# mrapi-control — ap-southeast-1 (Singapore)
+# mrapi-control
 
-- Người thực hiện: L tạo bảng; A tiếp nhận và ghi nhận cấu hình
-- Lần đối chiếu Console: 15/10/2026 qua ảnh Console (PK/SK, capacity, ARN, PITR, replica). TTL/tag A báo đã kiểm tra, chưa chép giá trị — đối chiếu lại bằng lệnh ở README
-- Trạng thái: Đã cấu hình. Chưa test đọc/ghi từ Lambda thật (NOT TESTED)
-- ARN: `arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-control`
-- Tag: `Project=mrapi`; giá trị `Owner` điền theo Console (chưa chép)
+## Chức năng
 
-## Cấu hình đang áp dụng
+Lưu dữ liệu quản lý tài khoản và cấu hình gateway.
 
-| Thuộc tính | Giá trị | Xác nhận |
-|---|---|---|
-| Partition key | `PK` (String) | Ảnh Console 15/10 |
-| Sort key | `SK` (String) | Ảnh Console 15/10 |
-| Capacity mode | On-demand | Ảnh Console 15/10 |
-| Table status | Active | Ảnh Console 15/10 |
-| PITR | Off | Ảnh Console 15/10 |
-| Replica / Global Tables | 0 (chưa có Tokyo) | Ảnh Console 15/10 |
-| TTL | Thuộc tính `expiresAt` (theo thiết kế và code) | A báo TTL đã bật; tên thuộc tính cần đối chiếu |
-| Tag | `Project=mrapi` | A báo đã có tag; giá trị cần đối chiếu |
+## Ứng dụng trong project
 
-## Loại item đang dùng trong code (xem GATEWAY_DESIGN.md và src/)
+Dashboard quản lý tài khoản, phiên, API đích và key trong bảng này. Authorizer đọc key/scope, proxy đọc cấu hình backend; dữ liệu được sao chép sang Tokyo.
+
+## Ý nghĩa các file cấu hình
+
+| File | Mục đích |
+|---|---|
+| `mrapi-control.json` | Input tạo bảng, khóa và index. |
+| `mrapi-control.ttl.json` | Input bật TTL trên expiresAt. |
+| `mrapi-control.describe.json` | Schema, stream, replica và bảo vệ xóa đang có trên AWS; dùng để đối chiếu. |
+| `mrapi-control.backup.json` | Trạng thái continuous backup/PITR, không chứa dữ liệu backup. |
+
+## Cấu hình và chi tiết
+
+Lưu tài khoản, phiên đăng nhập, API đích và API key.
+
+| Thuộc tính | Giá trị |
+|---|---|
+| ARN SG | `arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-control` |
+| Khóa | `PK`, `SK`, String |
+| Capacity | On-demand |
+| Replica | Tokyo, `ap-northeast-1` |
+| TTL | `expiresAt`, epoch giây |
+| PITR / deletion protection | Bật cả hai Region |
+| Tag | `Project=mrapi`; Owner chưa ghi lại |
+
+## Dữ liệu trong code
 
 | Loại | PK | SK |
 |---|---|---|
 | Tài khoản | `USER#<email>` | `META` |
-| Phiên đăng nhập | `SESSION#<hash>` | `META` |
+| Phiên | `SESSION#<hash>` | `META` |
 | API đích | `TENANT#<tenantId>` | `API#<apiId>` |
-| API key (bản cũ, chưa có scope theo API) | `TENANT#<tenantId>` | `KEY#<keyId>` |
-| Bộ đếm usage (bản cũ) | `TENANT#<tenantId>` | `USAGE#...` |
+| Key | `TENANT#<tenantId>` | `KEY#<keyId>` |
+| Bộ đếm cũ | `TENANT#<tenantId>` | `USAGE#...` |
 
-Cách lưu item API key mới (hash, trạng thái, tenant, scope) chưa được L/B/A chốt; cập nhật bảng này khi chốt.
+Key lưu `keyHash`, trạng thái và danh sách API `apiIds`. Secret chỉ trả một lần khi tạo. Dashboard hiện đọc thống kê từ telemetry, không dùng USAGE cũ.
 
-## Cách dựng lại
+## Dựng lại
 
-1. DynamoDB → Create table → tên `mrapi-control`, PK `PK` (String), SK `SK` (String), On-demand.
-2. Bật TTL thuộc tính `expiresAt`; thêm tag theo `mrapi-control.json`.
-3. Hoặc dùng CLI/CloudShell: `aws dynamodb create-table --cli-input-json file://mrapi-control.json --region ap-southeast-1`, sau đó `aws dynamodb update-time-to-live --cli-input-json file://mrapi-control.ttl.json --region ap-southeast-1`.
+Chạy tại thư mục JSON:
 
-`mrapi-control.json` và `mrapi-control.ttl.json` là định nghĩa dựng lại theo cấu hình đã quan sát, không phải bản xuất nguyên văn từ AWS. Bản xuất thực tế: xem lệnh `describe-table` ở README.
+```bash
+aws dynamodb create-table --cli-input-json file://mrapi-control.json --region ap-southeast-1
+aws dynamodb update-time-to-live --cli-input-json file://mrapi-control.ttl.json --region ap-southeast-1
+```
 
-## Kiểm thử và bằng chứng
+Cấu hình tiếp replica, PITR và deletion protection theo [runbook](../../../docs/runbooks/DYNAMODB_GLOBAL_TABLES.md). Hai lệnh trên chỉ tạo bảng và TTL.
 
-- Quyền role dashboard với bảng: xem `infra/iam/roles/mrapi-dashboard-role/permission.json` (GetItem, PutItem, DeleteItem, Query)
-- Thực tế: NOT TESTED
-- Bằng chứng: chưa có (đặt tại docs/evidence/dynamodb/)
-
-## Bàn giao
-
-- Config đã cập nhật: `config/demo/ap-southeast-1.json` đã có `tables.control`
-- Consumer: L (dashboard), B (proxy, authorizer)
-- Reviewer/kết luận: chưa điền
+Tên bảng đã lưu trong `config/demo/*.json`. Dashboard, proxy và authorizer dùng bảng này. Luồng tài khoản/API/key thật chưa nghiệm thu đầy đủ.

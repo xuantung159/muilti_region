@@ -1,0 +1,7 @@
+{
+  "ContinuousBackupsStatus": "ENABLED",
+  "PointInTimeRecoveryDescription": {
+    "PointInTimeRecoveryStatus": "ENABLED",
+    "RecoveryPeriodInDays": 35
+  }
+}
