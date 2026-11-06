@@ -1,0 +1,93 @@
+[
+  {
+    "Name": "multi-region.io.vn.",
+    "Type": "NS",
+    "TTL": 172800,
+    "ResourceRecords": [
+      {
+        "Value": "ns-179.awsdns-22.com."
+      },
+      {
+        "Value": "ns-2031.awsdns-61.co.uk."
+      },
+      {
+        "Value": "ns-860.awsdns-43.net."
+      },
+      {
+        "Value": "ns-1037.awsdns-01.org."
+      }
+    ]
+  },
+  {
+    "Name": "multi-region.io.vn.",
+    "Type": "SOA",
+    "TTL": 900,
+    "ResourceRecords": [
+      {
+        "Value": "ns-179.awsdns-22.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400"
+      }
+    ]
+  },
+  {
+    "Name": "api.multi-region.io.vn.",
+    "Type": "A",
+    "SetIdentifier": "mrapi-sg",
+    "Region": "ap-southeast-1",
+    "AliasTarget": {
+      "HostedZoneId": "ZL327KTPIQFUL",
+      "DNSName": "d-zd1hv50jn0.execute-api.ap-southeast-1.amazonaws.com.",
+      "EvaluateTargetHealth": false
+    },
+    "HealthCheckId": "c7764d38-b17d-44df-8d44-4f2791296adc"
+  },
+  {
+    "Name": "api.multi-region.io.vn.",
+    "Type": "A",
+    "SetIdentifier": "mrapi-tokyo",
+    "Region": "ap-northeast-1",
+    "AliasTarget": {
+      "HostedZoneId": "Z1YSHQZHG15GKL",
+      "DNSName": "d-csqvriesoh.execute-api.ap-northeast-1.amazonaws.com.",
+      "EvaluateTargetHealth": false
+    },
+    "HealthCheckId": "bfa2df95-4abf-40d2-a240-dbd04acf735c"
+  },
+  {
+    "Name": "_f994f68d3e7315add72fd342842a03f0.api.multi-region.io.vn.",
+    "Type": "CNAME",
+    "TTL": 300,
+    "ResourceRecords": [
+      {
+        "Value": "_f983283af8655fc6ad524f548d618f30.wzccmgtwzk.acm-validations.aws."
+      }
+    ]
+  },
+  {
+    "Name": "app.multi-region.io.vn.",
+    "Type": "A",
+    "AliasTarget": {
+      "HostedZoneId": "Z2FDTNDATAQYW2",
+      "DNSName": "d2hkrs5dvlrte6.cloudfront.net.",
+      "EvaluateTargetHealth": false
+    }
+  },
+  {
+    "Name": "app.multi-region.io.vn.",
+    "Type": "AAAA",
+    "AliasTarget": {
+      "HostedZoneId": "Z2FDTNDATAQYW2",
+      "DNSName": "d2hkrs5dvlrte6.cloudfront.net.",
+      "EvaluateTargetHealth": false
+    }
+  },
+  {
+    "Name": "_5f7e01d4f84c0c259f4307697c0f4cf2.app.multi-region.io.vn.",
+    "Type": "CNAME",
+    "TTL": 300,
+    "ResourceRecords": [
+      {
+        "Value": "_d4ea9b8c410cf318fa2f291e955913c5.wzccmgtwzk.acm-validations.aws."
+      }
+    ]
+  }
+]

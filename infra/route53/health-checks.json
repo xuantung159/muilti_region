@@ -1,0 +1,36 @@
+[
+  {
+    "Id": "bfa2df95-4abf-40d2-a240-dbd04acf735c",
+    "CallerReference": "mrapi-20261027-tyo",
+    "HealthCheckConfig": {
+      "Port": 443,
+      "Type": "HTTPS",
+      "ResourcePath": "/demo/health",
+      "FullyQualifiedDomainName": "n39r5pits8.execute-api.ap-northeast-1.amazonaws.com",
+      "RequestInterval": 30,
+      "FailureThreshold": 3,
+      "MeasureLatency": false,
+      "Inverted": false,
+      "Disabled": false,
+      "EnableSNI": true
+    },
+    "HealthCheckVersion": 1
+  },
+  {
+    "Id": "c7764d38-b17d-44df-8d44-4f2791296adc",
+    "CallerReference": "mrapi-20261027-sg",
+    "HealthCheckConfig": {
+      "Port": 443,
+      "Type": "HTTPS",
+      "ResourcePath": "/demo/health",
+      "FullyQualifiedDomainName": "43vakggyh5.execute-api.ap-southeast-1.amazonaws.com",
+      "RequestInterval": 30,
+      "FailureThreshold": 3,
+      "MeasureLatency": false,
+      "Inverted": false,
+      "Disabled": false,
+      "EnableSNI": true
+    },
+    "HealthCheckVersion": 1
+  }
+]
