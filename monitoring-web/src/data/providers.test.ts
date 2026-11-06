@@ -1,8 +1,9 @@
+import { MockProvider } from '../test/fixtures/MockProvider';
 import { describe, expect, it, vi } from 'vitest';
 import { RANGES } from '../domain/range';
 import { deriveRegionHealth } from '../domain/status';
-import { simulatedIncidentWindow } from './mock/generator';
-import { createProvider, HttpProvider, MockProvider, NotConnectedProvider } from './providers';
+import { simulatedIncidentWindow } from '../test/fixtures/generator';
+import { createProvider, HttpProvider, NotConnectedProvider } from './providers';
 
 const NOW = Date.UTC(2026, 9, 13, 5, 7, 30);
 
@@ -76,9 +77,7 @@ describe('HttpProvider', () => {
 
 describe('createProvider', () => {
   it('chọn nguồn theo chế độ demo và URL backend', () => {
-    expect(createProvider(true, '').id).toBe('mock');
-    expect(createProvider(true, 'https://b.example').id).toBe('mock');
-    expect(createProvider(false, '').id).toBe('none');
-    expect(createProvider(false, 'https://b.example').id).toBe('http');
+    expect(createProvider('').id).toBe('none');
+    expect(createProvider('https://b.example').id).toBe('http');
   });
 });

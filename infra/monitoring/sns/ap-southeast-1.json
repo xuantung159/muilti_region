@@ -1,0 +1,37 @@
+{
+  "Attributes": {
+    "Policy": {
+      "Version": "2008-10-17",
+      "Id": "__default_policy_ID",
+      "Statement": [
+        {
+          "Sid": "__default_statement_ID",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "*"
+          },
+          "Action": [
+            "SNS:Publish",
+            "SNS:RemovePermission",
+            "SNS:SetTopicAttributes",
+            "SNS:DeleteTopic",
+            "SNS:ListSubscriptionsByTopic",
+            "SNS:GetTopicAttributes",
+            "SNS:AddPermission",
+            "SNS:Subscribe"
+          ],
+          "Resource": "arn:aws:sns:ap-southeast-1:138150704839:mrapi-alerts",
+          "Condition": {
+            "StringEquals": {
+              "AWS:SourceAccount": "138150704839"
+            }
+          }
+        }
+      ]
+    },
+    "SubscriptionsPending": "0",
+    "TopicArn": "arn:aws:sns:ap-southeast-1:138150704839:mrapi-alerts",
+    "SubscriptionsConfirmed": "1",
+    "DisplayName": ""
+  }
+}

@@ -1,0 +1,218 @@
+{
+  "CompositeAlarms": [],
+  "MetricAlarms": [
+    {
+      "AlarmName": "mrapi-sg-api-5xx",
+      "AlarmArn": "arn:aws:cloudwatch:ap-southeast-1:138150704839:alarm:mrapi-sg-api-5xx",
+      "AlarmDescription": "API Gateway mrapi-api-sg demo: at least one HTTP 5xx response in one minute.",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:ap-southeast-1:138150704839:mrapi-alerts"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "5XXError",
+      "Namespace": "AWS/ApiGateway",
+      "Statistic": "Sum",
+      "Dimensions": [
+        {
+          "Name": "ApiName",
+          "Value": "mrapi-api-sg"
+        },
+        {
+          "Name": "Stage",
+          "Value": "demo"
+        }
+      ],
+      "Period": 60,
+      "EvaluationPeriods": 1,
+      "DatapointsToAlarm": 1,
+      "Threshold": 1.0,
+      "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "mrapi-sg-api-latency",
+      "AlarmArn": "arn:aws:cloudwatch:ap-southeast-1:138150704839:alarm:mrapi-sg-api-latency",
+      "AlarmDescription": "Average API latency exceeds 3000 ms for three consecutive one-minute periods.",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:ap-southeast-1:138150704839:mrapi-alerts"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "Latency",
+      "Namespace": "AWS/ApiGateway",
+      "Statistic": "Average",
+      "Dimensions": [
+        {
+          "Name": "ApiName",
+          "Value": "mrapi-api-sg"
+        },
+        {
+          "Name": "Stage",
+          "Value": "demo"
+        }
+      ],
+      "Period": 60,
+      "EvaluationPeriods": 3,
+      "DatapointsToAlarm": 3,
+      "Threshold": 3000.0,
+      "ComparisonOperator": "GreaterThanThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "mrapi-sg-exporter-errors",
+      "AlarmArn": "arn:aws:cloudwatch:ap-southeast-1:138150704839:alarm:mrapi-sg-exporter-errors",
+      "AlarmDescription": "Errors of Lambda mrapi-exporter >= 1 per minute.",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:ap-southeast-1:138150704839:mrapi-alerts"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "Errors",
+      "Namespace": "AWS/Lambda",
+      "Statistic": "Sum",
+      "Dimensions": [
+        {
+          "Name": "FunctionName",
+          "Value": "mrapi-exporter"
+        }
+      ],
+      "Period": 60,
+      "EvaluationPeriods": 1,
+      "DatapointsToAlarm": 1,
+      "Threshold": 1.0,
+      "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "mrapi-sg-lambda-errors",
+      "AlarmArn": "arn:aws:cloudwatch:ap-southeast-1:138150704839:alarm:mrapi-sg-lambda-errors",
+      "AlarmDescription": "Sum of Errors for active Lambda functions (mrapi-proxy, mrapi-dashboard, mrapi-authorizer) >= 1 per minute.",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:ap-southeast-1:138150704839:mrapi-alerts"
+      ],
+      "InsufficientDataActions": [],
+      "Dimensions": [],
+      "EvaluationPeriods": 1,
+      "DatapointsToAlarm": 1,
+      "Threshold": 1.0,
+      "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+      "TreatMissingData": "notBreaching",
+      "Metrics": [
+        {
+          "Id": "e1",
+          "Expression": "SUM(METRICS())",
+          "Label": "Total Lambda errors",
+          "ReturnData": true
+        },
+        {
+          "Id": "m2",
+          "MetricStat": {
+            "Metric": {
+              "Namespace": "AWS/Lambda",
+              "MetricName": "Errors",
+              "Dimensions": [
+                {
+                  "Name": "FunctionName",
+                  "Value": "mrapi-proxy"
+                }
+              ]
+            },
+            "Period": 60,
+            "Stat": "Sum"
+          },
+          "ReturnData": false
+        },
+        {
+          "Id": "m3",
+          "MetricStat": {
+            "Metric": {
+              "Namespace": "AWS/Lambda",
+              "MetricName": "Errors",
+              "Dimensions": [
+                {
+                  "Name": "FunctionName",
+                  "Value": "mrapi-dashboard"
+                }
+              ]
+            },
+            "Period": 60,
+            "Stat": "Sum"
+          },
+          "ReturnData": false
+        },
+        {
+          "Id": "m4",
+          "MetricStat": {
+            "Metric": {
+              "Namespace": "AWS/Lambda",
+              "MetricName": "Errors",
+              "Dimensions": [
+                {
+                  "Name": "FunctionName",
+                  "Value": "mrapi-authorizer"
+                }
+              ]
+            },
+            "Period": 60,
+            "Stat": "Sum"
+          },
+          "ReturnData": false
+        }
+      ]
+    },
+    {
+      "AlarmName": "mrapi-sg-monitoring-errors",
+      "AlarmArn": "arn:aws:cloudwatch:ap-southeast-1:138150704839:alarm:mrapi-sg-monitoring-errors",
+      "AlarmDescription": "Errors of Lambda mrapi-monitoring >= 1 per minute.",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:ap-southeast-1:138150704839:mrapi-alerts"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "Errors",
+      "Namespace": "AWS/Lambda",
+      "Statistic": "Sum",
+      "Dimensions": [
+        {
+          "Name": "FunctionName",
+          "Value": "mrapi-monitoring"
+        }
+      ],
+      "Period": 60,
+      "EvaluationPeriods": 1,
+      "DatapointsToAlarm": 1,
+      "Threshold": 1.0,
+      "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+      "TreatMissingData": "notBreaching"
+    },
+    {
+      "AlarmName": "mrapi-sg-telemetry-write-failed",
+      "AlarmArn": "arn:aws:cloudwatch:ap-southeast-1:138150704839:alarm:mrapi-sg-telemetry-write-failed",
+      "AlarmDescription": "Proxy could not write request telemetry to DynamoDB. Check TELEMETRY_TABLE and Lambda execution role permissions.",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:ap-southeast-1:138150704839:mrapi-alerts"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "TelemetryWriteFailed",
+      "Namespace": "MRAPI",
+      "Statistic": "Sum",
+      "Dimensions": [],
+      "Period": 60,
+      "EvaluationPeriods": 1,
+      "DatapointsToAlarm": 1,
+      "Threshold": 1.0,
+      "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+      "TreatMissingData": "notBreaching"
+    }
+  ],
+  "LogAlarms": []
+}
