@@ -50,6 +50,7 @@ describe('điều hướng', () => {
       ['Multi-Region', 'Multi-Region Monitoring'],
       ['API Monitoring', 'API Monitoring'],
       ['Failover & Incidents', 'Failover & Incidents'],
+      ['Hạ tầng', 'Hạ tầng triển khai'],
       ['Data Sources', 'Data Sources & Integration Status'],
       ['Settings', 'Settings'],
       ['System Overview', 'System Overview'],
@@ -117,10 +118,22 @@ describe('Failover & Incidents', () => {
 describe('Data Sources', () => {
   it('đánh dấu mọi nguồn AWS là Not connected ở chế độ demo', async () => {
     renderApp(mock(), '/sources');
-    expect(await screen.findByText('AWS CloudWatch')).toBeInTheDocument();
-    expect(screen.getAllByText('Not connected')).toHaveLength(6);
+    expect(await screen.findByText('CloudWatch Alarms')).toBeInTheDocument();
+    expect(screen.getAllByText('Not connected')).toHaveLength(7);
     expect(screen.getAllByText('Mock')).toHaveLength(1);
-    expect(screen.getByText(/0 trên 6/)).toBeInTheDocument();
+    expect(screen.getByText(/0 trên 7/)).toBeInTheDocument();
     expect(screen.queryByText('Connected')).not.toBeInTheDocument();
+  });
+});
+
+describe('Hạ tầng', () => {
+  it('liệt kê tài nguyên hai Region và nêu rõ trạng thái sống chưa có khi chưa kết nối', async () => {
+    renderApp(new NotConnectedProvider(), '/infrastructure');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hạ tầng triển khai' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Singapore (ap-southeast-1)' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tokyo (ap-northeast-1)' })).toBeInTheDocument();
+    expect((await screen.findAllByText('Health check: chưa có dữ liệu')).length).toBe(2);
+    expect(screen.queryByText('Health check OK')).not.toBeInTheDocument();
+    expect(screen.getByText('mrapi-api-tyo (n39r5pits8), stage demo')).toBeInTheDocument();
   });
 });

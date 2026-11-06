@@ -11,6 +11,7 @@ import {
 import { buildEndpoints, buildIncidents, buildSnapshot } from './mock/generator';
 import type { MonitoringProvider } from './provider';
 import { awsSources } from './sources';
+import { validEndpoints, validIncidents, validSnapshot, validSources } from './validation';
 
 const wait = (ms: number) => (ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve());
 
@@ -122,22 +123,19 @@ export class HttpProvider implements MonitoringProvider {
   }
 
   getSnapshot(range: RangeKey): Promise<MonitoringSnapshot> {
-    return this.get(`/monitoring/snapshot?range=${range}`, (b) => {
-      const s = b as Partial<MonitoringSnapshot> | null;
-      return !!s && Array.isArray(s.regions) && Array.isArray(s.series);
-    });
+    return this.get(`/monitoring/snapshot?range=${range}`, validSnapshot);
   }
 
   getEndpoints(range: RangeKey): Promise<EndpointStat[]> {
-    return this.get(`/monitoring/endpoints?range=${range}`, Array.isArray);
+    return this.get(`/monitoring/endpoints?range=${range}`, validEndpoints);
   }
 
   getIncidents(): Promise<IncidentEvent[]> {
-    return this.get('/monitoring/incidents', Array.isArray);
+    return this.get('/monitoring/incidents', validIncidents);
   }
 
   getSources(): Promise<DataSource[]> {
-    return this.get('/monitoring/sources', Array.isArray);
+    return this.get('/monitoring/sources', validSources);
   }
 }
 

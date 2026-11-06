@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { EmptyState } from './components/ui';
 import { ApisPage } from './pages/ApisPage';
 import { IncidentsPage } from './pages/IncidentsPage';
+import { InfrastructurePage } from './pages/InfrastructurePage';
 import { OverviewPage } from './pages/OverviewPage';
 import { RegionsPage } from './pages/RegionsPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -18,6 +19,7 @@ export function App() {
         <Route path="regions" element={<RegionsPage />} />
         <Route path="apis" element={<ApisPage />} />
         <Route path="incidents" element={<IncidentsPage />} />
+        <Route path="infrastructure" element={<InfrastructurePage />} />
         <Route path="sources" element={<SourcesPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route

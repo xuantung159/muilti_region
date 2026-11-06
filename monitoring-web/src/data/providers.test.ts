@@ -72,6 +72,29 @@ describe('HttpProvider', () => {
     await expect(new HttpProvider('https://b.example', respond({}, 503)).getSnapshot('1h')).rejects.toThrow('503');
     await expect(new HttpProvider('https://b.example', respond({ nope: true })).getSnapshot('1h')).rejects.toThrow('sai định dạng');
   });
+
+  it('từ chối snapshot thiếu Region hoặc metric trước khi trang truy cập dữ liệu', async () => {
+    const snapshot = await new NotConnectedProvider().getSnapshot('1h');
+    await expect(new HttpProvider('https://b.example', respond(snapshot)).getSnapshot('1h')).resolves.toEqual(snapshot);
+    for (const regions of [[], [snapshot.regions[0]], [snapshot.regions[0], snapshot.regions[0]], [{}, {}]]) {
+      await expect(new HttpProvider('https://b.example', respond({ ...snapshot, regions })).getSnapshot('1h')).rejects.toThrow('sai định dạng');
+    }
+    const malformed = { ...snapshot, regions: snapshot.regions.map((r) => ({ ...r, lambda: null })) };
+    await expect(new HttpProvider('https://b.example', respond(malformed)).getSnapshot('1h')).rejects.toThrow('sai định dạng');
+  });
+
+  it('từ chối phần tử sai cấu trúc và dữ liệu mô phỏng trong nguồn live', async () => {
+    const provider = new HttpProvider('https://b.example', respond([{}]));
+    await expect(provider.getEndpoints('1h')).rejects.toThrow('sai định dạng');
+    await expect(provider.getIncidents()).rejects.toThrow('sai định dạng');
+    await expect(provider.getSources()).rejects.toThrow('sai định dạng');
+    const mock = new MockProvider(0, () => NOW);
+    const snapshot = { ...await mock.getSnapshot('1h'), dataMode: 'live' };
+    await expect(new HttpProvider('https://b.example', respond(snapshot)).getSnapshot('1h')).resolves.toEqual(snapshot);
+    await expect(new HttpProvider('https://b.example', respond({ ...snapshot, series: [{ t: NOW, regions: {} }] })).getSnapshot('1h')).rejects.toThrow('sai định dạng');
+    await expect(new HttpProvider('https://b.example', respond(await mock.getSnapshot('1h'))).getSnapshot('1h')).rejects.toThrow('sai định dạng');
+    await expect(new HttpProvider('https://b.example', respond(await mock.getIncidents())).getIncidents()).rejects.toThrow('sai định dạng');
+  });
 });
 
 describe('createProvider', () => {
