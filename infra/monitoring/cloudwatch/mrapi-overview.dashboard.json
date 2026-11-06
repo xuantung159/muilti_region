@@ -1,0 +1,669 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "API requests",
+        "region": "ap-southeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Sum",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/ApiGateway",
+            "Count",
+            "ApiName",
+            "mrapi-api-sg",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG Count"
+            }
+          ],
+          [
+            "AWS/ApiGateway",
+            "Count",
+            "ApiName",
+            "mrapi-api-tyo",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-northeast-1",
+              "label": "TYO Count"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 8,
+      "y": 0,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "API 5xx / 4xx",
+        "region": "ap-southeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Sum",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/ApiGateway",
+            "5XXError",
+            "ApiName",
+            "mrapi-api-sg",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG 5XXError"
+            }
+          ],
+          [
+            "AWS/ApiGateway",
+            "5XXError",
+            "ApiName",
+            "mrapi-api-tyo",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-northeast-1",
+              "label": "TYO 5XXError"
+            }
+          ],
+          [
+            "AWS/ApiGateway",
+            "4XXError",
+            "ApiName",
+            "mrapi-api-sg",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG 4XXError"
+            }
+          ],
+          [
+            "AWS/ApiGateway",
+            "4XXError",
+            "ApiName",
+            "mrapi-api-tyo",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-northeast-1",
+              "label": "TYO 4XXError"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 16,
+      "y": 0,
+      "width": 8,
+      "height": 6,
+      "properties": {
+        "title": "API latency (ms)",
+        "region": "ap-southeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Average",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/ApiGateway",
+            "Latency",
+            "ApiName",
+            "mrapi-api-sg",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG Latency"
+            }
+          ],
+          [
+            "AWS/ApiGateway",
+            "Latency",
+            "ApiName",
+            "mrapi-api-tyo",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-northeast-1",
+              "label": "TYO Latency"
+            }
+          ],
+          [
+            "AWS/ApiGateway",
+            "IntegrationLatency",
+            "ApiName",
+            "mrapi-api-sg",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG IntegrationLatency"
+            }
+          ],
+          [
+            "AWS/ApiGateway",
+            "IntegrationLatency",
+            "ApiName",
+            "mrapi-api-tyo",
+            "Stage",
+            "demo",
+            {
+              "region": "ap-northeast-1",
+              "label": "TYO IntegrationLatency"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 6,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "title": "Lambda errors SG",
+        "region": "ap-southeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Sum",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/Lambda",
+            "Errors",
+            "FunctionName",
+            "mrapi-proxy",
+            {
+              "region": "ap-southeast-1",
+              "label": "proxy"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Errors",
+            "FunctionName",
+            "mrapi-authorizer",
+            {
+              "region": "ap-southeast-1",
+              "label": "authorizer"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Errors",
+            "FunctionName",
+            "mrapi-dashboard",
+            {
+              "region": "ap-southeast-1",
+              "label": "dashboard"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Errors",
+            "FunctionName",
+            "mrapi-monitoring",
+            {
+              "region": "ap-southeast-1",
+              "label": "monitoring"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Errors",
+            "FunctionName",
+            "mrapi-exporter",
+            {
+              "region": "ap-southeast-1",
+              "label": "exporter"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 6,
+      "y": 6,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "title": "Lambda errors Tokyo",
+        "region": "ap-northeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Sum",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/Lambda",
+            "Errors",
+            "FunctionName",
+            "mrapi-proxy",
+            {
+              "region": "ap-northeast-1",
+              "label": "proxy"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Errors",
+            "FunctionName",
+            "mrapi-authorizer",
+            {
+              "region": "ap-northeast-1",
+              "label": "authorizer"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Errors",
+            "FunctionName",
+            "mrapi-dashboard",
+            {
+              "region": "ap-northeast-1",
+              "label": "dashboard"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Errors",
+            "FunctionName",
+            "mrapi-monitoring",
+            {
+              "region": "ap-northeast-1",
+              "label": "monitoring"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 6,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "title": "Lambda duration SG (ms)",
+        "region": "ap-southeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Average",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/Lambda",
+            "Duration",
+            "FunctionName",
+            "mrapi-proxy",
+            {
+              "region": "ap-southeast-1",
+              "label": "proxy"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Duration",
+            "FunctionName",
+            "mrapi-authorizer",
+            {
+              "region": "ap-southeast-1",
+              "label": "authorizer"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Duration",
+            "FunctionName",
+            "mrapi-dashboard",
+            {
+              "region": "ap-southeast-1",
+              "label": "dashboard"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Duration",
+            "FunctionName",
+            "mrapi-monitoring",
+            {
+              "region": "ap-southeast-1",
+              "label": "monitoring"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Duration",
+            "FunctionName",
+            "mrapi-exporter",
+            {
+              "region": "ap-southeast-1",
+              "label": "exporter"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 18,
+      "y": 6,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "title": "Lambda duration Tokyo (ms)",
+        "region": "ap-northeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Average",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/Lambda",
+            "Duration",
+            "FunctionName",
+            "mrapi-proxy",
+            {
+              "region": "ap-northeast-1",
+              "label": "proxy"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Duration",
+            "FunctionName",
+            "mrapi-authorizer",
+            {
+              "region": "ap-northeast-1",
+              "label": "authorizer"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Duration",
+            "FunctionName",
+            "mrapi-dashboard",
+            {
+              "region": "ap-northeast-1",
+              "label": "dashboard"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Duration",
+            "FunctionName",
+            "mrapi-monitoring",
+            {
+              "region": "ap-northeast-1",
+              "label": "monitoring"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 12,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "title": "Lambda throttles 2 Region",
+        "region": "ap-southeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Sum",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/Lambda",
+            "Throttles",
+            "FunctionName",
+            "mrapi-proxy",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG proxy"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Throttles",
+            "FunctionName",
+            "mrapi-authorizer",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG authorizer"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Throttles",
+            "FunctionName",
+            "mrapi-dashboard",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG dashboard"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Throttles",
+            "FunctionName",
+            "mrapi-monitoring",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG monitoring"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Throttles",
+            "FunctionName",
+            "mrapi-exporter",
+            {
+              "region": "ap-southeast-1",
+              "label": "SG exporter"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Throttles",
+            "FunctionName",
+            "mrapi-proxy",
+            {
+              "region": "ap-northeast-1",
+              "label": "TYO proxy"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Throttles",
+            "FunctionName",
+            "mrapi-authorizer",
+            {
+              "region": "ap-northeast-1",
+              "label": "TYO authorizer"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Throttles",
+            "FunctionName",
+            "mrapi-dashboard",
+            {
+              "region": "ap-northeast-1",
+              "label": "TYO dashboard"
+            }
+          ],
+          [
+            "AWS/Lambda",
+            "Throttles",
+            "FunctionName",
+            "mrapi-monitoring",
+            {
+              "region": "ap-northeast-1",
+              "label": "TYO monitoring"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 6,
+      "y": 12,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "title": "DynamoDB ReplicationLatency (ms)",
+        "region": "ap-southeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Average",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/DynamoDB",
+            "ReplicationLatency",
+            "TableName",
+            "mrapi-telemetry",
+            "ReceivingRegion",
+            "ap-northeast-1",
+            {
+              "region": "ap-southeast-1",
+              "label": "telemetry SG>TYO"
+            }
+          ],
+          [
+            "AWS/DynamoDB",
+            "ReplicationLatency",
+            "TableName",
+            "mrapi-telemetry",
+            "ReceivingRegion",
+            "ap-southeast-1",
+            {
+              "region": "ap-northeast-1",
+              "label": "telemetry TYO>SG"
+            }
+          ],
+          [
+            "AWS/DynamoDB",
+            "ReplicationLatency",
+            "TableName",
+            "mrapi-control",
+            "ReceivingRegion",
+            "ap-northeast-1",
+            {
+              "region": "ap-southeast-1",
+              "label": "control SG>TYO"
+            }
+          ],
+          [
+            "AWS/DynamoDB",
+            "ReplicationLatency",
+            "TableName",
+            "mrapi-control",
+            "ReceivingRegion",
+            "ap-southeast-1",
+            {
+              "region": "ap-northeast-1",
+              "label": "control TYO>SG"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 12,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "title": "S3 ReplicationLatency SG>TYO (s, metric o Tokyo)",
+        "region": "ap-northeast-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Maximum",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/S3",
+            "ReplicationLatency",
+            "SourceBucket",
+            "mrapi-exports-sg",
+            "DestinationBucket",
+            "mrapi-exports-tyo",
+            "RuleId",
+            "mrapi-sg-to-tyo",
+            {
+              "region": "ap-northeast-1",
+              "label": "sg-to-tyo"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "type": "metric",
+      "x": 18,
+      "y": 12,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "title": "Route 53 HealthCheckStatus",
+        "region": "us-east-1",
+        "view": "timeSeries",
+        "stacked": false,
+        "stat": "Minimum",
+        "period": 60,
+        "metrics": [
+          [
+            "AWS/Route53",
+            "HealthCheckStatus",
+            "HealthCheckId",
+            "c7764d38-b17d-44df-8d44-4f2791296adc",
+            {
+              "region": "us-east-1",
+              "label": "SG"
+            }
+          ],
+          [
+            "AWS/Route53",
+            "HealthCheckStatus",
+            "HealthCheckId",
+            "bfa2df95-4abf-40d2-a240-dbd04acf735c",
+            {
+              "region": "us-east-1",
+              "label": "Tokyo"
+            }
+          ]
+        ],
+        "yAxis": {
+          "left": {
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    }
+  ]
+}
