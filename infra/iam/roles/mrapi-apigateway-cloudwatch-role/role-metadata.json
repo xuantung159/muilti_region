@@ -1,0 +1,21 @@
+{
+  "Path": "/",
+  "RoleName": "mrapi-apigateway-cloudwatch-role",
+  "RoleId": "AROASAKTMO3D2RA2F6PYR",
+  "Arn": "arn:aws:iam::138150704839:role/mrapi-apigateway-cloudwatch-role",
+  "AssumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "",
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "apigateway.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "Description": "Allows API Gateway to push logs to CloudWatch Logs.",
+  "MaxSessionDuration": 3600
+}

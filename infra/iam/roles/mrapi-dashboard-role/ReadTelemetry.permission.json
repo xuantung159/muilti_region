@@ -1,0 +1,13 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Resource": [
+        "arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-telemetry",
+        "arn:aws:dynamodb:ap-northeast-1:138150704839:table/mrapi-telemetry"
+      ],
+      "Action": "dynamodb:Query",
+      "Effect": "Allow"
+    }
+  ]
+}
