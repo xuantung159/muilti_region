@@ -1,0 +1,17 @@
+{
+  "Rule": {
+    "Name": "mrapi-export-daily",
+    "Arn": "arn:aws:events:ap-southeast-1:138150704839:rule/mrapi-export-daily",
+    "ScheduleExpression": "cron(0 18 * * ? *)",
+    "State": "ENABLED",
+    "Description": "Daily 18:00 UTC: invoke mrapi-exporter",
+    "EventBusName": "default",
+    "CreatedBy": "138150704839"
+  },
+  "Targets": [
+    {
+      "Id": "mrapi-exporter",
+      "Arn": "arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-exporter"
+    }
+  ]
+}
