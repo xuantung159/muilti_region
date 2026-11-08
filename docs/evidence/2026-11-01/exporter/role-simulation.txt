@@ -1,0 +1,28 @@
+iam simulate-principal-policy trên role thật mrapi-exporter-role, boundary v3, 01/11/2026.
+Cột: action, quyết định, AllowedByPermissionsBoundary, resource.
+
+-- Cần có
+dynamodb:ExportTableToPointInTime   allowed      True  table/mrapi-telemetry
+s3:PutObject                        allowed      True  mrapi-exports-sg/exports/telemetry/x
+s3:AbortMultipartUpload             allowed      True  mrapi-exports-sg/exports/telemetry/x
+s3:PutObjectAcl                     allowed      True  mrapi-exports-sg/exports/telemetry/x
+s3:GetBucketLocation                allowed      True  mrapi-exports-sg
+logs:CreateLogGroup                 allowed      True  log-group /aws/lambda/mrapi-exporter
+logs:CreateLogStream                allowed      True  log-group /aws/lambda/mrapi-exporter
+logs:PutLogEvents                   allowed      True  log-group /aws/lambda/mrapi-exporter
+xray:PutTraceSegments               allowed      True  *
+xray:PutTelemetryRecords            allowed      True  *
+
+-- Phải bị chặn
+dynamodb:Scan                       implicitDeny True  table/mrapi-telemetry
+dynamodb:GetItem                    implicitDeny True  table/mrapi-telemetry
+s3:GetObject                        implicitDeny True  mrapi-exports-sg/exports/telemetry/x
+s3:DeleteObject                     implicitDeny True  mrapi-exports-sg/exports/telemetry/x
+s3:PutObject                        implicitDeny True  mrapi-exports-sg/other/x
+s3:PutObject                        implicitDeny True  mrapi-exports-tyo/exports/telemetry/x
+dynamodb:ExportTableToPointInTime   implicitDeny True  table/mrapi-control
+iam:PassRole                        implicitDeny False role/mrapi-exporter-role
+lambda:InvokeFunction               implicitDeny False *
+
+Không có wildcard ở Action. `*` toàn phần ở Resource chỉ có ở 2 action xray, vì X-Ray không nhận ARN cụ thể.
+Hash chuẩn hóa policy trong CloudShell trùng repo: permission 72c47a65..., trust f3502e86...

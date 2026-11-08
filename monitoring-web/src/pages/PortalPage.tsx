@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Card, PageHeader, QueryBoundary, Tag } from '../components/ui';
+import { Card, EmptyState, PageHeader, QueryBoundary, Tag } from '../components/ui';
 import { portalCall, PortalError, readToken, saveToken } from '../portal/client';
 import { createDemoClient } from '../portal/demo';
 import { IntegrationGuide } from '../portal/IntegrationGuide';
@@ -15,7 +15,9 @@ type Usage = { totals: Counts & { totalMs: number }; byRegion: Record<string, Co
 type Tab = 'overview' | 'apis' | 'keys' | 'guide' | 'request';
 const tabs: [Tab, string][] = [['overview', 'Tổng quan'], ['apis', 'API đích'], ['keys', 'API key'], ['guide', 'Hướng dẫn']];
 const button = 'rounded-md border border-line bg-raised px-3 py-2 text-sm hover:bg-surface disabled:opacity-50';
-const input = 'w-full rounded-md border border-line bg-surface px-3 py-2 text-sm';
+const primary = 'btn-primary';
+const input = 'mt-1 w-full rounded-md border border-line bg-surface px-3 py-2 text-sm';
+const tabClass = (active: boolean) => `rounded-lg px-3 py-2 text-sm transition-colors ${active ? 'bg-accent font-semibold text-on-accent' : 'text-ink2 hover:bg-raised hover:text-ink'}`;
 const message = (error: unknown) => error instanceof Error ? error.message : 'Có lỗi xảy ra.';
 const PortalClient = createContext<typeof portalCall>(portalCall);
 
@@ -24,7 +26,7 @@ export function PortalPage() {
   const queryClient = useQueryClient();
   const client = useMemo(() => demo ? createDemoClient() : portalCall, [demo]);
   return <PortalClient.Provider value={client}><div className="space-y-4">
-    <Card className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-semibold">{demo ? 'DEMO PORTAL · Dữ liệu mô phỏng' : 'Khám phá luồng tích hợp'}</p><p className="mt-1 text-sm text-ink2">{demo ? 'Mọi thao tác chỉ chạy trong bộ nhớ trình duyệt. Thoát demo sẽ bỏ dữ liệu mẫu; không gọi AWS.' : 'Thử quản lý API, lấy key và gửi request mẫu mà không cần đăng ký tài khoản.'}</p></div><button type="button" className={button} onClick={() => {
+    <Card className="hero-card flex flex-wrap items-center justify-between gap-3"><div className="min-w-0 flex-1"><p className="font-semibold">{demo ? 'DEMO PORTAL · Dữ liệu mô phỏng' : 'Khám phá luồng tích hợp'}</p><p className="mt-1 text-sm text-ink2">{demo ? 'Mọi thao tác chỉ chạy trong bộ nhớ trình duyệt. Thoát demo sẽ bỏ dữ liệu mẫu; không gọi AWS.' : 'Thử quản lý API, lấy key và gửi request mẫu mà không cần đăng ký tài khoản.'}</p></div><button type="button" className={demo ? button : primary} onClick={() => {
       queryClient.removeQueries({ predicate: query => query.queryKey[0] === 'portal' && String(query.queryKey[1]).startsWith('demo:') });
       setDemo(!demo);
     }}>{demo ? 'Thoát demo, dùng tài khoản thật' : 'Trải nghiệm demo'}</button></Card>
@@ -59,9 +61,9 @@ function PortalSession({ demo }: { demo: boolean }) {
           <div><h2 className="font-semibold">{user.orgName}</h2><p className="text-sm text-ink2">{user.email}</p></div>
           {demo ? <Tag tone="warning">Tài khoản mẫu · Không dùng trên AWS</Tag> : <Logout token={token} onLogout={() => session(null)} />}
         </Card>
-        <nav aria-label="Chức năng doanh nghiệp" className="flex flex-wrap gap-2">
-          {tabs.map(([id, label]) => <button type="button" key={id} aria-pressed={tab === id} onClick={() => setTab(id)} className={`${button} ${tab === id ? 'font-semibold text-accent' : ''}`}>{label}</button>)}
-          {demo && <button type="button" className={`${button} ${tab === 'request' ? 'font-semibold text-accent' : ''}`} aria-pressed={tab === 'request'} onClick={() => setTab('request')}>Thử request demo</button>}
+        <nav aria-label="Chức năng doanh nghiệp" className="flex flex-wrap gap-1 rounded-xl border border-line bg-surface p-1">
+          {tabs.map(([id, label]) => <button type="button" key={id} aria-pressed={tab === id} onClick={() => setTab(id)} className={tabClass(tab === id)}>{label}</button>)}
+          {demo && <button type="button" className={tabClass(tab === 'request')} aria-pressed={tab === 'request'} onClick={() => setTab('request')}>Thử request demo</button>}
         </nav>
         <PortalContent key={token} token={token} tab={tab} onExpired={() => session(null)} />
       </>}</QueryBoundary>}
@@ -90,7 +92,7 @@ function Auth({ onLogin }: { onLogin: (token: string) => void }) {
       <label className="block text-sm">Email<input className={input} name="email" type="email" maxLength={200} required autoComplete="username" /></label>
       <label className="block text-sm">Mật khẩu<input className={input} name="password" type="password" minLength={8} maxLength={200} required autoComplete={signup ? 'new-password' : 'current-password'} /></label>
       {error && <p role="alert" className="text-sm text-critical">{error}</p>}
-      <button className={button} disabled={busy}>{busy ? 'Đang xử lý…' : signup ? 'Đăng ký' : 'Đăng nhập'}</button>
+      <button className={primary} disabled={busy}>{busy ? 'Đang xử lý…' : signup ? 'Đăng ký' : 'Đăng nhập'}</button>
       <button type="button" disabled={busy} className="block text-sm text-accent" onClick={() => { setSignup(!signup); setError(''); }}>{signup ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký doanh nghiệp'}</button>
     </form>
   </Card>;
@@ -131,7 +133,7 @@ function PortalContent({ token, tab, onExpired }: { token: string; tab: Tab; onE
     {error && <p role="alert" className="text-sm text-critical">{error}</p>}
     {tab === 'apis' && <>
       <Card><h2 className="mb-2 font-semibold">{editing ? 'Chỉnh sửa API đích' : 'Đăng ký API đích'}</h2>
-        <p className="mb-4 text-sm text-ink2">Khai báo backend HTTPS. Chức năng chuyển tiếp request chưa triển khai.</p>
+        <p className="mb-4 text-sm text-ink2">Khai báo backend HTTPS. Gateway chuyển tiếp request tới backend này qua đường dẫn /proxy/API_ID, dùng API key có phạm vi tương ứng.</p>
         <form key={editing?.apiId ?? 'new'} className="grid gap-3 sm:grid-cols-2" onSubmit={event => {
           event.preventDefault(); const form = event.currentTarget; const values = new FormData(form);
           void mutate(async () => {
@@ -142,10 +144,10 @@ function PortalContent({ token, tab, onExpired }: { token: string; tab: Tab; onE
           <label className="text-sm">Tên API<input className={input} name="name" defaultValue={editing?.name} maxLength={100} required /></label>
           <label className="text-sm">URL backend<input className={input} name="baseUrl" type="url" defaultValue={editing?.baseUrl} placeholder="https://backend.company.com/v1" required /></label>
           <label className="text-sm">Timeout (ms)<input className={input} name="timeoutMs" type="number" defaultValue={editing?.timeoutMs ?? 5000} min={1000} max={10000} step={1} required /></label>
-          <div className="flex items-end gap-2"><button className={button} disabled={busy}>{editing ? 'Lưu thay đổi' : 'Đăng ký API'}</button>{editing && <button type="button" className={button} disabled={busy} onClick={() => setEditing(null)}>Hủy chỉnh sửa</button>}</div>
+          <div className="flex items-end gap-2"><button className={primary} disabled={busy}>{editing ? 'Lưu thay đổi' : 'Đăng ký API'}</button>{editing && <button type="button" className={button} disabled={busy} onClick={() => setEditing(null)}>Hủy chỉnh sửa</button>}</div>
         </form>
       </Card>
-      <QueryBoundary query={apiQuery}>{({ apis }) => <div className="space-y-3">{!apis.length && <Card>Chưa đăng ký API nào.</Card>}{apis.map(api => <Card key={api.apiId}>
+      <QueryBoundary query={apiQuery}>{({ apis }) => <div className="space-y-3">{!apis.length && <EmptyState title="Chưa đăng ký API nào.">Điền form ở trên để thêm backend đầu tiên.</EmptyState>}{apis.map(api => <Card key={api.apiId}>
         <div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{api.name}</h3><Tag>{api.enabled ? 'Đang bật' : 'Đã tắt'}</Tag></div>
         <p className="my-2 break-all text-sm text-ink2">{api.baseUrl} · {api.timeoutMs} ms</p><p className="mb-3 break-all text-xs text-muted">ID: {api.apiId}</p>
         <div className="flex gap-2"><button className={button} disabled={busy} onClick={() => setEditing(api)}>Chỉnh sửa</button><button className={button} disabled={busy} onClick={() => void mutate(async () => { await portalCall(`apis/${api.apiId}`, token, 'PATCH', { enabled: !api.enabled }); })}>{api.enabled ? 'Vô hiệu hóa' : 'Bật API'}</button></div>
@@ -159,15 +161,15 @@ function PortalContent({ token, tab, onExpired }: { token: string; tab: Tab; onE
         void mutate(async () => { setSecret(''); setCopied(false); const result = await portalCall<{ apiKey: string }>('keys', token, 'POST', { name: values.get('name'), apiIds }); setSecret(result.apiKey); form.reset(); });
       }}><label className="block text-sm">Tên ứng dụng<input className={input} name="name" maxLength={60} required /></label>
         <QueryBoundary query={apiQuery}>{({ apis }) => <fieldset className="text-sm"><legend className="mb-1">API được phép gọi</legend>{!apis.length && <p className="text-muted">Đăng ký API đích trước khi tạo key.</p>}{apis.map(api => <label key={api.apiId} className="mr-4 inline-flex items-center gap-2"><input type="checkbox" name="apiIds" value={api.apiId} />{api.name}</label>)}</fieldset>}</QueryBoundary>
-        <button className={button} disabled={busy}>Tạo key</button></form>
+        <button className={primary} disabled={busy}>Tạo key</button></form>
       {secret && <div className="my-4 space-y-2 rounded-md border border-good p-3"><p className="text-sm font-semibold">Sao chép ngay — key chỉ hiển thị một lần.</p><code className="block break-all text-sm">{secret}</code><button className={button} onClick={async () => { try { await navigator.clipboard.writeText(secret); setCopied(true); } catch { setError('Không sao chép tự động được. Hãy sao chép key ở trên.'); } }}>{copied ? 'Đã sao chép' : 'Sao chép'}</button><button className={`${button} ml-2`} onClick={() => setSecret('')}>Ẩn key</button></div>}
       <QueryBoundary query={keysQuery}>{({ keys }) => <div className="mt-4 space-y-3">{!keys.length && <p className="text-sm text-muted">Chưa có key nào.</p>}{keys.map(key => <div key={key.keyId} className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3"><div><p className="text-sm font-semibold">{key.name} · {key.status === 'active' ? 'Đang dùng' : 'Đã thu hồi'}</p><p className="text-xs text-muted">{key.keyId} · {new Date(key.createdAt).toLocaleString('vi-VN')} · {key.apiIds?.length ? `API: ${key.apiIds.map(id => apiQuery.data?.apis.find(api => api.apiId === id)?.name ?? id).join(', ')}` : 'Chưa có phạm vi API (key cũ, không gọi được proxy)'}</p></div>{key.status === 'active' && <button className={button} disabled={busy} onClick={() => { if (window.confirm(`Thu hồi key của ${key.name}? Ứng dụng dùng key này sẽ mất quyền truy cập.`)) void mutate(async () => { await portalCall(`keys/${key.keyId}`, token, 'DELETE'); setSecret(''); }); }}>Thu hồi</button>}</div>)}</div>}</QueryBoundary>
     </Card>}
     {tab === 'overview' && <>
       <div className="flex flex-wrap items-center gap-3"><label className="text-sm">Khoảng thời gian <select className={input} value={range} onChange={event => setRange(event.target.value)}><option value="1h">1 giờ</option><option value="24h">24 giờ</option><option value="7d">7 ngày</option></select></label><button className={button} onClick={() => void client.invalidateQueries({ queryKey })}>Làm mới</button></div>
       <QueryBoundary query={usageQuery}>{usage => <>
-        <div className="grid gap-3 sm:grid-cols-3">{[['Tổng lượt gọi', usage.totals.requests.toLocaleString('vi-VN')], ['Lượt lỗi', usage.totals.errors.toLocaleString('vi-VN')], ['Thời gian xử lý trung bình', usage.totals.requests ? `${(usage.totals.totalMs / usage.totals.requests).toFixed(1)} ms` : 'Chưa có dữ liệu']].map(([label, value]) => <Card key={label}><p className="text-sm text-ink2">{label}</p><p className="mt-2 text-2xl font-semibold">{value}</p></Card>)}</div>
-        <Card><h2 className="mb-3 font-semibold">Lượt gọi theo thời gian</h2>{!usage.series.length ? <p className="text-sm text-muted">Chưa có lượt gọi được ghi nhận. Proxy và telemetry chưa triển khai.</p> : <UsageChart series={usage.series} />}</Card>
+        <div className="grid gap-3 sm:grid-cols-3">{[['Tổng lượt gọi', usage.totals.requests.toLocaleString('vi-VN')], ['Lượt lỗi', usage.totals.errors.toLocaleString('vi-VN')], ['Thời gian xử lý trung bình', usage.totals.requests ? `${(usage.totals.totalMs / usage.totals.requests).toFixed(1)} ms` : 'Chưa có dữ liệu']].map(([label, value]) => <Card key={label}><p className="text-sm text-ink2">{label}</p><p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p></Card>)}</div>
+        <Card><h2 className="mb-3 font-semibold">Lượt gọi theo thời gian</h2>{!usage.series.length ? <p className="text-sm text-muted">Chưa có lượt gọi nào qua proxy trong khoảng thời gian này.</p> : <UsageChart series={usage.series} />}</Card>
         <div className="grid gap-3 sm:grid-cols-2"><Card><h2 className="mb-3 font-semibold">Theo region</h2>{Object.entries(usage.byRegion).map(([region, counts]) => <p className="text-sm" key={region}>{region}: {counts.requests} lượt gọi · {counts.errors} lỗi</p>)}{!Object.keys(usage.byRegion).length && <p className="text-sm text-muted">Chưa có dữ liệu.</p>}</Card>
         <Card><h2 className="mb-3 font-semibold">Theo API key</h2>{Object.entries(usage.byKey).map(([id, counts]) => <p className="text-sm" key={id}>{keysQuery.data?.keys.find(key => key.keyId === id)?.name ?? id}: {counts.requests} lượt gọi · {counts.errors} lỗi</p>)}{!Object.keys(usage.byKey).length && <p className="text-sm text-muted">Chưa có dữ liệu.</p>}</Card></div>
       </>}</QueryBoundary>

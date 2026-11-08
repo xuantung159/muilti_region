@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Id": "default",
+  "Statement": [
+    {
+      "Sid": "bcd0aca3-a1a7-531c-9aac-bb4a730ab312",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "lambda:InvokeFunction",
+      "Resource": "arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-dashboard",
+      "Condition": {
+        "ArnLike": {
+          "AWS:SourceArn": "arn:aws:execute-api:ap-southeast-1:138150704839:43vakggyh5/*/GET/"
+        }
+      }
+    },
+    {
+      "Sid": "dfb7bca7-83ea-5b26-b277-161cd6788515",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "lambda:InvokeFunction",
+      "Resource": "arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-dashboard",
+      "Condition": {
+        "ArnLike": {
+          "AWS:SourceArn": "arn:aws:execute-api:ap-southeast-1:138150704839:43vakggyh5/*/*/api/*"
+        }
+      }
+    }
+  ]
+}

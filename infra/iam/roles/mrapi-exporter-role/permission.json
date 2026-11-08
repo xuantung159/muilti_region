@@ -1,0 +1,51 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ExportTelemetryTable",
+      "Effect": "Allow",
+      "Action": "dynamodb:ExportTableToPointInTime",
+      "Resource": "arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-telemetry"
+    },
+    {
+      "Sid": "WriteExportObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:AbortMultipartUpload",
+        "s3:PutObjectAcl"
+      ],
+      "Resource": "arn:aws:s3:::mrapi-exports-sg/exports/telemetry/*"
+    },
+    {
+      "Sid": "ReadBucketLocation",
+      "Effect": "Allow",
+      "Action": "s3:GetBucketLocation",
+      "Resource": "arn:aws:s3:::mrapi-exports-sg"
+    },
+    {
+      "Sid": "CreateOwnLogGroup",
+      "Effect": "Allow",
+      "Action": "logs:CreateLogGroup",
+      "Resource": "arn:aws:logs:ap-southeast-1:138150704839:log-group:/aws/lambda/mrapi-exporter:*"
+    },
+    {
+      "Sid": "WriteOwnLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:ap-southeast-1:138150704839:log-group:/aws/lambda/mrapi-exporter:*"
+    },
+    {
+      "Sid": "WriteXRay",
+      "Effect": "Allow",
+      "Action": [
+        "xray:PutTraceSegments",
+        "xray:PutTelemetryRecords"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

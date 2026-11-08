@@ -1,0 +1,8 @@
+﻿# verify 2026-11-01T02:22:09Z
+/health => 200 application/json || X-Served-Region: ap-southeast-1 | X-Cache: Miss from cloudfront | X-Amz-Cf-Pop: HAN50-P3 || {"region":"ap-southeast-1","status":"ok"}
+/monitoring/sources => 200 application/json || X-Cache: Miss from cloudfront | X-Amz-Cf-Pop: HAN50-P3 || [{"id":"api-gateway","service":"API Gateway","regions":"Singapore, Tokyo","status":"connected","metrics":["Cou
+/monitoring/overview => 404 application/json || X-Cache: Error from cloudfront | X-Amz-Cf-Pop: HAN50-P3 || {"error":"not_found"}
+/api/me => 401 application/json || X-Served-Region: ap-southeast-1 | X-Cache: Error from cloudfront | X-Amz-Cf-Pop: HAN50-P3 || {"region":"ap-southeast-1","error":"PhiÃªn Ä‘Äƒng nháº­p khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n"}
+/proxy/not-a-real-api => 401 application/json || X-Cache: Error from cloudfront | X-Amz-Cf-Pop: HAN50-P3 || {"message":"Unauthorized"}
+/ => 200 text/html || X-Cache: Hit from cloudfront | X-Amz-Cf-Pop: HAN50-P3 || <!doctype html> <html lang="vi"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="
+/portal => 200 text/html || X-Cache: Hit from cloudfront | X-Amz-Cf-Pop: HAN50-P3 || <!doctype html> <html lang="vi"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="

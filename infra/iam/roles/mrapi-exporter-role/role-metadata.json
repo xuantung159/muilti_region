@@ -1,0 +1,20 @@
+{
+  "Path": "/",
+  "RoleName": "mrapi-exporter-role",
+  "RoleId": "AROASAKTMO3DWFMIXVZZ5",
+  "Arn": "arn:aws:iam::138150704839:role/mrapi-exporter-role",
+  "AssumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "lambda.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "Description": "Lambda mrapi-exporter: export mrapi-telemetry to S3",
+  "MaxSessionDuration": 3600
+}

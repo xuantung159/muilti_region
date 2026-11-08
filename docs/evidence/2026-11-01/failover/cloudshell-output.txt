@@ -1,0 +1,121 @@
+Trich tu CloudShell ngay 2026-11-01, gio UTC. Khong co gia tri env. File goc nam trong ~/fo tren CloudShell ap-southeast-1.
+
+== Stage truoc khi sua (methodSettings)
+Ca hai Region: chi co "*/*": throttlingRateLimit 10000.0, throttlingBurstLimit 5000.
+lastUpdatedDate cu: SG 2026-10-25T09:18:37Z, Tokyo 2026-10-25T09:03:09Z.
+
+== Stage sau khi sua
+Them khoa "~1monitoring~1{proxy+}/GET": rate 5.0, burst 10. Cac truong khac cua khoa nay ke thua metrics/logging tu "*/*".
+Diff chi co khoa moi va lastUpdatedDate. update luc SG 01:12:53Z, Tokyo 01:12:55Z.
+
+== mrapi-monitoring
+Tokyo cu: Sfs9t0zX5w1mHr5w5oq6mho31FdaU6qOKuogGUFnMmE= (LastModified 2026-10-25T16:30:49Z)
+SG:       tCPCJhwbA9rdAoCWC1fCrvblPJTzR9DnbuIQIdsXugs=
+SHA-256 base64 cua ZIP tai ve: tCPCJhwbA9rdAoCWC1fCrvblPJTzR9DnbuIQIdsXugs= (3.831.238 byte)
+Tokyo moi: tCPCJhwbA9rdAoCWC1fCrvblPJTzR9DnbuIQIdsXugs= Successful LastModified 2026-11-01T01:13:39Z
+Tokyo: snapshot 200 25855 byte, endpoints 200 969 byte, incidents 200 1565 byte, sources 200 2213 byte
+
+== Dot thu throttle (40 request song song, /demo/monitoring/sources, khoang 01:14Z)
+SG:    10x200, 30x500
+Tokyo: 27x200, 2x429, 11x500
+Log API Gateway: "Lambda invocation failed with status: 429", "Execution failed due to configuration error"
+Quota Lambda: ConcurrentExecutions 10, Unreserved 10 o ca hai Region
+
+== HEALTH_PORCE_FAIL
+SG    01:15:27-01:15:29Z others_unchanged True nkeys 5 -> 4
+Tokyo 01:15:31-01:15:35Z others_unchanged True nkeys 5 -> 4
+keys con lai: CONTROL_TABLE PROJECT TELEMETRY_RETENTION_DAYS TELEMETRY_TABLE
+
+== Poller CloudShell, chi dong co thay doi. sg/tyo = so checker Success
+poll1
+01:17:30,sg=15,tyo=15,d_sg=503,d_tyo=200,al=OK/OK
+01:18:43,sg=8,tyo=15,d_sg=503,d_tyo=200,al=OK/OK
+01:18:58,sg=5,tyo=15,d_sg=503,d_tyo=200,al=OK/OK
+01:19:13,sg=0,tyo=15,d_sg=503,d_tyo=200,al=OK/OK
+01:20:42,sg=0,tyo=16,d_sg=503,d_tyo=200,al=OK/OK
+01:20:57,sg=0,tyo=16,d_sg=503,d_tyo=200,al=ALARM/OK
+01:21:27,sg=0,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:22:41,sg=6,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:22:56,sg=14,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:23:11,sg=15,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:25:54,sg=15,tyo=16,d_sg=200,d_tyo=200,al=OK/OK
+poll2
+01:27:45,sg=15,tyo=16,d_sg=503,d_tyo=200,al=OK/OK
+01:28:59,sg=7,tyo=16,d_sg=503,d_tyo=200,al=OK/OK
+01:29:14,sg=2,tyo=16,d_sg=503,d_tyo=200,al=OK/OK
+01:29:30,sg=0,tyo=16,d_sg=503,d_tyo=200,al=OK/OK
+01:30:59,sg=0,tyo=16,d_sg=503,d_tyo=200,al=ALARM/OK
+01:31:58,sg=0,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:33:02,sg=4,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:33:17,sg=13,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:33:31,sg=16,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:36:00,sg=16,tyo=16,d_sg=200,d_tyo=200,al=OK/OK
+poll3
+01:37:43,sg=16,tyo=16,d_sg=503,d_tyo=200,al=OK/OK
+01:38:57,sg=8,tyo=16,d_sg=503,d_tyo=200,al=OK/OK
+01:39:11,sg=4,tyo=16,d_sg=503,d_tyo=200,al=OK/OK
+01:39:26,sg=0,tyo=16,d_sg=503,d_tyo=200,al=OK/OK
+01:40:55,sg=0,tyo=16,d_sg=503,d_tyo=200,al=ALARM/OK
+01:41:11,sg=0,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:42:12,sg=2,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:42:27,sg=11,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:42:41,sg=16,tyo=16,d_sg=200,d_tyo=200,al=ALARM/OK
+01:45:56,sg=16,tyo=16,d_sg=200,d_tyo=200,al=OK/OK
+
+== Env mrapi-proxy SG trong 3 lan do
+run1 set    START 01:17:24 ACCEPTED 01:17:25 DONE 01:17:27, direct 503 "forced"
+run1 remove START 01:21:19 ACCEPTED 01:21:20 DONE 01:21:22, direct 200
+run2 set    START 01:27:39 ACCEPTED 01:27:40 DONE 01:27:42, direct 503 "forced"
+run2 remove START 01:31:42 ACCEPTED 01:31:44 DONE 01:31:45, direct 200
+run3 set    START 01:37:37 ACCEPTED 01:37:38 DONE 01:37:40, direct 503 "forced"
+run3 remove START 01:40:53 ACCEPTED 01:40:55 DONE 01:40:57, direct 200
+Moi lan: others_unchanged True, sau khi go has HEALTH_FORCE_FAIL False
+
+== Alarm history
+us-east-1 StateUpdate
+01:20:48.691 mrapi-health-sg OK to ALARM
+01:25:48.689 mrapi-health-sg ALARM to OK
+01:30:48.690 mrapi-health-sg OK to ALARM
+01:35:48.694 mrapi-health-sg ALARM to OK
+01:40:48.690 mrapi-health-sg OK to ALARM
+01:45:48.690 mrapi-health-sg ALARM to OK
+us-east-1 Action
+01:20:48.758 mrapi-health-sg Successfully executed action SNS mrapi-alerts
+01:30:48.736 mrapi-health-sg Successfully executed action SNS mrapi-alerts
+01:40:48.742 mrapi-health-sg Successfully executed action SNS mrapi-alerts
+ap-southeast-1 StateUpdate
+01:15:37.825 mrapi-sg-api-5xx OK to ALARM (do dot thu throttle)
+01:16:37.819 mrapi-sg-api-5xx ALARM to OK
+01:18:37.818 mrapi-sg-api-5xx OK to ALARM
+01:23:37.820 mrapi-sg-api-5xx ALARM to OK
+01:29:37.819 mrapi-sg-api-5xx OK to ALARM
+01:34:37.820 mrapi-sg-api-5xx ALARM to OK
+01:39:37.817 mrapi-sg-api-5xx OK to ALARM
+01:43:37.818 mrapi-sg-api-5xx ALARM to OK
+ap-southeast-1 Action
+01:15:37.867 mrapi-sg-api-5xx Successfully executed action SNS mrapi-alerts (do dot thu throttle)
+01:18:37.861 mrapi-sg-api-5xx Successfully executed action SNS mrapi-alerts
+01:29:37.863 mrapi-sg-api-5xx Successfully executed action SNS mrapi-alerts
+01:39:37.859 mrapi-sg-api-5xx Successfully executed action SNS mrapi-alerts
+ap-northeast-1 StateUpdate
+01:15:28.280 mrapi-tyo-api-5xx OK to ALARM (do dot thu throttle)
+01:16:28.275 mrapi-tyo-api-5xx ALARM to OK
+ap-northeast-1 Action
+01:15:28.327 mrapi-tyo-api-5xx Successfully executed action SNS mrapi-alerts (do dot thu throttle)
+
+== Metric HealthCheckStatus cua SG, cac phut Minimum < 1
+01:19 01:20 01:21 01:22 01:23 | 01:29 01:30 01:31 01:32 01:33 | 01:39 01:40 01:41 01:42 01:43
+
+== Trang thai cuoi, 01:47:36Z
+01:47:42,hcOK_sg=16,hcOK_tyo=16,direct_sg=200,direct_tyo=200,alarm_sg_tyo=OK/OK
+ap-southeast-1: mrapi-sg-api-5xx, api-latency, lambda-errors, telemetry-write-failed deu OK
+ap-northeast-1: mrapi-tyo-api-5xx, api-latency, lambda-errors, telemetry-write-failed deu OK
+mrapi-proxy env (ca hai Region): CONTROL_TABLE PROJECT TELEMETRY_RETENTION_DAYS TELEMETRY_TABLE, FORCE False, PORCE False, hash eb132f0e5cd9 giong nhau
+CodeSha256 (giong nhau o ca hai Region, Successful):
+mrapi-proxy      Ot7hINFMLTRDaFPXDvOFw+1XiH1lHHQK6kERyUu/HIA=
+mrapi-authorizer rVBoGTgN7bcEKk9b82GX1I65U/8e4prTfy0c3FHsLOM=
+mrapi-dashboard  mggBHJ5biFepPFOy/1dwPt4+gO8QvVi8Lg2CFz0ZzCo=
+mrapi-monitoring tCPCJhwbA9rdAoCWC1fCrvblPJTzR9DnbuIQIdsXugs=
+Throttle doc lai: SG 5.0/10, Tokyo 5.0/10
+/monitoring snapshot, endpoints, incidents, sources: tyo=200 sg=200
+May local 01:48:08Z: https://api.multi-region.io.vn/health 200, X-Served-Region ap-southeast-1

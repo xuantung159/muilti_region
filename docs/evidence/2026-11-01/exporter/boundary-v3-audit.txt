@@ -1,0 +1,44 @@
+CloudShell us-east-1, 01/11/2026, user admin. Giờ UTC. Nội dung chép từ terminal.
+
+== Role gắn mrapi-workload-boundary (list-entities + get-role từng role, trước khi đổi)
+list-entities-for-policy: roles = mrapi-test, mrapi-dashboard-role, mrapi-proxy-role, mrapi-authorizer-role, mrapi-monitoring-role; users = 0; groups = 0
+Quét toàn bộ statement Allow của inline + attached, so wildcard và cả NotAction, với s3:AbortMultipartUpload, s3:PutObjectAcl:
+mrapi-authorizer-role  inline mrapi-authorizer-data-access (4 statement)    0 khớp
+mrapi-dashboard-role   inline mrapi-dashboard-access (5), ReadTelemetry (1) 0 khớp
+mrapi-monitoring-role  inline Policymrapi-monitoring-access (6)             0 khớp
+mrapi-proxy-role       inline mrapi-proxy-data-access (5)                   0 khớp
+mrapi-test             không có policy nào                                  0 khớp
+Attached policy: không role nào có.
+Kết luận: không role có sẵn nào nhận thêm 2 action này.
+
+== Version trước khi đổi: v2 (default), v1. Chưa đủ 5.
+
+== Diff v2 -> v3 (chuẩn hóa indent 4, diff v2n.json v3.json)
+71c71,73
+<                 "s3:ObjectOwnerOverrideToBucketOwner"
+---
+>                 "s3:ObjectOwnerOverrideToBucketOwner",
+>                 "s3:AbortMultipartUpload",
+>                 "s3:PutObjectAcl"
+Dòng 71 chỉ thêm dấu phẩy, thực chất 2 action mới. Resource của ProjectBuckets giữ nguyên: arn:aws:s3:::mrapi-*, arn:aws:s3:::mrapi-*/*.
+sha256 v2 82cbc2967fa695886db323256bef80d6ff67cb2316f9c7af58078cec262c153f (khớp boundary-v2.json)
+sha256 v3 37272aff95944b259ff6a6083b0df72be0682ea802b1e0750c51a8c8ac9dba00 (khớp boundary-v3.json)
+Tạo v3 với --no-set-as-default, đọc lại: Document == v3.json (True). Sau đó set-default-policy-version v3.
+Version hiện tại: v3 default (2026-11-01T04:01:49), v2 (2026-10-28T01:43:42), v1 (2026-10-14T11:49:06).
+
+== Kiểm tra: trước 04:00:51Z, sau v3 04:02:18Z, cuối 04:15:31Z. Kết quả giống nhau cả 3 lần
+200 ap-southeast-1 43vakggyh5.../demo/health
+401 ap-southeast-1 43vakggyh5.../demo/api/me
+200                43vakggyh5.../demo/monitoring/sources
+200 ap-northeast-1 n39r5pits8.../demo/health
+401 ap-northeast-1 n39r5pits8.../demo/api/me
+200                n39r5pits8.../demo/monitoring/sources
+200 ap-northeast-1 api.multi-region.io.vn/health
+401 ap-northeast-1 api.multi-region.io.vn/api/me
+200                api.multi-region.io.vn/monitoring/sources
+200 ap-northeast-1 app.multi-region.io.vn/health
+401 ap-northeast-1 app.multi-region.io.vn/api/me
+200                app.multi-region.io.vn/monitoring/sources
+10 alarm OK cả 3 lần: us-east-1 mrapi-health-sg, mrapi-health-tyo; SG mrapi-sg-api-5xx, -api-latency, -lambda-errors, -telemetry-write-failed; TYO mrapi-tyo-api-5xx, -api-latency, -lambda-errors, -telemetry-write-failed.
+Lần cuối thêm mrapi-sg-exporter-errors OK (tổng 11).
+Cột vùng lấy từ header X-Served-Region. /monitoring/sources không trả header này.

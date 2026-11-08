@@ -1,6 +1,59 @@
 {
   "project": "mrapi",
-  "domain": "",
-  "hostedZoneId": "",
-  "roles": { "api": "", "dashboard": "", "authorizer": "arn:aws:iam::138150704839:role/mrapi-authorizer-role", "monitoring": "", "s3Replication": "" }
+  "domain": "multi-region.io.vn",
+  "hostedZoneId": "Z03093462BF2L4GV4FGRD",
+  "route53": {
+    "delegationStatus": "VERIFIED_PUBLIC_DNS",
+    "nameServers": [
+      "ns-179.awsdns-22.com",
+      "ns-2031.awsdns-61.co.uk",
+      "ns-860.awsdns-43.net",
+      "ns-1037.awsdns-01.org"
+    ],
+    "healthChecks": {
+      "ap-southeast-1": "c7764d38-b17d-44df-8d44-4f2791296adc",
+      "ap-northeast-1": "bfa2df95-4abf-40d2-a240-dbd04acf735c"
+    },
+    "frontendHostname": "app.multi-region.io.vn",
+    "apiHostname": "api.multi-region.io.vn",
+    "latencyRecordsCreated": true,
+    "apiMappingsStatus": "AVAILABLE_ROOT_TO_DEMO_BOTH_REGIONS",
+    "regionalTargets": {
+      "ap-southeast-1": {
+        "hostedZoneId": "ZL327KTPIQFUL",
+        "domainName": "d-zd1hv50jn0.execute-api.ap-southeast-1.amazonaws.com"
+      },
+      "ap-northeast-1": {
+        "hostedZoneId": "Z1YSHQZHG15GKL",
+        "domainName": "d-csqvriesoh.execute-api.ap-northeast-1.amazonaws.com"
+      }
+    },
+    "apiHttpsStatus": "VERIFIED_DEFAULT_RESOLVER_AND_BOTH_REGIONS_WITH_RESOLVE",
+    "recursiveDnsStatus": "VERIFIED_LOCAL_GOOGLE_CLOUDFLARE",
+    "dnsHttpsVerifiedAt": "2026-10-28T08:12:55+07:00"
+  },
+  "acm": {
+    "us-east-1": "arn:aws:acm:us-east-1:138150704839:certificate/30c505e1-65b2-4b90-b151-d600c9c3083a",
+    "ap-southeast-1": "arn:aws:acm:ap-southeast-1:138150704839:certificate/cede38ce-71f3-42e0-9b1f-ac2f7448eab0",
+    "ap-northeast-1": "arn:aws:acm:ap-northeast-1:138150704839:certificate/c1a76b1f-060a-459e-aa39-4f2e8fda450e"
+  },
+  "cloudFront": {
+    "distributionId": "E33WCNP66CDRPQ",
+    "domainName": "d2hkrs5dvlrte6.cloudfront.net",
+    "baseUrl": "https://app.multi-region.io.vn",
+    "hostingBucket": "mrapi-web-sg",
+    "originAccessControlId": "EWN75AS66OW4A",
+    "spaFunction": "mrapi-spa-router",
+    "apiOrigin": "api.multi-region.io.vn"
+  },
+  "roles": {
+    "api": "arn:aws:iam::138150704839:role/mrapi-proxy-role",
+    "dashboard": "arn:aws:iam::138150704839:role/mrapi-dashboard-role",
+    "authorizer": "arn:aws:iam::138150704839:role/mrapi-authorizer-role",
+    "monitoring": "arn:aws:iam::138150704839:role/mrapi-monitoring-role",
+    "s3Replication": {
+      "ap-southeast-1": "arn:aws:iam::138150704839:role/service-role/s3crr_role_for_mrapi-exports-sg",
+      "ap-northeast-1": "arn:aws:iam::138150704839:role/service-role/s3crr_role_for_mrapi-exports-tyo_1"
+    }
+  }
 }

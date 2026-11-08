@@ -1,0 +1,16 @@
+{
+  "id": "43vakggyh5",
+  "name": "mrapi-api-sg",
+  "apiKeySource": "HEADER",
+  "endpointConfiguration": {
+    "types": [
+      "REGIONAL"
+    ],
+    "ipAddressType": "ipv4"
+  },
+  "disableExecuteApiEndpoint": false,
+  "rootResourceId": "z4gt2uyobh",
+  "securityPolicy": "SecurityPolicy_TLS13_1_2_2021_06",
+  "endpointAccessMode": "STRICT",
+  "apiStatus": "AVAILABLE"
+}

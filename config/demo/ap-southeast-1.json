@@ -5,13 +5,15 @@
     "telemetry": "mrapi-telemetry"
   },
   "functions": {
-    "api": "mrapi-api",
+    "api": "mrapi-proxy",
     "dashboard": "mrapi-dashboard",
-    "authorizer": "mrapi-authorizer"
+    "authorizer": "mrapi-authorizer",
+    "monitoring": "mrapi-monitoring"
   },
   "apiGateway": {
-    "apiId": "",
+    "apiId": "43vakggyh5",
     "stage": "demo",
-    "baseUrl": ""
-  }
+    "baseUrl": "https://43vakggyh5.execute-api.ap-southeast-1.amazonaws.com/demo"
+  },
+  "exportBucket": "mrapi-exports-sg"
 }

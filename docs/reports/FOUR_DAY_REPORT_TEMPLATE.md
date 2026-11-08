@@ -1,6 +1,6 @@
 # Mẫu báo cáo đợt 15–18/10/2026
 
-Sao chép thành `docs/reports/2026-10-18-L.md` (hoặc A/B/C). Đây là mẫu, chưa phải báo cáo hoàn thành. Deadline cuối ngày 18/10, giờ Việt Nam. Xem [phân công](../WORK_ASSIGNMENT.md).
+Sao chép thành `docs/reports/2026-10-18-L.md` (hoặc A/B/C). Đây là mẫu, chưa phải báo cáo hoàn thành. Deadline cuối ngày 18/10, giờ Việt Nam. Xem [phân công](../phan-cong.md).
 
 ## 1. Thông tin
 
@@ -24,7 +24,7 @@ Ghi riêng việc mock/local và AWS thật; không ghi DONE cho đầu việc c
 |---|---|---|---|---|
 | … | … | … | … | … |
 
-Ghi handler/env không secret, role/policy, schema/query, route/authorizer/stage tùy phần. Các giá trị đã đối chiếu Console phải lưu vào infra theo runbook RECORD_CONSOLE_CONFIG.
+Ghi handler/env không secret, role/policy, schema/query, route/authorizer/stage tùy phần. Các giá trị đã đối chiếu Console phải lưu vào infra theo runbook ghi-cau-hinh-console.
 
 ## 4. Test và hướng dẫn chạy lại
 

@@ -1,0 +1,203 @@
+{
+  "items": [
+    {
+      "id": "2c92og",
+      "parentId": "m6fnc6",
+      "pathPart": "{proxy+}",
+      "path": "/api/{proxy+}",
+      "resourceMethods": {
+        "ANY": {
+          "httpMethod": "ANY",
+          "authorizationType": "NONE",
+          "apiKeyRequired": false,
+          "requestParameters": {
+            "method.request.path.proxy": true
+          },
+          "methodResponses": {
+            "200": {
+              "statusCode": "200"
+            }
+          },
+          "methodIntegration": {
+            "type": "AWS_PROXY",
+            "httpMethod": "POST",
+            "uri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:138150704839:function:mrapi-dashboard/invocations",
+            "passthroughBehavior": "WHEN_NO_MATCH",
+            "timeoutInMillis": 29000,
+            "cacheNamespace": "2c92og",
+            "cacheKeyParameters": [],
+            "responseTransferMode": "BUFFERED"
+          }
+        }
+      }
+    },
+    {
+      "id": "d2wdhx",
+      "parentId": "u0t32dzc2i",
+      "pathPart": "monitoring",
+      "path": "/monitoring"
+    },
+    {
+      "id": "k08u8r",
+      "parentId": "u0t32dzc2i",
+      "pathPart": "health",
+      "path": "/health",
+      "resourceMethods": {
+        "GET": {
+          "httpMethod": "GET",
+          "authorizationType": "NONE",
+          "apiKeyRequired": false,
+          "methodResponses": {
+            "200": {
+              "statusCode": "200"
+            }
+          },
+          "methodIntegration": {
+            "type": "AWS_PROXY",
+            "httpMethod": "POST",
+            "uri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:138150704839:function:mrapi-proxy/invocations",
+            "passthroughBehavior": "WHEN_NO_MATCH",
+            "timeoutInMillis": 29000,
+            "cacheNamespace": "k08u8r",
+            "cacheKeyParameters": [],
+            "responseTransferMode": "BUFFERED"
+          }
+        }
+      }
+    },
+    {
+      "id": "m6fnc6",
+      "parentId": "u0t32dzc2i",
+      "pathPart": "api",
+      "path": "/api"
+    },
+    {
+      "id": "obz1q4",
+      "parentId": "pp5u44",
+      "pathPart": "{proxy+}",
+      "path": "/proxy/{apiId}/{proxy+}",
+      "resourceMethods": {
+        "ANY": {
+          "httpMethod": "ANY",
+          "authorizationType": "CUSTOM",
+          "authorizerId": "n7sdca",
+          "apiKeyRequired": false,
+          "requestParameters": {
+            "method.request.path.apiId": true,
+            "method.request.path.proxy": true
+          },
+          "methodResponses": {
+            "200": {
+              "statusCode": "200"
+            }
+          },
+          "methodIntegration": {
+            "type": "AWS_PROXY",
+            "httpMethod": "POST",
+            "uri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:138150704839:function:mrapi-proxy/invocations",
+            "passthroughBehavior": "WHEN_NO_MATCH",
+            "timeoutInMillis": 29000,
+            "cacheNamespace": "obz1q4",
+            "cacheKeyParameters": [],
+            "responseTransferMode": "BUFFERED"
+          }
+        }
+      }
+    },
+    {
+      "id": "pp5u44",
+      "parentId": "rzsu03",
+      "pathPart": "{apiId}",
+      "path": "/proxy/{apiId}",
+      "resourceMethods": {
+        "ANY": {
+          "httpMethod": "ANY",
+          "authorizationType": "CUSTOM",
+          "authorizerId": "n7sdca",
+          "apiKeyRequired": false,
+          "requestParameters": {
+            "method.request.path.apiId": true
+          },
+          "methodResponses": {
+            "200": {
+              "statusCode": "200"
+            }
+          },
+          "methodIntegration": {
+            "type": "AWS_PROXY",
+            "httpMethod": "POST",
+            "uri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:138150704839:function:mrapi-proxy/invocations",
+            "passthroughBehavior": "WHEN_NO_MATCH",
+            "timeoutInMillis": 29000,
+            "cacheNamespace": "pp5u44",
+            "cacheKeyParameters": [],
+            "responseTransferMode": "BUFFERED"
+          }
+        }
+      }
+    },
+    {
+      "id": "rzsu03",
+      "parentId": "u0t32dzc2i",
+      "pathPart": "proxy",
+      "path": "/proxy"
+    },
+    {
+      "id": "u0t32dzc2i",
+      "path": "/",
+      "resourceMethods": {
+        "GET": {
+          "httpMethod": "GET",
+          "authorizationType": "NONE",
+          "apiKeyRequired": false,
+          "methodResponses": {
+            "200": {
+              "statusCode": "200"
+            }
+          },
+          "methodIntegration": {
+            "type": "AWS_PROXY",
+            "httpMethod": "POST",
+            "uri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:138150704839:function:mrapi-dashboard/invocations",
+            "passthroughBehavior": "WHEN_NO_MATCH",
+            "timeoutInMillis": 29000,
+            "cacheNamespace": "u0t32dzc2i",
+            "cacheKeyParameters": [],
+            "responseTransferMode": "BUFFERED"
+          }
+        }
+      }
+    },
+    {
+      "id": "yebk6v",
+      "parentId": "d2wdhx",
+      "pathPart": "{proxy+}",
+      "path": "/monitoring/{proxy+}",
+      "resourceMethods": {
+        "GET": {
+          "httpMethod": "GET",
+          "authorizationType": "NONE",
+          "apiKeyRequired": false,
+          "requestParameters": {
+            "method.request.path.proxy": true
+          },
+          "methodResponses": {
+            "200": {
+              "statusCode": "200"
+            }
+          },
+          "methodIntegration": {
+            "type": "AWS_PROXY",
+            "httpMethod": "POST",
+            "uri": "arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-northeast-1:138150704839:function:mrapi-monitoring/invocations",
+            "passthroughBehavior": "WHEN_NO_MATCH",
+            "timeoutInMillis": 29000,
+            "cacheNamespace": "yebk6v",
+            "cacheKeyParameters": [],
+            "responseTransferMode": "BUFFERED"
+          }
+        }
+      }
+    }
+  ]
+}

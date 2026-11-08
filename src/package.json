@@ -4,13 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test ../tests/control-plane/*.test.mjs",
+    "test": "node --test ../tests/control-plane/*.test.mjs ../tests/monitoring/*.test.mjs",
     "package": "node ../scripts/package-lambdas.mjs",
     "test:e2e": "node ../tests/e2e/control-plane.mjs",
     "test:e2e:proxy": "node ../tests/e2e/proxy.mjs",
     "test:telemetry": "node ../tests/telemetry/telemetry-table.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.1156.0",
     "@aws-sdk/client-dynamodb": "^3.0.0",
     "@aws-sdk/lib-dynamodb": "^3.0.0",
     "@aws-sdk/client-route-53": "^3.0.0"

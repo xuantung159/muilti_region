@@ -1,31 +1,18 @@
 {
-  "Version": "2012-10-17",
+  "Version": "2008-10-17",
+  "Id": "__default_policy_ID",
   "Statement": [
     {
-      "Sid": "OwnerManagesTopic",
+      "Sid": "__default_statement_ID",
       "Effect": "Allow",
-      "Principal": { "AWS": "arn:aws:iam::138150704839:root" },
-      "Action": ["sns:Publish", "sns:Subscribe", "sns:GetTopicAttributes", "sns:SetTopicAttributes", "sns:ListSubscriptionsByTopic", "sns:DeleteTopic"],
-      "Resource": "arn:aws:sns:us-east-1:138150704839:mrapi-alerts"
-    },
-    {
-      "Sid": "AllowBudgetsPublish",
-      "Effect": "Allow",
-      "Principal": { "Service": "budgets.amazonaws.com" },
-      "Action": "sns:Publish",
+      "Principal": { "AWS": "*" },
+      "Action": [
+        "SNS:Publish", "SNS:RemovePermission", "SNS:SetTopicAttributes",
+        "SNS:DeleteTopic", "SNS:ListSubscriptionsByTopic", "SNS:GetTopicAttributes",
+        "SNS:AddPermission", "SNS:Subscribe"
+      ],
       "Resource": "arn:aws:sns:us-east-1:138150704839:mrapi-alerts",
-      "Condition": {
-        "StringEquals": { "aws:SourceAccount": "138150704839" },
-        "ArnLike": { "aws:SourceArn": "arn:aws:budgets::138150704839:*" }
-      }
-    },
-    {
-      "Sid": "AllowCloudWatchAlarmsPublish",
-      "Effect": "Allow",
-      "Principal": { "Service": "cloudwatch.amazonaws.com" },
-      "Action": "sns:Publish",
-      "Resource": "arn:aws:sns:us-east-1:138150704839:mrapi-alerts",
-      "Condition": { "StringEquals": { "aws:SourceAccount": "138150704839" } }
+      "Condition": { "StringEquals": { "AWS:SourceAccount": "138150704839" } }
     }
   ]
 }

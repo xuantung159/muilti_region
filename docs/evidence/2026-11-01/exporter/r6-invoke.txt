@@ -1,0 +1,31 @@
+Invoke đúng một lần bằng script r6.sh, AWS_MAX_ATTEMPTS=1. Metric Invocations 30 phút = 1, Errors = 0.
+
+invoke_start 2026-11-01T04:11:42Z
+200 None $LATEST
+{"exportArn":"arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-telemetry/export/01793506305633-58e93d13","status":"IN_PROGRESS","clientToken":"mrapi-telemetry-2026-11-01"}
+Log: REPORT Duration 1091.85 ms, Billed 1418 ms, Memory 128 MB, Max Memory Used 96 MB, Init 325.37 ms
+X-Ray: trace 1-6ae6bc00-5e674c6b303662fd55c0a4af, HasError False, HasFault False, 1.535 s
+
+describe-export: COMPLETED, StartTime 04:11:45.633, EndTime 04:13:48.605 (123 s), ItemCount 27, BilledSizeBytes 9241, FailureCode null
+S3Prefix exports/telemetry, manifest exports/telemetry/AWSDynamoDB/01793506305633-58e93d13/manifest-summary.json
+Không đọc nội dung object, chỉ list và head-object.
+
+Thời gian đo bằng poll
+invoke -> script thấy COMPLETED: 132 s (04:13:54Z)
+COMPLETED -> toàn bộ object ReplicationStatus COMPLETED: <= 45 s (04:14:39Z), poll 15 s
+Tổng từ invoke: 177 s
+
+Object mới trong prefix exports/telemetry/AWSDynamoDB/01793506305633-58e93d13/. Cột: key | SG status, ETag, size | TYO status, ETag, size
+_started | COMPLETED "59adb24ef3cdbe0297f05b395827453f-1" 0 | REPLICA cùng ETag 0
+data/fv2mypjrnayg7eu2dlqwo6v77y.json.gz | COMPLETED "d711353a6db1c799df15b20b618234e9-1" 286 | REPLICA cùng ETag 286
+data/mcx2m5bf24zezem3gkuhhlrj2y.json.gz | COMPLETED "910786c10ee1f9f2f88c7f87f961691a-1" 562 | REPLICA cùng ETag 562
+data/motpm6s63m5znoucvp5dlxvtle.json.gz | COMPLETED "8a2cfc3ecac79c92beda3a876fc2bdf2-1" 1069 | REPLICA cùng ETag 1069
+data/s2pfztudim33lnebib5mijfccm.json.gz | COMPLETED "07a5b4f228fa70d5c329ad1130bab8ba-1" 726 | REPLICA cùng ETag 726
+manifest-files.json | COMPLETED "e5340227175d2771f90ee93ec1e8d0d3-1" 853 | REPLICA cùng ETag 853
+manifest-files.md5 | COMPLETED "dd9eedb98ba60bd9091a45c12ad90a6b-1" 24 | REPLICA cùng ETag 24
+manifest-summary.json | COMPLETED "ba8a69d22c19b96aeba0d53bc1913a3f-1" 655 | REPLICA cùng ETag 655
+manifest-summary.md5 | COMPLETED "6c26702964b7aa6e5492d17cd0d7fb36-1" 24 | REPLICA cùng ETag 24
+
+ETag có hậu tố -1: DynamoDB ghi bằng multipart, nên AbortMultipartUpload là quyền cần thật.
+
+Danh sách export của bảng sau khi chạy: 01793506305633-58e93d13 (mới), 01793499887258-66a60a29, 01792752415680-452d01dd (2 export cũ), đều COMPLETED.

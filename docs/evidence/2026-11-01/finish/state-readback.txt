@@ -1,0 +1,70 @@
+Đọc bằng boto3 chỉ đọc trong CloudShell SG, 03:08 và lặp lại 03:14:58 UTC. Env chỉ ghi tên và hash; email không in, SNS chỉ có trạng thái.
+
+== LAMBDA (tên, Region, CodeSha256, runtime, handler, memory, timeout, role, arch, tracing, LastModified, hash env 16 ký tự)
+proxy SG  Ot7hINFMLTRDaFPXDvOFw+lXiH1lHHQK6kERyUu/HIA= nodejs24.x api/index.handler 256 15 mrapi-proxy-role arm64 Active 2026-11-01T02:50 env eb132f0e5cd9bb47
+proxy TYO Ot7hINFMLTRDaFPXDvOFw+lXiH1lHHQK6kERyUu/HIA= nodejs24.x api/index.handler 256 15 mrapi-proxy-role arm64 Active 2026-11-01T02:42 env eb132f0e5cd9bb47
+authorizer SG  rVBoGTgN7bcEKk9b82GX1I65U/8e4prTfy0c3FHsLOM= nodejs24.x authorizer/index.handler 128 5 mrapi-authorizer-role arm64 Active 2026-10-25T16:24 env 95e527745bfa06c9
+authorizer TYO rVBoGTgN7bcEKk9b82GX1I65U/8e4prTfy0c3FHsLOM= nodejs24.x authorizer/index.handler 128 5 mrapi-authorizer-role arm64 Active 2026-10-25T16:29 env 95e527745bfa06c9
+dashboard SG  mggBHJ5biFepPFOy/1dwPt4+gO8QvVi8Lg2CFz0ZzCo= nodejs24.x dashboard/index.handler 256 10 mrapi-dashboard-role arm64 Active 2026-10-25T16:25 env 8b0189a4691199af
+dashboard TYO mggBHJ5biFepPFOy/1dwPt4+gO8QvVi8Lg2CFz0ZzCo= nodejs24.x dashboard/index.handler 256 10 mrapi-dashboard-role arm64 Active 2026-10-25T16:30 env 8b0189a4691199af
+monitoring SG  f5BTOxk7f/SurRRfm2aTQJTufyavWbmqqh2qi127CGY= nodejs24.x monitoring/index.handler 128 5 mrapi-monitoring-role arm64 Active 2026-11-01T03:05 env 24c986d562d78033
+monitoring TYO f5BTOxk7f/SurRRfm2aTQJTufyavWbmqqh2qi127CGY= nodejs24.x monitoring/index.handler 128 5 mrapi-monitoring-role arm64 Active 2026-11-01T03:05 env 24c986d562d78033
+
+== PARITY (CodeSha256, Runtime, Handler, MemorySize, Timeout, Role, từng biến env)
+proxy MATCH
+authorizer MATCH
+dashboard MATCH
+monitoring MATCH
+
+== SOURCE AWS so với local (bản Tokyo, sha256 16 ký tự sau khi bỏ CR)
+           AWS                local              git HEAD
+proxy      6c186079bfe69cae   6c186079bfe69cae
+authorizer eb3524ed54bd1fb8   eb3524ed54bd1fb8
+dashboard  4411eb02e0f093f5   626c2e559620b11b   4411eb02e0f093f5
+shared/lib 6b16d9d3abd10d9d   6b16d9d3abd10d9d
+monitoring 2ccbba404000f988 (không bỏ CR, trùng local)
+Chỉ so index.mjs và shared/lib.mjs. Chưa so src/api/proxy.mjs, target.mjs, src/dashboard/apis.mjs.
+
+== S3
+mrapi-exports-sg {"Role":"arn:aws:iam::138150704839:role/service-role/s3crr_role_for_mrapi-exports-sg","Rules":[{"ID":"mrapi-sg-to-tyo","Priority":0,"Filter":{"Prefix":"exports/"},"Status":"Enabled","Destination":{"Bucket":"arn:aws:s3:::mrapi-exports-tyo","Metrics":{"Status":"Enabled"}},"DeleteMarkerReplication":{"Status":"Disabled"}}]}
+mrapi-exports-sg versioning Enabled
+mrapi-exports-tyo {"Role":"arn:aws:iam::138150704839:role/service-role/s3crr_role_for_mrapi-exports-tyo_1","Rules":[{"ID":"mrapi-tyo-to-sg","Priority":0,"Filter":{},"Status":"Enabled","Destination":{"Bucket":"arn:aws:s3:::mrapi-exports-sg"},"DeleteMarkerReplication":{"Status":"Disabled"}}]}
+mrapi-exports-tyo versioning Enabled
+
+== DYNAMODB
+mrapi-control SG  ACTIVE replica ap-northeast-1 PITR DISABLED DelProt False TTL ENABLED
+mrapi-control TYO ACTIVE replica ap-southeast-1 PITR DISABLED DelProt False TTL ENABLED
+mrapi-telemetry SG  ACTIVE replica ap-northeast-1 PITR ENABLED DelProt False TTL ENABLED
+mrapi-telemetry TYO ACTIVE replica ap-southeast-1 PITR DISABLED DelProt False TTL ENABLED
+
+== API GATEWAY
+43vakggyh5 mrapi-api-sg REGIONAL, execute-api bật; stage demo deployment r6bin4, xray bật, không WAF, access log /mrapi/apigateway/sg/demo
+n39r5pits8 mrapi-api-tyo REGIONAL, execute-api bật; stage demo deployment fm5wpo, xray bật, không WAF, access log /mrapi/apigateway/tyo/demo
+methodSettings cả 2: */* 10000/5000 INFO metrics; ~1monitoring~1{proxy+}/GET 5/10 INFO metrics
+Authorizer: gq9zp9 (SG), n7sdca (Tokyo), đều mrapi-request-authorizer
+Route cả 2: GET / NONE dashboard; ANY /api/{proxy+} NONE dashboard; GET /health NONE proxy; GET /monitoring/{proxy+} NONE monitoring; ANY /proxy/{apiId} và /proxy/{apiId}/{proxy+} CUSTOM proxy
+
+== ALARM, 03:14:58: 10 alarm OK, không có ALARM hay INSUFFICIENT_DATA
+SG: mrapi-sg-api-5xx, -api-latency, -lambda-errors, -telemetry-write-failed
+TYO: mrapi-tyo-api-5xx, -api-latency, -lambda-errors, -telemetry-write-failed
+us-east-1: mrapi-health-sg, mrapi-health-tyo (HealthCheckStatus, Minimum, 60, <1, breaching)
+OKActions rỗng ở cả 10 alarm.
+
+== SNS: 3 topic, mỗi topic 1 email Confirmed
+== LOG: 6 log group mỗi Region retention 14 ngày; metric filter mrapi-telemetry-write-failed ở 2 Region
+
+== ROUTE 53
+api.multi-region.io.vn. A ap-southeast-1 mrapi-sg c7764d38 d-zd1hv50jn0.execute-api.ap-southeast-1.amazonaws.com. EvaluateTargetHealth False
+api.multi-region.io.vn. A ap-northeast-1 mrapi-tokyo bfa2df95 d-csqvriesoh.execute-api.ap-northeast-1.amazonaws.com. EvaluateTargetHealth False
+app.multi-region.io.vn. A và AAAA alias d2hkrs5dvlrte6.cloudfront.net.
+bfa2df95-4abf-40d2-a240-dbd04acf735c HTTPS n39r5pits8.execute-api.ap-northeast-1.amazonaws.com /demo/health 30 3, 16/16 Success
+c7764d38-b17d-44df-8d44-4f2791296adc HTTPS 43vakggyh5.execute-api.ap-southeast-1.amazonaws.com /demo/health 30 3, 16/16 Success
+
+== CLOUDFRONT E33WCNP66CDRPQ: Deployed, alias app.multi-region.io.vn
+Origin: S3 mrapi-web-sg; mrapi-api-latency api.multi-region.io.vn; mrapi-api-sg 43vakggyh5... /demo
+Behavior: /api/*, /health, /proxy/*, /monitoring/* -> mrapi-api-latency; default -> S3
+
+== Cuối, 03:14:58
+HEALTH_FORCE_FAIL: không có ở mrapi-proxy 2 Region
+/demo/health: SG 200, TYO 200
+Lambda so với lần đọc 03:08: không đổi

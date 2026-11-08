@@ -1,0 +1,58 @@
+{
+  "CompositeAlarms": [],
+  "MetricAlarms": [
+    {
+      "AlarmName": "mrapi-health-sg",
+      "AlarmArn": "arn:aws:cloudwatch:us-east-1:138150704839:alarm:mrapi-health-sg",
+      "AlarmDescription": "Route 53 health check c7764d38-b17d-44df-8d44-4f2791296adc (sg) reports unhealthy.",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:us-east-1:138150704839:mrapi-alerts"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "HealthCheckStatus",
+      "Namespace": "AWS/Route53",
+      "Statistic": "Minimum",
+      "Dimensions": [
+        {
+          "Name": "HealthCheckId",
+          "Value": "c7764d38-b17d-44df-8d44-4f2791296adc"
+        }
+      ],
+      "Period": 60,
+      "EvaluationPeriods": 1,
+      "DatapointsToAlarm": 1,
+      "Threshold": 1.0,
+      "ComparisonOperator": "LessThanThreshold",
+      "TreatMissingData": "breaching"
+    },
+    {
+      "AlarmName": "mrapi-health-tyo",
+      "AlarmArn": "arn:aws:cloudwatch:us-east-1:138150704839:alarm:mrapi-health-tyo",
+      "AlarmDescription": "Route 53 health check bfa2df95-4abf-40d2-a240-dbd04acf735c (tyo) reports unhealthy.",
+      "ActionsEnabled": true,
+      "OKActions": [],
+      "AlarmActions": [
+        "arn:aws:sns:us-east-1:138150704839:mrapi-alerts"
+      ],
+      "InsufficientDataActions": [],
+      "MetricName": "HealthCheckStatus",
+      "Namespace": "AWS/Route53",
+      "Statistic": "Minimum",
+      "Dimensions": [
+        {
+          "Name": "HealthCheckId",
+          "Value": "bfa2df95-4abf-40d2-a240-dbd04acf735c"
+        }
+      ],
+      "Period": 60,
+      "EvaluationPeriods": 1,
+      "DatapointsToAlarm": 1,
+      "Threshold": 1.0,
+      "ComparisonOperator": "LessThanThreshold",
+      "TreatMissingData": "breaching"
+    }
+  ],
+  "LogAlarms": []
+}

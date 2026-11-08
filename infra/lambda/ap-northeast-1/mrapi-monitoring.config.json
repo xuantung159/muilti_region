@@ -1,0 +1,35 @@
+{
+  "FunctionName": "mrapi-monitoring",
+  "FunctionArn": "arn:aws:lambda:ap-northeast-1:138150704839:function:mrapi-monitoring",
+  "Runtime": "nodejs24.x",
+  "Role": "arn:aws:iam::138150704839:role/mrapi-monitoring-role",
+  "Handler": "monitoring/index.handler",
+  "CodeSize": 3831450,
+  "Description": "",
+  "Timeout": 10,
+  "MemorySize": 256,
+  "CodeSha256": "4uFR/KFr2yoPERi0aoHYkpupOyUsKN5p02BWppCcqt0=",
+  "Version": "$LATEST",
+  "TracingConfig": {
+    "Mode": "Active"
+  },
+  "PackageType": "Zip",
+  "Architectures": [
+    "arm64"
+  ],
+  "EphemeralStorage": {
+    "Size": 512
+  },
+  "SnapStart": {
+    "ApplyOn": "None",
+    "OptimizationStatus": "Off"
+  },
+  "LoggingConfig": {
+    "LogFormat": "Text",
+    "LogGroup": "/aws/lambda/mrapi-monitoring"
+  },
+  "EnvironmentVariableNames": [
+    "MONITORING_ALLOWED_ORIGIN",
+    "MONITORING_CONFIG"
+  ]
+}

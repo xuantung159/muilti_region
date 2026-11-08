@@ -5,14 +5,14 @@ import type { Health } from '../domain/status';
 import type { Metric } from '../domain/types';
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-lg border border-line bg-surface p-4 ${className}`}>{children}</section>;
+  return <section className={`rounded-2xl border border-line bg-surface p-5 shadow-sm ${className}`}>{children}</section>;
 }
 
 export function PageHeader({ title, description, actions }: { title: string; description: string; actions?: ReactNode }) {
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="text-xl font-semibold text-ink">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
         <p className="mt-1 text-sm text-ink2">{description}</p>
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -41,9 +41,9 @@ export function HealthBadge({ health, label }: { health: Health; label?: string 
 export function Tag({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'warning' | 'accent' | 'critical' }) {
   const tones = {
     neutral: 'border-line text-ink2',
-    warning: 'border-warning text-ink',
-    accent: 'border-accent text-ink',
-    critical: 'border-critical text-ink',
+    warning: 'border-warning bg-warning/10 text-ink',
+    accent: 'border-accent bg-accent/10 text-ink',
+    critical: 'border-critical bg-critical/10 text-ink',
   };
   return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${tones[tone]}`}>{children}</span>;
 }
@@ -58,7 +58,7 @@ export function KpiCard({ label, metric, format, hint }: { label: string; metric
   return (
     <Card>
       <div className="text-xs font-medium text-ink2">{label}</div>
-      <div className="mt-2 text-2xl font-semibold text-ink">
+      <div className="mt-2 text-2xl font-semibold tabular-nums text-ink">
         <MetricText metric={metric} format={format} />
       </div>
       {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
@@ -99,10 +99,10 @@ export function LoadingState({ label = 'Đang tải dữ liệu…' }: { label?:
       <span className="sr-only">{label}</span>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-lg bg-raised" />
+          <div key={i} className="h-24 animate-pulse rounded-xl bg-raised" />
         ))}
       </div>
-      <div className="h-64 animate-pulse rounded-lg bg-raised" />
+      <div className="h-64 animate-pulse rounded-xl bg-raised" />
     </div>
   );
 }
@@ -125,7 +125,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry: () => 
 
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-line px-4 py-10 text-center">
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-line bg-surface px-4 py-10 text-center">
       <Inbox aria-hidden className="size-6 text-muted" />
       <div className="text-sm font-semibold text-ink">{title}</div>
       {children && <div className="max-w-md text-sm text-ink2">{children}</div>}

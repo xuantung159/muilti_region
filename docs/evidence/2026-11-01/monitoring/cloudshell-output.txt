@@ -1,0 +1,69 @@
+Trich ket qua AWS CLI chay trong CloudShell ap-northeast-1, 01/11/2026 khoang 08:00-08:10 (GMT+7). Chi lenh doc.
+Gia tri env khong in ra, tru MONITORING_CONFIG, MONITORING_ALLOWED_ORIGIN, HEALTH_PORCE_FAIL (deu rong).
+
+== Lambda (Region Function Handler Arch Runtime Role Tracing Mem Timeout LastModified CodeSha256)
+ap-southeast-1 mrapi-proxy      api/index.handler        arm64 nodejs24.x mrapi-proxy-role      Active 256 15 2026-10-25T16:28:03Z Ot7hINFMLTRDaFPXDvOFw+lXiH1lHHQK6kERyUu/HIA=
+ap-northeast-1 mrapi-proxy      api/index.handler        arm64 nodejs24.x mrapi-proxy-role      Active 256 15 2026-10-25T16:30:26Z Ot7hINFMLTRDaFPXDvOFw+lXiH1lHHQK6kERyUu/HIA=
+ap-southeast-1 mrapi-authorizer authorizer/index.handler arm64 nodejs24.x mrapi-authorizer-role Active 128 5  2026-10-25T16:24:52Z rVBoGTgN7bcEKk9b82GX1I65U/8e4prTfy0c3FHsLOM=
+ap-northeast-1 mrapi-authorizer authorizer/index.handler arm64 nodejs24.x mrapi-authorizer-role Active 128 5  2026-10-25T16:29:41Z rVBoGTgN7bcEKk9b82GX1I65U/8e4prTfy0c3FHsLOM=
+ap-southeast-1 mrapi-dashboard  dashboard/index.handler  arm64 nodejs24.x mrapi-dashboard-role  Active 256 10 2026-10-25T16:25:45Z mggBHJ5biFepPFOy/1dwPt4+gO8QvVi8Lg2CFz0ZzCo=
+ap-northeast-1 mrapi-dashboard  dashboard/index.handler  arm64 nodejs24.x mrapi-dashboard-role  Active 256 10 2026-10-25T16:30:04Z mggBHJ5biFepPFOy/1dwPt4+gO8QvVi8Lg2CFz0ZzCo=
+ap-southeast-1 mrapi-monitoring monitoring/index.handler arm64 nodejs24.x mrapi-monitoring-role Active 128 5  2026-10-27T15:59:04Z tCPCJhwbA9rdAoCWC1fCrvblPJTzR9DnbuIQIdsXugs=
+ap-northeast-1 mrapi-monitoring monitoring/index.handler arm64 nodejs24.x mrapi-monitoring-role Active 128 5  2026-10-25T16:30:49Z Sfs9t0zX5w1mHr5w5oq6mho31FdaU6qOKuogGUFnMmE=
+
+Env keys proxy (2 Region): PROJECT TELEMETRY_TABLE TELEMETRY_RETENTION_DAYS CONTROL_TABLE HEALTH_PORCE_FAIL
+HEALTH_PORCE_FAIL = "" o ca hai Region; khong co HEALTH_FORCE_FAIL.
+mrapi-monitoring (2 Region): {"MONITORING_ALLOWED_ORIGIN": "", "MONITORING_CONFIG": ""}
+
+== Code monitoring da trien khai
+ap-southeast-1 sha256 86ea275a9a6276e0.. 22083 byte, dong 417: export const handler = async (event, _context) => handleRequest(event, realService());
+ap-northeast-1 sha256 f6e468ab72ff532b.. 20239 byte, dong 361: export const handler = async (event, service = realService()) => {
+Local src/monitoring/index.mjs sha256 86ea275a9a6276e0.. 22083 byte (trung SG).
+Log Tokyo: 2026-11-01T01:00:26.733Z ERROR monitoring_error TypeError service[name] is not a function
+
+== API Gateway
+mrapi-api-sg  43vakggyh5 stage demo tracing=True deployment r6bin4
+mrapi-api-tyo n39r5pits8 stage demo tracing=True deployment fm5wpo
+Ca hai Region:
+  GET /monitoring/{proxy+}     auth=NONE   apiKey=false -> mrapi-monitoring
+  GET /health                  auth=NONE   apiKey=false -> mrapi-proxy
+  GET /                        auth=NONE   apiKey=false -> mrapi-dashboard
+  ANY /api/{proxy+}            auth=NONE   apiKey=false -> mrapi-dashboard
+  ANY /proxy/{apiId}           auth=CUSTOM apiKey=false -> mrapi-proxy
+  ANY /proxy/{apiId}/{proxy+}  auth=CUSTOM apiKey=false -> mrapi-proxy
+Stage */*: throttlingRateLimit 10000, throttlingBurstLimit 5000, webAclArn null. mrapi-monitoring khong co reserved concurrency.
+
+== CloudFront E33WCNP66CDRPQ
+LastModifiedTime 2026-10-28T01:52:41Z, Deployed.
+Behaviors: /api/*, /health, /proxy/*, /monitoring/* -> mrapi-api-sg, cache policy 4135ea2d-6df8-44a3-9df3-4b5a84be39ad (CachingDisabled).
+CloudTrail UpdateDistribution gan nhat: 2026-10-28T01:52:42Z admin; 2026-10-27T15:18:46Z admin.
+
+== S3 mrapi-web-sg (key, size, LastModified, ETag)
+assets/index-BhkwTp1J.css 18767  2026-10-25T05:30:28Z 1d83bfa6090504d30baf07b6e61d003f
+assets/index-CXAwDP4-.js  774487 2026-10-25T05:30:28Z a54b482c3bc5348c748eb58c1973c2ab
+assets/index-D5x6s6tr.js  780019 2026-10-28T02:01:30Z b5b1cda18283951457c835074b38bc4c
+assets/index-Ke9J9iFB.css 19237  2026-10-28T02:01:30Z 188cd28bf18b8feeb41149009a3c91f5
+index.html                418    2026-10-28T02:01:30Z 94521be49f9f2686b7d956782c97b5b9
+MD5 local monitoring-web/dist: index.html 94521be4.., index-D5x6s6tr.js b5b1cda1.., index-Ke9J9iFB.css 188cd28b.. (trung ETag).
+
+== CloudWatch doi chieu cua so 2026-10-31T19:05Z den 2026-11-01T01:05Z
+AWS/ApiGateway Count Sum: mrapi-api-sg 11055, mrapi-api-tyo 11128 (dashboard 6h luc 08:04: 11044, 11126).
+AWS/DynamoDB ReplicationLatency mrapi-telemetry 7 ngay: SG->Tokyo khong co diem; Tokyo->SG 1 diem 679 ms ngay 2026-10-25.
+AWS/S3 ReplicationLatency list-metrics ap-southeast-1: khong co metric nao.
+X-Ray sampling rule: Default FixedRate 0.05, Reservoir 1.
+
+== X-Ray batch-get-traces cho 24 trace id trong xray-health-requests.json
+SG tim thay 4/12: 6ae69036-c0d8ce67.. 0.065s; 6ae69037-51e92c56.. 0.053s; 6ae69039-8985929a.. 0.249s; 6ae6903a-521933c4.. 0.025s
+Tokyo tim thay 7/12: 6ae6903b-7d8a7d49.. 0.026s; 6ae6903b-2dec637b.. 0.027s; 6ae6903f-5101742c.. 0.034s; 6ae69040-56175691.. 0.021s; 6ae6903d-400f61cf.. 0.034s; 6ae69040-363ff96c.. 0.023s; 6ae69041-261f1efe.. 0.027s
+
+Segment (trace, name, origin, api request_id, lambda request_id, http):
+1-6ae69036-c0d8ce67f3ac6cd2d070d4bc mrapi-api-sg/demo  AWS::ApiGateway::Stage api=715ada51-473e-4c1a-8a2b-b502da020fcc http=200
+                                    mrapi-proxy        AWS::Lambda            lambda=dad5000e-9ee6-4f2d-8d6a-70b74b1f1adc http=200
+                                    mrapi-proxy        AWS::Lambda::Function
+1-6ae6903b-2dec637b0c8c477b7a787e56 mrapi-api-tyo/demo AWS::ApiGateway::Stage api=1a738808-87dd-44e2-96d2-6db8d30632ce http=200
+                                    mrapi-proxy        AWS::Lambda            lambda=5adb7af3-a27f-4e51-a279-78a70daf5b21 http=200
+                                    mrapi-proxy        AWS::Lambda::Function
+
+== Parity (lenh tuong duong scripts/check-region-parity.mjs, them mrapi-monitoring; env so bang hash)
+proxy, dashboard, authorizer: CodeSha256, Runtime, Handler, MemorySize, Timeout, Role, env deu MATCH.
+monitoring: CodeSha256 DIFFERENT; Runtime, Handler, MemorySize, Timeout, Role, env MATCH.

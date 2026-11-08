@@ -39,9 +39,40 @@
                 "ce:Describe*",
                 "health:*",
                 "pricing:*",
-                "notifications:*"
+                "notifications:*",
+                "kms:Encrypt",
+                "kms:Decrypt"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "DenyEncryptOutsideLambdaKey",
+            "Effect": "Deny",
+            "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt"
+            ],
+            "NotResource": [
+                "arn:aws:kms:ap-southeast-1:138150704839:key/08298957-cc75-4600-a465-f3f6d9cba885",
+                "arn:aws:kms:ap-northeast-1:138150704839:key/f61535ec-b0f9-4f38-98cd-81485e1015f5"
+            ]
+        },
+        {
+            "Sid": "DenyLambdaKeyEncryptExceptPhamtoan",
+            "Effect": "Deny",
+            "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt"
+            ],
+            "Resource": [
+                "arn:aws:kms:ap-southeast-1:138150704839:key/08298957-cc75-4600-a465-f3f6d9cba885",
+                "arn:aws:kms:ap-northeast-1:138150704839:key/f61535ec-b0f9-4f38-98cd-81485e1015f5"
+            ],
+            "Condition": {
+                "ArnNotEquals": {
+                    "aws:PrincipalArn": "arn:aws:iam::138150704839:user/phamtoan"
+                }
+            }
         }
     ]
 }

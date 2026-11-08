@@ -1,0 +1,27 @@
+[
+  {
+    "CertificateArn": "arn:aws:acm:us-east-1:138150704839:certificate/30c505e1-65b2-4b90-b151-d600c9c3083a",
+    "DomainName": "app.multi-region.io.vn",
+    "SubjectAlternativeNameSummaries": [
+      "app.multi-region.io.vn"
+    ],
+    "HasAdditionalSubjectAlternativeNames": false,
+    "Status": "ISSUED",
+    "Type": "AMAZON_ISSUED",
+    "KeyAlgorithm": "RSA-2048",
+    "KeyUsages": [
+      "DIGITAL_SIGNATURE",
+      "KEY_ENCIPHERMENT"
+    ],
+    "ExtendedKeyUsages": [
+      "TLS_WEB_SERVER_AUTHENTICATION"
+    ],
+    "ExportOption": "DISABLED",
+    "InUse": true,
+    "Exported": false,
+    "RenewalEligibility": "ELIGIBLE",
+    "NotBefore": "2026-10-27 00:00:00+00:00",
+    "NotAfter": "2027-05-12 23:59:59+00:00",
+    "CertificateKeyPairOrigin": "AWS_MANAGED"
+  }
+]

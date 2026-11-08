@@ -8,7 +8,7 @@ Dashboard giám sát cho dự án AWS Multi-Region Active-Active API Platform. T
 
 Mở `/portal` → **Trải nghiệm demo**. Thử thêm/sửa/bật/tắt API đích, tạo key `DEMO_ONLY`, sao chép key, rồi mở **Thử request demo**. Có sẵn API/key mẫu để thử ngay. Màn hình mô phỏng HTTP 200, thiếu/sai key (401), key thu hồi/API tắt (403), backend lỗi (502). Không gửi request đến URL backend đã nhập. Mọi kết quả đều là mô phỏng; proxy thật và key scope chưa triển khai.
 
-Tab **Hướng dẫn** (cũng có dưới form đăng nhập) giải thích lấy API ID/key, cấu hình biến môi trường ở backend doanh nghiệp, mẫu Node.js/Python/cURL, và cách xử lý lỗi. Mã mẫu là contract dự kiến cho proxy tương lai; không nhúng key vào frontend. Demo portal độc lập với chế độ demo monitoring trong Settings và không thay token đăng nhập thật.
+Tab **Hướng dẫn** (cũng có dưới form đăng nhập) có phần **Làm thử với project mẫu** (mô phỏng năm bước từ tạo key tới dán `.env` và chạy client, kèm file tải `public/samples/project-mau-mrapi.zip` đóng gói từ `project_test/`, không chứa `.env`), kịch bản trình diễn, sơ đồ luồng request, sơ đồ hai Region và failover (chỉ minh họa, không tác động AWS), rồi giải thích lấy API ID/key, cấu hình biến môi trường ở backend doanh nghiệp, mẫu Node.js/Python/cURL, response mẫu, telemetry và bảng mã lỗi. Mã mẫu là contract dự kiến cho proxy tương lai; không nhúng key vào frontend. Demo portal độc lập với chế độ demo monitoring trong Settings và không thay token đăng nhập thật.
 
 
 ## Mục lục
@@ -42,7 +42,7 @@ Mở http://localhost:5173. Sidebar có Cổng doanh nghiệp và sáu trang gi�
 
 ### Nối portal với backend doanh nghiệp
 
-Tạo `.env.local` từ `.env.example`. Khi phát triển, đặt `PORTAL_API_TARGET=https://<api-id>.execute-api.ap-southeast-1.amazonaws.com/demo`, để trống `VITE_PORTAL_API_URL`, rồi khởi động lại Vite. Proxy dev chuyển `/api/*` tới stage tương ứng. Proxy chỉ chuyển request; vẫn cần API Gateway/Lambda thật.
+Tạo `.env.local` từ `.env.example`. Đặt thêm `VITE_MONITORING_API_URL=/` thì proxy dev cũng chuyển `/monitoring/*` tới cùng stage, nên các trang giám sát hiện số liệu thật. Khi phát triển, đặt `PORTAL_API_TARGET=https://<api-id>.execute-api.ap-southeast-1.amazonaws.com/demo`, để trống `VITE_PORTAL_API_URL`, rồi khởi động lại Vite. Proxy dev chuyển `/api/*` tới stage tương ứng. Proxy chỉ chuyển request; vẫn cần API Gateway/Lambda thật.
 
 Khi triển khai frontend tĩnh, đặt `VITE_PORTAL_API_URL` thành URL gốc API Gateway bao gồm stage trước khi build. Trên Lambda dashboard đặt `PORTAL_ALLOWED_ORIGIN` bằng origin của frontend (không có path/dấu `/` cuối), mở method `OPTIONS` qua Lambda hoặc cấu hình preflight tương đương ở API Gateway, rồi deploy stage. CORS cần có cả trên Gateway Responses cho lỗi do API Gateway trả. Nếu phục vụ frontend và `/api/*` qua cùng origin thì để trống URL này.
 
@@ -392,6 +392,7 @@ Nhớ tắt `HEALTH_FORCE_FAIL` sau kiểm tra số 5.
 | `/regions` | Multi-Region | `/monitoring/snapshot` |
 | `/apis` | API Monitoring | `/monitoring/endpoints` |
 | `/incidents` | Failover & Incidents | `/monitoring/incidents` |
+| `/infrastructure` | Hạ tầng triển khai | `/monitoring/snapshot` (trạng thái sống); danh sách tài nguyên ở `src/data/deployment.ts` |
 | `/sources` | Data Sources | `/monitoring/sources` |
 | `/settings` | Settings | không gọi backend |
 

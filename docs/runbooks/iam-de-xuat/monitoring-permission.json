@@ -1,0 +1,46 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadMetrics",
+      "Effect": "Allow",
+      "Action": ["cloudwatch:GetMetricData", "cloudwatch:GetMetricStatistics", "cloudwatch:ListMetrics", "cloudwatch:DescribeAlarms"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ReadHealth",
+      "Effect": "Allow",
+      "Action": ["route53:ListHealthChecks", "route53:GetHealthCheck", "route53:GetHealthCheckStatus"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "QueryTelemetry",
+      "Effect": "Allow",
+      "Action": "dynamodb:Query",
+      "Resource": [
+        "arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-telemetry",
+        "arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-telemetry/index/*",
+        "arn:aws:dynamodb:ap-northeast-1:138150704839:table/mrapi-telemetry",
+        "arn:aws:dynamodb:ap-northeast-1:138150704839:table/mrapi-telemetry/index/*"
+      ]
+    },
+    {
+      "Sid": "CreateOwnLogGroup",
+      "Effect": "Allow",
+      "Action": "logs:CreateLogGroup",
+      "Resource": ["arn:aws:logs:ap-southeast-1:138150704839:log-group:/aws/lambda/mrapi-monitoring:*", "arn:aws:logs:ap-northeast-1:138150704839:log-group:/aws/lambda/mrapi-monitoring:*"]
+    },
+    {
+      "Sid": "WriteOwnLogs",
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": ["arn:aws:logs:ap-southeast-1:138150704839:log-group:/aws/lambda/mrapi-monitoring:*", "arn:aws:logs:ap-northeast-1:138150704839:log-group:/aws/lambda/mrapi-monitoring:*"]
+    },
+    {
+      "Sid": "WriteXRay",
+      "Effect": "Allow",
+      "Action": ["xray:PutTraceSegments", "xray:PutTelemetryRecords"],
+      "Resource": "*"
+    }
+  ]
+}

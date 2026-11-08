@@ -6,8 +6,8 @@ Cập nhật từ Tùng ngày 14/10/2026: đã hoàn thành đến bước 5 hư
 
 | Phần | Kết quả trong repo | AWS thực tế |
 |---|---|---|
-| Thiết kế | GATEWAY_DESIGN.md có contract, schema và giới hạn | Chưa cần tài nguyên |
-| AWS base | FIRST_FOUR_PARTS.md có checklist MFA/Budget/SNS/tag | User/group/IAM được người dùng xác nhận trước đó; Budget/SNS/tag chưa xác minh |
+| Thiết kế | thiet-ke-gateway.md có contract, schema và giới hạn | Chưa cần tài nguyên |
+| AWS base | dung-portal-singapore.md có checklist MFA/Budget/SNS/tag | User/group/IAM được người dùng xác nhận trước đó; Budget/SNS/tag chưa xác minh |
 | Tài khoản | Có signup/login/logout/me, hash mật khẩu/token, kiểm tra expiry | Đã tạo/cấu hình Lambda theo xác nhận của Tùng; test thật chưa xác nhận |
 | API đích | Có create/list/get/patch/enable/disable, tenant isolation, validation và UI | Cùng Lambda dashboard đã cấu hình; test thật chưa xác nhận |
 

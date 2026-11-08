@@ -1,0 +1,18 @@
+Vì sao không dùng gói A7F771D3... dù hash còn đúng.
+
+Giải nén gói cũ rồi import exporter/index.mjs (Node 24.14.1, không gọi AWS):
+Error: Cannot find module '@smithy/core/client'
+Gói cũ chỉ có node_modules/@aws-sdk, thiếu @smithy/*, tslib, bowser, fflate, mnemonist, obliterator, @aws/lambda-invoke-store.
+So với api.zip: thiếu 13 nhóm package (cộng thư mục handler api), phần còn lại trùng CRC. Test mock 27/27 không phát hiện vì chạy với node_modules đầy đủ của src.
+
+Gói mới: artifacts/lambda/exporter.zip, 3.823.382 byte, 4.651 entry
+SHA-256 9C78B0D231E99AE9641396F58110B2955114464B47728DE1C8487DA1BEBA06E8
+base64 nHiw0jHpmulkE5b1gRCylVEURktHco3hyEh9ob66Bug= (trùng CodeSha256 trên Lambda)
+Chỉ thay file exporter.zip. 4 gói api/authorizer/dashboard/monitoring không đổi (kiểm size, giờ sửa).
+
+Cách dựng (rawbuild.py, cùng thư mục): lấy nguyên khối nén từ zip có sẵn, bỏ thư mục handler, thêm 3 entry exporter/index.mjs, package.json, shared/lib.mjs, sắp theo tên, timestamp cố định.
+Local chạy trên monitoring.zip, CloudShell chạy trên code mrapi-proxy tải từ Lambda SG. Hai bên ra cùng SHA-256, nên không cần upload 3,8 MB.
+Ba entry gõ vào CloudShell dạng base64, script kiểm CRC và độ dài.
+
+Khác với gói Lambda đang chạy: bản AWS thiếu 48 file trong @aws-sdk/core (dist-es, dist-types, ts3.4 của submodules/protocols/json), local có. Gói mới bỏ 48 file này cho khớp bản đang chạy. dist-cjs hai bên trùng nên runtime không đổi.
+Import gói mới trong Node 24.14.1: OK, ExportTableToPointInTimeCommand là function.

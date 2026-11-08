@@ -1,0 +1,13 @@
+
+> monitoring-web@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.4 D:/BTL/aws/monitoring-web
+
+
+ Test Files  4 passed (4)
+      Tests  32 passed (32)
+   Start at  10:48:22
+   Duration  15.57s (environment 41%, tests 33%, setup 13%, import 11%, transform 1%)
+

@@ -2,22 +2,19 @@
   {
     "Notification": { "NotificationType": "ACTUAL", "ComparisonOperator": "GREATER_THAN", "Threshold": 50, "ThresholdType": "PERCENTAGE" },
     "Subscribers": [
-      { "SubscriptionType": "SNS", "Address": "arn:aws:sns:us-east-1:138150704839:mrapi-alerts" },
-      { "SubscriptionType": "EMAIL", "Address": "THAY_EMAIL_NGUOI_NHAN" }
+      { "SubscriptionType": "EMAIL", "Address": "" }
     ]
   },
   {
     "Notification": { "NotificationType": "ACTUAL", "ComparisonOperator": "GREATER_THAN", "Threshold": 80, "ThresholdType": "PERCENTAGE" },
     "Subscribers": [
-      { "SubscriptionType": "SNS", "Address": "arn:aws:sns:us-east-1:138150704839:mrapi-alerts" },
-      { "SubscriptionType": "EMAIL", "Address": "THAY_EMAIL_NGUOI_NHAN" }
+      { "SubscriptionType": "EMAIL", "Address": "" }
     ]
   },
   {
     "Notification": { "NotificationType": "FORECASTED", "ComparisonOperator": "GREATER_THAN", "Threshold": 100, "ThresholdType": "PERCENTAGE" },
     "Subscribers": [
-      { "SubscriptionType": "SNS", "Address": "arn:aws:sns:us-east-1:138150704839:mrapi-alerts" },
-      { "SubscriptionType": "EMAIL", "Address": "THAY_EMAIL_NGUOI_NHAN" }
+      { "SubscriptionType": "EMAIL", "Address": "" }
     ]
   }
 ]

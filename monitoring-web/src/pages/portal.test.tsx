@@ -137,11 +137,55 @@ it('demo tạo key, gửi request, từ chối key thu hồi và không gọi AW
 it('hướng dẫn tích hợp đọc được trước đăng nhập và có mẫu cho ba nền tảng', async () => {
   const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
   expect(screen.getByRole('heading', { name: '2. Lấy API key' })).toBeInTheDocument();
-  expect(screen.getByText(/Proxy chuyển tiếp và cấp quyền key theo API chưa triển khai/)).toBeInTheDocument();
+  expect(screen.getByText(/Proxy chuyển tiếp và key theo phạm vi API đã triển khai/)).toBeInTheDocument();
   expect(screen.getByText(/const response = await fetch/)).toBeInTheDocument();
-  await user.selectOptions(screen.getByLabelText('Ngôn ngữ mẫu'), 'python');
+  await user.click(screen.getByRole('button', { name: 'Python' }));
   expect(screen.getByText(/from urllib.request import Request/)).toBeInTheDocument();
-  await user.selectOptions(screen.getByLabelText('Ngôn ngữ mẫu'), 'curl');
+  await user.click(screen.getByRole('button', { name: 'cURL' }));
   expect(screen.getByText(/curl --fail-with-body/)).toBeInTheDocument();
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it('hướng dẫn project mẫu đi từ tạo key tới dán .env, chạy client và không gọi AWS', async () => {
+  const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
+  expect(screen.getByRole('link', { name: 'Tải project mẫu (.zip)' })).toHaveAttribute('href', '/samples/project-mau-mrapi.zip');
+  expect(screen.getByRole('button', { name: 'Bước 5: Chạy và xem kết quả' })).toBeDisabled();
+  await user.click(screen.getByRole('button', { name: 'Chạy backend' }));
+  await user.click(screen.getByRole('button', { name: 'Bước tiếp' }));
+  await user.click(screen.getByRole('button', { name: 'Đăng ký API' }));
+  await user.click(screen.getByRole('button', { name: 'Bước tiếp' }));
+  await user.click(screen.getByRole('button', { name: 'Tạo key' }));
+  expect(screen.getByText('DEMO_ONLY_KEY_MAU_KHONG_GOI_DUOC_GATEWAY')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Bước tiếp' }));
+  expect(screen.getByText('MRAPI_API_KEY=PASTE_YOUR_SECRET_KEY_HERE')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Dán API ID và key' }));
+  expect(screen.getByText('MRAPI_API_KEY=DEMO_ONLY_KEY_MAU_KHONG_GOI_DUOC_GATEWAY')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Bước tiếp' }));
+  await user.click(screen.getByRole('button', { name: 'Dán sai key' }));
+  expect(screen.getByText(/HTTP 401/)).toBeInTheDocument();
+  expect(screen.getByText('Tổng quan · Tổng lượt gọi').nextSibling).toHaveTextContent('0');
+  await user.click(screen.getByRole('button', { name: 'Backend đã tắt' }));
+  expect(screen.getByText(/HTTP 502 \| 2329 ms/)).toBeInTheDocument();
+  expect(screen.getByText('Tổng quan · Lượt lỗi').nextSibling).toHaveTextContent('1');
+  await user.click(screen.getByRole('button', { name: 'Làm lại' }));
+  expect(screen.getByRole('button', { name: 'Chạy backend' })).toBeInTheDocument();
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it('sơ đồ hướng dẫn tương tác được, có nhãn minh họa và bảng mã lỗi theo contract', async () => {
+  const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
+  await user.click(screen.getByRole('button', { name: /Lambda authorizer/ }));
+  expect(screen.getByText(/Request bị từ chối ở đây không ghi telemetry/)).toBeInTheDocument();
+  expect(screen.getByText('Minh họa, không phải trạng thái thật')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Giả sử Singapore lỗi' }));
+  expect(screen.getByText('Health check lỗi')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Thiếu API key' }));
+  await user.click(screen.getByRole('button', { name: 'Từng bước' }));
+  await user.click(screen.getByRole('button', { name: 'Từng bước' }));
+  await user.click(screen.getByRole('button', { name: 'Từng bước' }));
+  expect(screen.getByText('Bước 3/4: API Gateway từ chối')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Từng bước' }));
+  expect(screen.getByText('HTTP 401 · Dừng ở API Gateway')).toBeInTheDocument();
+  for (const code of ['KEY_REVOKED', 'KEY_SCOPE_DENIED', 'API_DISABLED', 'TARGET_BLOCKED', 'PAYLOAD_TOO_LARGE', 'UPSTREAM_TOO_LARGE', 'GATEWAY_INTERNAL']) expect(screen.getByText(code)).toBeInTheDocument();
   expect(fetchMock).not.toHaveBeenCalled();
 });

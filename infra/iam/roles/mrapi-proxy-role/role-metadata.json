@@ -1,0 +1,20 @@
+{
+  "Path": "/",
+  "RoleName": "mrapi-proxy-role",
+  "RoleId": "AROASAKTMO3DTLV5MRL55",
+  "Arn": "arn:aws:iam::138150704839:role/mrapi-proxy-role",
+  "AssumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "lambda.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+    ]
+  },
+  "Description": "Allows Lambda functions to call AWS services on your behalf.",
+  "MaxSessionDuration": 3600
+}

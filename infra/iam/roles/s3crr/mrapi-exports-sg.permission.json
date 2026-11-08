@@ -1,0 +1,89 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetReplicationConfiguration",
+        "s3:GetObjectVersionForReplication",
+        "s3:GetObjectVersionAcl",
+        "s3:GetObjectVersionTagging",
+        "s3:GetObjectVersionAnnotationForReplication",
+        "s3:GetObjectRetention",
+        "s3:GetObjectLegalHold"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:s3:::mrapi-exports-sg",
+        "arn:aws:s3:::mrapi-exports-sg/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceAccount": "138150704839"
+        }
+      }
+    },
+    {
+      "Action": [
+        "s3:ReplicateObject",
+        "s3:ReplicateDelete",
+        "s3:ReplicateTags",
+        "s3:ReplicateObjectAnnotation",
+        "s3:GetObjectVersionTagging",
+        "s3:ObjectOwnerOverrideToBucketOwner"
+      ],
+      "Effect": "Allow",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceAccount": [
+            "138150704839"
+          ]
+        },
+        "StringLikeIfExists": {
+          "s3:x-amz-server-side-encryption": [
+            "aws:kms",
+            "aws:kms:dsse",
+            "AES256"
+          ]
+        }
+      },
+      "Resource": [
+        "arn:aws:s3:::mrapi-exports-tyo/*"
+      ]
+    },
+    {
+      "Action": [
+        "kms:Decrypt"
+      ],
+      "Effect": "Allow",
+      "Condition": {
+        "StringLike": {
+          "kms:ViaService": "s3.ap-southeast-1.amazonaws.com",
+          "kms:EncryptionContext:aws:s3:arn": [
+            "arn:aws:s3:::mrapi-exports-sg",
+            "arn:aws:s3:::mrapi-exports-sg/*"
+          ]
+        }
+      },
+      "Resource": "*"
+    },
+    {
+      "Action": [
+        "kms:Encrypt"
+      ],
+      "Effect": "Allow",
+      "Condition": {
+        "StringLike": {
+          "kms:ViaService": [
+            "s3.ap-northeast-1.amazonaws.com"
+          ],
+          "kms:EncryptionContext:aws:s3:arn": [
+            "arn:aws:s3:::mrapi-exports-tyo",
+            "arn:aws:s3:::mrapi-exports-tyo/*"
+          ]
+        }
+      },
+      "Resource": "*"
+    }
+  ]
+}

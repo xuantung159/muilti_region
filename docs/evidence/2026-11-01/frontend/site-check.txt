@@ -1,0 +1,22 @@
+# Tu may local va browser tich hop, sau invalidation
+
+GET tu may local:
+200 text/html 418 /
+200 text/html 418 /portal
+200 text/html 418 /infrastructure
+200 application/javascript 780493 /assets/index-BswYtAbA.js
+200 application/javascript 780019 /assets/index-D5x6s6tr.js (asset cu van con)
+200 application/json 41 /health
+200 application/json 2199 /monitoring/sources
+index.html goc tham chieu index-BswYtAbA.js
+
+Browser, sau khi tai lai / va /portal bo qua cache:
+/ : script index-BswYtAbA.js, LIVE · BACKEND, S3 replication: 11.0 s, /monitoring/snapshot 200
+/portal : script index-BswYtAbA.js, form email + password, khong con "chua trien khai",
+  co cau "Proxy chuyen tiep va key theo pham vi API da trien khai o hai Region; goi thieu hoac sai key bi tu choi 401."
+/infrastructure : VERIFIED 01/11/2026, CloudWatch us-east-1 2 alarm, CloudFront qua mrapi-api-latency,
+  Tokyo co monitoring, 4 alarm mrapi-tyo-*, SNS, S3 hai chieu
+
+Console: 1 dong loi 429 cua request 20384.17 /monitoring/snapshot, xay ra truoc khi deploy tren bundle cu.
+Trong 132 request cua tab, chi request nay la 429; moi request sau deploy deu 200.
+Lan tai dau, browser dung index.html cu cho / va /portal tu cache trinh duyet (khong co Cache-Control).

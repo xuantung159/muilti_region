@@ -1,0 +1,42 @@
+{
+  "item": [
+    {
+      "deploymentId": "r6bin4",
+      "stageName": "demo",
+      "cacheClusterEnabled": false,
+      "cacheClusterSize": "0.5",
+      "cacheClusterStatus": "NOT_AVAILABLE",
+      "methodSettings": {
+        "*/*": {
+          "metricsEnabled": true,
+          "loggingLevel": "INFO",
+          "dataTraceEnabled": false,
+          "throttlingBurstLimit": 5000,
+          "throttlingRateLimit": 10000.0,
+          "cachingEnabled": false,
+          "cacheTtlInSeconds": 300,
+          "cacheDataEncrypted": false,
+          "requireAuthorizationForCacheControl": true,
+          "unauthorizedCacheControlHeaderStrategy": "SUCCEED_WITH_RESPONSE_HEADER"
+        },
+        "~1monitoring~1{proxy+}/GET": {
+          "metricsEnabled": true,
+          "loggingLevel": "INFO",
+          "dataTraceEnabled": false,
+          "throttlingBurstLimit": 10,
+          "throttlingRateLimit": 5.0,
+          "cachingEnabled": false,
+          "cacheTtlInSeconds": 300,
+          "cacheDataEncrypted": false,
+          "requireAuthorizationForCacheControl": true,
+          "unauthorizedCacheControlHeaderStrategy": "SUCCEED_WITH_RESPONSE_HEADER"
+        }
+      },
+      "accessLogSettings": {
+        "format": "{\"requestId\":\"$context.requestId\",\"extendedRequestId\":\"$context.extendedRequestId\",\"httpMethod\":\"$context.httpMethod\",\"resourcePath\":\"$context.resourcePath\",\"status\":\"$context.status\",\"responseLatency\":\"$context.responseLatency\",\"integrationLatency\":\"$context.integrationLatency\",\"responseLength\":\"$context.responseLength\"}",
+        "destinationArn": "arn:aws:logs:ap-southeast-1:138150704839:log-group:/mrapi/apigateway/sg/demo"
+      },
+      "tracingEnabled": true
+    }
+  ]
+}

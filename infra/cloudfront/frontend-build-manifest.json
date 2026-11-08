@@ -1,0 +1,17 @@
+[
+  {
+    "key": "index.html",
+    "bytes": 418,
+    "sha256": "9f0d5033d2c1a8a3a093b34c3de7dccb6af5a10f61efe3d0f9b54d4aa02efd0a"
+  },
+  {
+    "key": "assets/index-AS3tCnNt.css",
+    "bytes": 31924,
+    "sha256": "ed9306470a38e3c126b4b4637f5c0e597becdd761e8769b2b487362b12744c9c"
+  },
+  {
+    "key": "assets/index-D_0xNfOM.js",
+    "bytes": 806614,
+    "sha256": "71fab420b1dd6a4fa7dc397e602ab987c06bcf89e7732bd2148621899d5bfd2c"
+  }
+]

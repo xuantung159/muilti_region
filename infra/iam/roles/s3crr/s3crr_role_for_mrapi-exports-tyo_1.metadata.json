@@ -1,0 +1,24 @@
+{
+  "Path": "/service-role/",
+  "RoleName": "s3crr_role_for_mrapi-exports-tyo_1",
+  "RoleId": "AROASAKTMO3DYEX4QIIZL",
+  "Arn": "arn:aws:iam::138150704839:role/service-role/s3crr_role_for_mrapi-exports-tyo_1",
+  "AssumeRolePolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "s3.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole",
+        "Condition": {
+          "StringEquals": {
+            "aws:SourceAccount": "138150704839"
+          }
+        }
+      }
+    ]
+  },
+  "MaxSessionDuration": 3600
+}

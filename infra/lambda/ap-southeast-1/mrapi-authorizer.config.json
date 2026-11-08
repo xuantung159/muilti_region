@@ -1,0 +1,36 @@
+{
+  "FunctionName": "mrapi-authorizer",
+  "FunctionArn": "arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-authorizer",
+  "Runtime": "nodejs24.x",
+  "Role": "arn:aws:iam::138150704839:role/mrapi-authorizer-role",
+  "Handler": "authorizer/index.handler",
+  "CodeSize": 3886105,
+  "Description": "",
+  "Timeout": 5,
+  "MemorySize": 128,
+  "CodeSha256": "rVBoGTgN7bcEKk9b82GX1I65U/8e4prTfy0c3FHsLOM=",
+  "Version": "$LATEST",
+  "TracingConfig": {
+    "Mode": "Active"
+  },
+  "PackageType": "Zip",
+  "Architectures": [
+    "arm64"
+  ],
+  "EphemeralStorage": {
+    "Size": 512
+  },
+  "SnapStart": {
+    "ApplyOn": "None",
+    "OptimizationStatus": "Off"
+  },
+  "LoggingConfig": {
+    "LogFormat": "Text",
+    "LogGroup": "/aws/lambda/mrapi-authorizer"
+  },
+  "EnvironmentVariableNames": [
+    "CONTROL_TABLE",
+    "PROJECT",
+    "TELEMETRY_TABLE"
+  ]
+}

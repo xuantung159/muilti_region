@@ -1,0 +1,97 @@
+**********************
+PowerShell transcript start
+Start time: 20261028081252
+Username: XUAN_TUNG\dxtun
+RunAs User: XUAN_TUNG\dxtun
+Configuration Name: 
+Machine: XUAN_TUNG (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Users\dxtun\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.dll -Command try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}
+$ErrorActionPreference = 'Stop'
+$evidenceDir = 'D:\BTL\aws\docs\evidence\2026-10-28\L'
+New-Item -ItemType Directory -Force -Path $evidenceDir | Out-Null
+$evidencePath = Join-Path $evidenceDir 'route53-dns-verification.txt'
+Start-Transcript -Path $evidencePath -Force
+Get-Date -Format o
+Resolve-DnsName multi-region.io.vn -Type NS -DnsOnly
+Resolve-DnsName api.multi-region.io.vn -Type A -DnsOnly
+Resolve-DnsName api.multi-region.io.vn -Type A -Server 8.8.8.8 -DnsOnly
+Resolve-DnsName api.multi-region.io.vn -Type A -Server 1.1.1.1 -DnsOnly
+Resolve-DnsName api.multi-region.io.vn -Type A -Server ns-179.awsdns-22.com -DnsOnly
+curl.exe --connect-timeout 10 --max-time 20 -sS -i https://api.multi-region.io.vn/health
+curl.exe --connect-timeout 10 --max-time 20 -sS -i https://app.multi-region.io.vn/health
+$targets = @('d-zd1hv50jn0.execute-api.ap-southeast-1.amazonaws.com', 'd-csqvriesoh.execute-api.ap-northeast-1.amazonaws.com')
+foreach ($target in $targets) {
+  Write-Output "Regional target: $target"
+  $targetIp = (Resolve-DnsName $target -Type A -DnsOnly | Where-Object Type -eq A | Select-Object -First 1).IPAddress
+  Write-Output "Resolved IP for this verification only: $targetIp"
+  curl.exe --connect-timeout 10 --max-time 20 -sS -i --resolve "api.multi-region.io.vn:443:$targetIp" https://api.multi-region.io.vn/health
+}
+Stop-Transcript
+Process ID: 7100
+PSVersion: 7.6.5
+PSEdition: Core
+GitCommitId: 7.6.5
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is D:\BTL\aws\docs\evidence\2026-10-28\L\route53-dns-verification.txt
+2026-10-28T08:12:52.0524461+07:00
+
+Name                           Type   TTL   Section    NameHost
+----                           ----   ---   -------    --------
+multi-region.io.vn             NS     21600 Answer     ns-179.awsdns-22.com
+multi-region.io.vn             NS     21600 Answer     ns-860.awsdns-43.net
+multi-region.io.vn             NS     21600 Answer     ns-1037.awsdns-01.org
+multi-region.io.vn             NS     21600 Answer     ns-2031.awsdns-61.co.uk
+
+Name       : api.multi-region.io.vn
+QueryType  : A
+TTL        : 60
+Section    : Answer
+IP4Address : 54.251.131.234
+
+
+Name       : api.multi-region.io.vn
+QueryType  : A
+TTL        : 60
+Section    : Answer
+IP4Address : 47.128.196.219
+
+
+Name       : api.multi-region.io.vn
+QueryType  : A
+TTL        : 60
+Section    : Answer
+IP4Address : 52.74.58.114
+
+
+Name       : api.multi-region.io.vn
+QueryType  : A
+TTL        : 60
+Section    : Answer
+IP4Address : 18.139.143.59
+
+multi-region.io.vn             NS     17280 Authority  ns-1037.awsdns-01.org
+                                      0
+multi-region.io.vn             NS     17280 Authority  ns-179.awsdns-22.com
+                                      0
+multi-region.io.vn             NS     17280 Authority  ns-2031.awsdns-61.co.uk
+                                      0
+multi-region.io.vn             NS     17280 Authority  ns-860.awsdns-43.net
+                                      0
+
+
+Regional target: d-zd1hv50jn0.execute-api.ap-southeast-1.amazonaws.com
+Resolved IP for this verification only: 52.74.58.114
+
+Regional target: d-csqvriesoh.execute-api.ap-northeast-1.amazonaws.com
+Resolved IP for this verification only: 13.159.107.235
+
+**********************
+PowerShell transcript end
+End time: 20261028081254
+**********************

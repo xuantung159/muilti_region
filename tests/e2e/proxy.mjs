@@ -29,13 +29,14 @@ async function check(id, name, fn) {
   catch (err) { results.push(['FAIL', id, `${name}: ${err.message}`]); }
 }
 
+const tag = process.env.E2E_TAG || `e2e-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}`;
 const password = randomBytes(20).toString('hex');
-const signup = async org => (await call('POST', '/api/signup', { body: { orgName: org, email: `proxy-${org}-${Date.now()}@example.com`, password } })).data.token;
+const signup = async org => (await call('POST', '/api/signup', { body: { orgName: `${tag} proxy ${org}`, email: `${tag}-proxy-${org}-${Date.now()}@example.com`, password } })).data.token;
 const a = await signup('a'); const b = await signup('b');
 assert.ok(a && b, 'Không tạo được tài khoản thử; kiểm tra portal API trước.');
 const newApi = async (token, name, timeoutMs = 5000) =>
-  (await call('POST', '/api/apis', { token, body: { name, baseUrl: backend, timeoutMs } })).data.api.apiId;
-const newKey = async (token, apiIds) => (await call('POST', '/api/keys', { token, body: { name: 'e2e', apiIds } })).data;
+  (await call('POST', '/api/apis', { token, body: { name: `${tag} ${name}`, baseUrl: backend, timeoutMs } })).data.api.apiId;
+const newKey = async (token, apiIds) => (await call('POST', '/api/keys', { token, body: { name: `${tag} key`, apiIds } })).data;
 const api1 = await newApi(a, 'E2E main', 2000);
 const api2 = await newApi(a, 'E2E outside scope');
 const apiB = await newApi(b, 'E2E tenant B');

@@ -1,0 +1,75 @@
+Bản trích kết quả CloudShell us-east-1, 01/11/2026 (UTC). User arn:aws:iam::138150704839:user/admin.
+Không có nội dung item hay object nào trong file này.
+
+== Trước khi đổi gì
+PITR mrapi-telemetry: ap-southeast-1 ENABLED, ap-northeast-1 DISABLED
+Bảng: ACTIVE, PAY_PER_REQUEST, key PK/SK, Global Tables 2019.11.21, TTL expiresAt ENABLED ở cả 2 Region
+Export cũ: 01792752415680-452d01dd, COMPLETED, 23/10 10:46:55-10:48:59 UTC, S3Prefix exports/telemetry/, DYNAMODB_JSON, 30 item
+EventBridge rules và Scheduler: rỗng ở cả 2 Region (không có producer định kỳ)
+mrapi-exports-sg 16 object, mrapi-exports-tyo 17 object (thêm marker exports/)
+
+Rule SG (khớp infra/s3/ap-southeast-1/replication.json):
+{"Role":".../s3crr_role_for_mrapi-exports-sg","Rules":[{"ID":"mrapi-sg-to-tyo","Priority":0,"Filter":{"Prefix":"exports/"},"Status":"Enabled","Destination":{"Bucket":"arn:aws:s3:::mrapi-exports-tyo","Metrics":{"Status":"Enabled"}},"DeleteMarkerReplication":{"Status":"Disabled"}}]}
+
+Rule Tokyo (KHÁC infra/s3/ap-northeast-1/replication.json):
+{"Role":".../s3crr_role_for_mrapi-exports-tyo_1","Rules":[{"ID":"mrapi-tyo-to-sg","Priority":0,"Filter":{},"Status":"Enabled","Destination":{"Bucket":"arn:aws:s3:::mrapi-exports-sg"},"DeleteMarkerReplication":{"Status":"Disabled"}}]}
+
+== list-metrics ReplicationLatency
+ap-southeast-1 AWS/S3: rỗng
+ap-southeast-1 AWS/DynamoDB: TableName=mrapi-telemetry, ReceivingRegion=ap-northeast-1
+ap-northeast-1 AWS/S3: SourceBucket=mrapi-exports-sg, DestinationBucket=mrapi-exports-tyo, RuleId=mrapi-sg-to-tyo
+ap-northeast-1 AWS/DynamoDB: TableName=mrapi-telemetry, ReceivingRegion=ap-southeast-1
+
+== DynamoDB ReplicationLatency trước R2 (14 ngày, period 3600: thời gian, số mẫu, TB ms, max ms)
+Nguồn SG, metric ở SG:    2026-10-23T10:22  10  806.0  1039.0
+Nguồn Tokyo, metric ở Tokyo: 2026-10-23T10:22  6  947.2  1048.0
+Nguồn Tokyo, metric ở Tokyo: 2026-10-25T16:22  1  679.0  679.0
+
+== R2 dọn dẹp (sau delete, chờ 6 giây, get-item ConsistentRead ở cả 2 Region)
+SG-TO-TYO 1..5  SG False  TYO False
+TYO-TO-SG 1..5  SG False  TYO False
+
+== DynamoDB ReplicationLatency sau R2 (period 60)
+Nguồn SG:    2026-11-01T02:22  3 mẫu  TB 601.0   max 750.0
+Nguồn SG:    2026-11-01T02:23  4 mẫu  TB 788.75  max 1080.0
+Nguồn Tokyo: 2026-11-01T02:23  6 mẫu  TB 551.0   max 683.0
+
+== R6 describe-export
+ARN arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-telemetry/export/01793499887258-66a60a29
+COMPLETED, Start 02:24:47.258, End 02:26:49.348 UTC, ExportTime 02:24:47.258, S3Prefix exports/telemetry
+FULL_EXPORT, DYNAMODB_JSON, AES256, ItemCount 27, BilledSizeBytes 9241
+
+== R6 log thời điểm (epoch), chu kỳ poll khoảng 4 giây
+1793499887.421 START
+1793499892.092 SEEN sg _started
+1793499914.061 SEEN ty _started                   (+22,0 s)
+1793499979.251 SEEN sg data/*.json.gz (4 file)
+1793500001.234 SEEN ty data/*.json.gz (4 file)    (+22,0 s)
+1793500011.964 SEEN sg manifest-* (4 file)
+1793500012.360 STATUS COMPLETED
+1793500032.769 SEEN ty manifest-* (4 file)        (+20,8 s)
+
+== R6 object (key, byte, ETag SG = ETag Tokyo, trạng thái SG / Tokyo)
+Tiền tố exports/telemetry/AWSDynamoDB/01793499887258-66a60a29/
+_started                               0     59adb24ef3cdbe0297f05b395827453f-1  COMPLETED / REPLICA
+data/24b24wq4qa5wvp4lpaxgczxm5m.json.gz 286  d711353a6db1c799df15b20b618234e9-1  COMPLETED / REPLICA
+data/a22t575lnmycvfky5zsqqxdbiu.json.gz 726  07a5b4f228fa70d5c329ad1130bab8ba-1  COMPLETED / REPLICA
+data/itjqxqhbhq65xbgw4u5zrkbtia.json.gz 562  910786c10ee1f9f2f88c7f87f961691a-1  COMPLETED / REPLICA
+data/mvhinabskq2fnmqqczsbadjt5i.json.gz 1069 8a2cfc3ecac79c92beda3a876fc2bdf2-1  COMPLETED / REPLICA
+manifest-files.json                    853   956043c7cddd25e28469331282ef25af-1  COMPLETED / REPLICA
+manifest-files.md5                     24    097444e0de38c43a976172fb4337274a-1  COMPLETED / REPLICA
+manifest-summary.json                  655   cf9abdf1f069c20a3a7212f333d5eb26-1  COMPLETED / REPLICA
+manifest-summary.md5                   24    4cb531b520dd05dd0ce67f23afcb0292-1  COMPLETED / REPLICA
+VersionId hai bên trùng nhau ở mọi object. Không tải hay mở object nào.
+Sau export: SG 25 object, Tokyo 26 object (16+9, 17+9).
+
+== S3 ReplicationLatency sau R6 (period 60, giây)
+Region ap-southeast-1: không có điểm nào
+Region ap-northeast-1:
+2026-11-01T02:24  0.0
+2026-11-01T02:25  11.0
+2026-11-01T02:26  0.0
+2026-11-01T02:27  11.0
+2026-11-01T02:28  0.0
+2026-11-01T02:29  0.0
+Trước đó mỗi giờ 60 mẫu giá trị 0.0 (không có object mới vẫn có điểm).

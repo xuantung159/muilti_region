@@ -1,0 +1,6 @@
+[
+  {
+    "PolicyName": "s3crr_for_mrapi-exports-sg_f789ba",
+    "PolicyArn": "arn:aws:iam::138150704839:policy/service-role/s3crr_for_mrapi-exports-sg_f789ba"
+  }
+]

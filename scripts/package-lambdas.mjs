@@ -12,7 +12,7 @@ await access(path.join(src, 'node_modules', '@aws-sdk', 'lib-dynamodb'));
 const outputDir = path.join(root, 'artifacts', 'lambda');
 await mkdir(outputDir, { recursive: true });
 
-for (const name of ['api', 'dashboard', 'authorizer', 'monitoring']) {
+for (const name of ['api', 'dashboard', 'authorizer', 'monitoring', 'exporter']) {
   try { await access(path.join(src, name, 'index.mjs')); }
   catch { console.log(`Skip ${name}: chưa có handler`); continue; }
   const output = createWriteStream(path.join(outputDir, `${name}.zip`));

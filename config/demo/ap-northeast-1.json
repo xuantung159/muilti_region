@@ -1,16 +1,19 @@
 {
   "region": "ap-northeast-1",
   "tables": {
-    "control": "mrapi-control"
+    "control": "mrapi-control",
+    "telemetry": "mrapi-telemetry"
   },
   "functions": {
-    "api": "mrapi-api",
+    "api": "mrapi-proxy",
     "dashboard": "mrapi-dashboard",
-    "authorizer": "mrapi-authorizer"
+    "authorizer": "mrapi-authorizer",
+    "monitoring": "mrapi-monitoring"
   },
   "apiGateway": {
-    "apiId": "",
+    "apiId": "n39r5pits8",
     "stage": "demo",
-    "baseUrl": ""
-  }
+    "baseUrl": "https://n39r5pits8.execute-api.ap-northeast-1.amazonaws.com/demo"
+  },
+  "exportBucket": "mrapi-exports-tyo"
 }

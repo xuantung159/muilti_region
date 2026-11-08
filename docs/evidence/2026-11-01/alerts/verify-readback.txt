@@ -1,0 +1,44 @@
+Đọc lại từ AWS bằng CloudShell (user/admin, account 138150704839), chỉ đọc. Thời điểm UTC ghi ở từng khối.
+Địa chỉ email không ghi vào file này.
+
+== 2026-11-01T01:05:01Z - alarm: ARN | state | action (đã rút gọn tiền tố ARN)
+ap-northeast-1:mrapi-tyo-api-5xx                 OK  ap-northeast-1:mrapi-alerts
+ap-northeast-1:mrapi-tyo-api-latency             OK  ap-northeast-1:mrapi-alerts
+ap-northeast-1:mrapi-tyo-lambda-errors           OK  ap-northeast-1:mrapi-alerts
+ap-northeast-1:mrapi-tyo-telemetry-write-failed  OK  ap-northeast-1:mrapi-alerts
+us-east-1:mrapi-health-sg                        OK  us-east-1:mrapi-alerts
+us-east-1:mrapi-health-tyo                       OK  us-east-1:mrapi-alerts
+
+== 2026-11-01T01:05:01Z - SNS Tokyo: Protocol, PendingConfirmation, ConfirmationWasAuthenticated
+email  false  false
+SubscriptionsConfirmed=1  SubscriptionsPending=0
+
+== 2026-11-01T01:05:34Z - đọc lại subscription Tokyo
+{"Protocol":"email","PendingConfirmation":"false","ConfirmationWasAuthenticated":"false","Owner":"138150704839","TopicArn":"arn:aws:sns:ap-northeast-1:138150704839:mrapi-alerts"}
+{"Protocol":"email","SubscriptionArn":"arn:aws:sns:ap-northeast-1:138150704839:mrapi-alerts:8ed57f71-018c-46a6-aec4-6766dddae16c"}
+So sánh Endpoint Tokyo với subscription Singapore (không in địa chỉ): SAME_ENDPOINT_AS_SG
+
+== 2026-11-01T01:05:01Z - log group: tên | retentionInDays
+ap-southeast-1 /aws/apigateway/welcome                     None  (ngoài phạm vi, không đổi)
+ap-southeast-1 /aws/lambda/mr-api                          None  (ngoài phạm vi, không đổi)
+ap-southeast-1 /aws/lambda/mrapi-authorizer                14
+ap-southeast-1 /aws/lambda/mrapi-dashboard                 14
+ap-southeast-1 /aws/lambda/mrapi-monitoring                14
+ap-southeast-1 /aws/lambda/mrapi-proxy                     14
+ap-southeast-1 /mrapi/apigateway/sg/demo                   14    (đã có từ trước)
+ap-southeast-1 API-Gateway-Execution-Logs_43vakggyh5/demo  14
+ap-northeast-1 /aws/apigateway/welcome                     None  (ngoài phạm vi, không đổi)
+ap-northeast-1 /aws/lambda/mrapi-authorizer                14
+ap-northeast-1 /aws/lambda/mrapi-dashboard                 14
+ap-northeast-1 /aws/lambda/mrapi-monitoring                14
+ap-northeast-1 /aws/lambda/mrapi-proxy                     14
+ap-northeast-1 /mrapi/apigateway/tyo/demo                  14    (đã có từ trước)
+ap-northeast-1 API-Gateway-Execution-Logs_n39r5pits8/demo  14
+
+== 2026-11-01T01:05:01Z - metric filter: tên | log group | pattern
+ap-southeast-1 mrapi-telemetry-write-failed /aws/lambda/mrapi-proxy { $.event = "TELEMETRY_WRITE_FAILED" }
+ap-northeast-1 mrapi-telemetry-write-failed /aws/lambda/mrapi-proxy { $.event = "TELEMETRY_WRITE_FAILED" }
+
+== 2026-11-01T01:05:34Z - cấu hình alarm health (us-east-1)
+{"AlarmName":"mrapi-health-sg","Namespace":"AWS/Route53","MetricName":"HealthCheckStatus","Statistic":"Minimum","Dimensions":[{"Name":"HealthCheckId","Value":"c7764d38-b17d-44df-8d44-4f2791296adc"}],"Period":60,"EvaluationPeriods":1,"DatapointsToAlarm":1,"Threshold":1.0,"ComparisonOperator":"LessThanThreshold","TreatMissingData":"breaching","AlarmActions":["arn:aws:sns:us-east-1:138150704839:mrapi-alerts"],"StateValue":"OK","StateReason":"Threshold Crossed: 1 out of the last 1 datapoints [1.0 (01/11/26 01:03:00)] was not less than the threshold (1.0) (minimum 1 datapoint for ALARM -> OK transition)."}
+{"AlarmName":"mrapi-health-tyo","Namespace":"AWS/Route53","MetricName":"HealthCheckStatus","Statistic":"Minimum","Dimensions":[{"Name":"HealthCheckId","Value":"bfa2df95-4abf-40d2-a240-dbd04acf735c"}],"Period":60,"EvaluationPeriods":1,"DatapointsToAlarm":1,"Threshold":1.0,"ComparisonOperator":"LessThanThreshold","TreatMissingData":"breaching","AlarmActions":["arn:aws:sns:us-east-1:138150704839:mrapi-alerts"],"StateValue":"OK","StateReason":"Threshold Crossed: 1 out of the last 1 datapoints [1.0 (01/11/26 01:03:00)] was not less than the threshold (1.0) (minimum 1 datapoint for ALARM -> OK transition)."}

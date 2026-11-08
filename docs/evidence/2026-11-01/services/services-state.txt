@@ -1,0 +1,29 @@
+CloudShell SG, 01/11/2026 08:22 UTC, chỉ đọc. Bản trích.
+
+CF Deployed enabled aliases=app.multi-region.io.vn cert=...d600c9c3083a tls=TLSv1.3_2025 waf=none logging=False PriceClass_All http2 ipv6 root=index.html origin groups=0
+CF origins: S3 mrapi-web-sg; mrapi-api-latency=api.multi-region.io.vn; mrapi-api-sg=43vakggyh5.execute-api.ap-southeast-1.amazonaws.com/demo
+CF behaviors /api/* /health /proxy/* /monitoring/* -> mrapi-api-latency, redirect-to-https; default -> S3
+
+HZ Z03093462BF2L4GV4FGRD records=15 querylog=0 dnssec=NOT_SIGNING
+RR api A Alias latency mrapi-sg hc=c7764d38 eval=False target d-zd1hv50jn0...; mrapi-tokyo hc=bfa2df95 eval=False target d-csqvriesoh...
+RR app A/AAAA Alias d2hkrs5dvlrte6.cloudfront.net
+RR @, *, www, ftp, mail A 112.213.89.150 ttl=360; MX 10 mail.multi-region.io.vn; TXT "v=spf1 a mx ~all"
+HC bfa2df95 n39r5pits8 /demo/health HTTPS 30s th=3 SNI 15/15 Success, tag Name=mrapi-tokyo-health
+HC c7764d38 43vakggyh5 /demo/health HTTPS 30s th=3 SNI 15/15 Success, tag Name=mrapi-sg-health
+
+Lambda SG: authorizer rVBoGTgN, dashboard 6j5+KNl+, monitoring f5BTOxk7, proxy Ot7hINFM, exporter nHiw0jHp. Tokyo 4 hàm cùng hash. Tất cả nodejs24.x, tracing=Active.
+X-Ray: sampling Default 5%, reservoir 1 ở 2 Region, group Default. Stage SG deploy r6bin4 tracing=True; Tokyo deploy fm5wpo tracing=True.
+
+DDB SG control: del=False pitr=DISABLED replica Tokyo ACTIVE PAY_PER_REQUEST TTL ENABLED
+DDB SG telemetry: del=False pitr=ENABLED replica Tokyo ACTIVE
+DDB TYO control: del=False pitr=DISABLED
+DDB TYO telemetry: del=False pitr=DISABLED
+
+S3 mrapi-exports-sg ver=Enabled lifecycle=none multipart=0 PAB=all sse=AES256 repl=mrapi-sg-to-tyo Enabled
+S3 mrapi-exports-tyo ver=Enabled lifecycle=none multipart=0 PAB=all sse=AES256 repl=mrapi-tyo-to-sg Enabled
+S3 mrapi-web-sg ver=None lifecycle=none multipart=0 PAB=all sse=AES256 repl=none
+
+Dashboard trước khi đổi: 1 (mrapi-overview, sửa cuối 2026-10-19T15:19:58Z, CloudTrail: admin; chỉ SG, 5 widget, 21 metric, có metric hàm mr-api không còn tồn tại). Bản gốc: dashboard-before.json.
+Log group không retention trước khi đổi: SG /aws/lambda/mr-api (5832 byte), SG /aws/apigateway/welcome (109 byte), Tokyo /aws/apigateway/welcome (109 byte).
+Không có Lambda tên mr-api ở SG; log group và role mr-api-role-8p30x4qr còn lại từ trước.
+SNS SG, Tokyo: mrapi-alerts 1 subscription Confirmed.
