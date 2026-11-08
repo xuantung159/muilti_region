@@ -70,5 +70,5 @@ Trust và permission nằm trong từng thư mục `roles/`. Dashboard tách hai
 
 Chép đúng trust, policy và boundary đang áp dụng. ARN role dùng chung lưu ở [config](../../config/demo/global.json). Không thay bản thực tế bằng policy mẫu.
 
-Không lưu password, secret key, token hoặc QR MFA. [Hướng dẫn đăng nhập](../../docs/MEMBER_LOGIN_MFA.md).
+Không lưu password, secret key, token hoặc QR MFA. [Hướng dẫn đăng nhập](../../docs/dang-nhap-mfa.md).
 

@@ -2,7 +2,7 @@
 import { randomBytes, scryptSync } from "node:crypto";
 import { GetHealthCheckStatusCommand, ListHealthChecksCommand, Route53Client } from "@aws-sdk/client-route-53";
 import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { API_ID_PATTERN, CONTROL_TABLE, apiRef, db, json, keyRef, parseBody, routeOf, sameHex, sha256, text } from "../shared/lib.mjs";
+import { API_ID_PATTERN, CONTROL_TABLE, TELEMETRY_TABLE, apiRef, db, json, keyRef, parseBody, routeOf, sameHex, sha256, text } from "../shared/lib.mjs";
 import { apis } from './apis.mjs';
 
 const SESSION_HOURS = 8;
@@ -174,14 +174,16 @@ async function revokeKey(session, keyId) {
   return json(200, { keyId, status: "revoked" });
 }
 
-// ---------- Thống kê: đọc các bộ đếm theo phút do hàm api ghi ----------
+// ---------- Thống kê: tổng hợp request từ telemetry do proxy ghi ----------
 
 async function usage(session, event) {
+  if (!TELEMETRY_TABLE) return json(503, { error: "Chưa cấu hình TELEMETRY_TABLE cho dashboard" });
   const rangeName = event.queryStringParameters?.range ?? "24h";
   const range = RANGES[rangeName];
   if (!range) return json(400, { error: "range phải là 1h, 24h hoặc 7d" });
 
-  const start = new Date(Date.now() - (range.buckets - 1) * range.minutes * 60_000);
+  const now = new Date();
+  const start = new Date(now.getTime() - (range.buckets - 1) * range.minutes * 60_000);
   const from = start.toISOString().slice(0, range.chars);
 
   const items = [];
@@ -189,13 +191,14 @@ async function usage(session, event) {
   do {
     const res = await db.send(
       new QueryCommand({
-        TableName: CONTROL_TABLE,
+        TableName: TELEMETRY_TABLE,
         KeyConditionExpression: "PK = :pk AND SK BETWEEN :from AND :to",
-        ExpressionAttributeValues: { ":pk": `TENANT#${session.tenantId}`, ":from": `USAGE#${from}`, ":to": "USAGE#~" },
+        ExpressionAttributeValues: { ":pk": `TENANT#${session.tenantId}`, ":from": from, ":to": `${now.toISOString()}#~` },
+        ConsistentRead: true,
         ExclusiveStartKey,
       }),
     );
-    items.push(...res.Items);
+    items.push(...(res.Items ?? []));
     ExclusiveStartKey = res.LastEvaluatedKey;
   } while (ExclusiveStartKey);
 
@@ -208,7 +211,10 @@ async function usage(session, event) {
   const byRegion = {};
   const byKey = {};
   const series = {};
-  for (const item of items) {
+  for (const record of items) {
+    if (!record.timestamp || !Number.isFinite(record.status) || !Number.isFinite(record.latencyMs)) continue;
+    const item = { requests: 1, errors: record.status >= 400 ? 1 : 0, totalMs: record.latencyMs,
+      servedRegion: record.region, keyId: record.keyId, minute: record.timestamp };
     totals.requests += item.requests ?? 0;
     totals.errors += item.errors ?? 0;
     totals.totalMs += item.totalMs ?? 0;
@@ -219,6 +225,8 @@ async function usage(session, event) {
 
   return json(200, {
     range: rangeName,
+    source: "telemetry",
+    generatedAt: new Date().toISOString(),
     totals,
     byRegion,
     byKey,

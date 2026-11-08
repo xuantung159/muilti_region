@@ -2,24 +2,13 @@
 
 Dashboard giám sát cho dự án AWS Multi-Region Active-Active API Platform. Tài liệu này dành cho cả nhóm: cách chạy trên máy, cách nối dashboard với AWS thật, và cách đưa nó lên AWS.
 
-**Trạng thái hiện tại:** portal doanh nghiệp và sáu trang giám sát chỉ dùng backend thật. Đã bỏ nút demo, tài khoản/key mẫu và bộ sinh số liệu khỏi ứng dụng. Dữ liệu kiểm thử nằm riêng trong `src/test/fixtures`, không được import bởi ứng dụng.
+**Trạng thái hiện tại:** một ứng dụng React chứa portal doanh nghiệp (`/portal`) và sáu trang giám sát. Portal có nút **Trải nghiệm demo** để dùng tài khoản, API và key mẫu trong bộ nhớ trình duyệt, không gọi AWS. Thoát demo trở về tài khoản thật và bỏ dữ liệu demo. Giám sát vẫn dùng dữ liệu mẫu mang nhãn `DEMO DATA`, chưa có backend monitoring.
 
-Tab **Hướng dẫn** giải thích cấu hình server doanh nghiệp bằng API ID/key và cách gọi gateway.
+### Demo portal và hướng dẫn doanh nghiệp
 
-### Luồng doanh nghiệp trên web
+Mở `/portal` → **Trải nghiệm demo**. Thử thêm/sửa/bật/tắt API đích, tạo key `DEMO_ONLY`, sao chép key, rồi mở **Thử request demo**. Có sẵn API/key mẫu để thử ngay. Màn hình mô phỏng HTTP 200, thiếu/sai key (401), key thu hồi/API tắt (403), backend lỗi (502). Không gửi request đến URL backend đã nhập. Mọi kết quả đều là mô phỏng; proxy thật và key scope chưa triển khai.
 
-Mở `/portal`, đăng ký/đăng nhập rồi đi theo bốn bước trên màn hình:
-
-1. **Khai báo API**: đăng ký backend HTTPS công khai, bật API cần tích hợp.
-2. **Lấy API key**: đặt tên ứng dụng, chọn các API được phép gọi, tạo key. Secret chỉ được trả một lần. Bấm **Dùng key này để tích hợp** để chuyển trực tiếp sang bước tiếp theo.
-3. **Cấu hình & kiểm tra**: tab **Tích hợp project** nhận API/key vừa tạo. Nhập URL gateway bao gồm stage (hoặc cấu hình trước `VITE_GATEWAY_URL`). Sao chép `.env` có key hoặc tải `mrapi.env`, đặt vào project server và đổi tên thành `.env`. Có mã Node.js/Python để sao chép ngay trên web. Trình duyệt không tự ghi file vào project bên ngoài.
-4. **Gửi GET tới gateway**: nhập đường dẫn của backend, ví dụ `/orders?limit=10`, xem trước URL rồi gửi. Màn hình hiển thị HTTP status, thời gian thực đo từ trình duyệt, response body, region/request ID nếu được CORS expose. Có lựa chọn thử thiếu key và nút hủy request. Sau đó bấm **Xem thống kê doanh nghiệp**. Thu hồi key trong tab API key và thử lại sẽ nhận lỗi nếu authorizer được cấu hình đúng.
-
-Key tích hợp chỉ ở bộ nhớ của bước đang mở; rời bước/đăng xuất sẽ xóa. Nút xóa key cũng xóa secret đang dùng ở bước này. File/clipboard được xuất theo yêu cầu có chứa secret, nên chỉ dùng trên server và không commit. Không dùng biến public frontend để chứa key.
-
-Tab tích hợp gọi gateway thật, không thay phản hồi lỗi bằng dữ liệu mẫu và không gửi Bearer token/cookie của portal đến gateway. GET không theo redirect, giới hạn 15 giây và chỉ hiển thị tối đa 64 KiB đầu của body. Project doanh nghiệp cần nạp `.env` và thực thi mã tích hợp trên server.
-
-**Điều kiện kết nối thật:** triển khai proxy và authorizer cho `/proxy/{apiId}/...`; cấu hình preflight `OPTIONS` không yêu cầu key, `Access-Control-Allow-Origin` là origin của web, `Access-Control-Allow-Methods` gồm `GET, OPTIONS`, `Access-Control-Allow-Headers` gồm `x-api-key`. Phản hồi proxy và lỗi Gateway Responses đều cần CORS. Để đọc region/request ID, expose `X-Served-Region, X-Request-Id`. Nếu trình duyệt chặn CORS hoặc mạng lỗi, web báo không đọc được phản hồi và không suy đoán HTTP status. Portal CORS và proxy CORS là hai phần cấu hình riêng. Thống kê phụ thuộc telemetry backend và có thể cập nhật chậm; request bị authorizer từ chối có thể chưa được proxy ghi nhận.
+Tab **Hướng dẫn** (cũng có dưới form đăng nhập) có phần **Làm thử với project mẫu** (mô phỏng năm bước từ tạo key tới dán `.env` và chạy client, kèm file tải `public/samples/project-mau-mrapi.zip` đóng gói từ `project_test/`, không chứa `.env`), kịch bản trình diễn, sơ đồ luồng request, sơ đồ hai Region và failover (chỉ minh họa, không tác động AWS), rồi giải thích lấy API ID/key, cấu hình biến môi trường ở backend doanh nghiệp, mẫu Node.js/Python/cURL, response mẫu, telemetry và bảng mã lỗi. Mã mẫu là contract dự kiến cho proxy tương lai; không nhúng key vào frontend. Demo portal độc lập với chế độ demo monitoring trong Settings và không thay token đăng nhập thật.
 
 
 ## Mục lục
@@ -53,13 +42,13 @@ Mở http://localhost:5173. Sidebar có Cổng doanh nghiệp và sáu trang gi�
 
 ### Nối portal với backend doanh nghiệp
 
-Tạo `.env.local` từ `.env.example`. Khi phát triển, đặt `PORTAL_API_TARGET=https://<api-id>.execute-api.ap-southeast-1.amazonaws.com/demo`, để trống `VITE_PORTAL_API_URL`, rồi khởi động lại Vite. Proxy dev chuyển `/api/*` tới stage tương ứng. Proxy chỉ chuyển request; vẫn cần API Gateway/Lambda thật.
+Tạo `.env.local` từ `.env.example`. Đặt thêm `VITE_MONITORING_API_URL=/` thì proxy dev cũng chuyển `/monitoring/*` tới cùng stage, nên các trang giám sát hiện số liệu thật. Khi phát triển, đặt `PORTAL_API_TARGET=https://<api-id>.execute-api.ap-southeast-1.amazonaws.com/demo`, để trống `VITE_PORTAL_API_URL`, rồi khởi động lại Vite. Proxy dev chuyển `/api/*` tới stage tương ứng. Proxy chỉ chuyển request; vẫn cần API Gateway/Lambda thật.
 
 Khi triển khai frontend tĩnh, đặt `VITE_PORTAL_API_URL` thành URL gốc API Gateway bao gồm stage trước khi build. Trên Lambda dashboard đặt `PORTAL_ALLOWED_ORIGIN` bằng origin của frontend (không có path/dấu `/` cuối), mở method `OPTIONS` qua Lambda hoặc cấu hình preflight tương đương ở API Gateway, rồi deploy stage. CORS cần có cả trên Gateway Responses cho lỗi do API Gateway trả. Nếu phục vụ frontend và `/api/*` qua cùng origin thì để trống URL này.
 
-Lambda dashboard không còn chứa `page.html`. Đóng gói/upload lại `dashboard.zip`. Đặt `FRONTEND_URL` bằng URL gốc frontend để `GET /` của Lambda chuyển hướng tới `/portal`; nếu chưa đặt, nó trả thông tin JSON của service. Token phiên được giữ trong sessionStorage; logout/hết hạn xóa phiên phía giao diện và cache portal. Secret API key chỉ hiện sau khi tạo và bị ẩn khi đổi tab, trừ khi chủ động chuyển sang bước Tích hợp project.
+Lambda dashboard không còn chứa `page.html`. Đóng gói/upload lại `dashboard.zip`. Đặt `FRONTEND_URL` bằng URL gốc frontend để `GET /` của Lambda chuyển hướng tới `/portal`; nếu chưa đặt, nó trả thông tin JSON của service. Token phiên được giữ trong sessionStorage; logout/hết hạn xóa phiên phía giao diện và cache portal. Secret API key chỉ hiện sau khi tạo và bị ẩn khi đổi tab. Proxy gateway, key scope và telemetry vẫn chưa triển khai.
 
-Monitoring có nguồn dữ liệu/cấu hình độc lập với portal doanh nghiệp. Backend monitoring và phân quyền quản trị chưa triển khai.
+Monitoring có nguồn dữ liệu/cấu hình độc lập; bật demo ở Settings không tạo dữ liệu giả cho portal. Backend monitoring và phân quyền quản trị chưa triển khai.
 
 Trước khi mở pull request, chạy:
 
@@ -89,10 +78,11 @@ Trình duyệt không được giữ thông tin xác thực AWS, nên dashboard 
 
 Dashboard chọn nguồn dữ liệu theo hai đầu vào:
 
-| `VITE_MONITORING_API_URL` | Kết quả |
-|---|---|
-| Trống | Mọi metric hiện Not connected, trạng thái Unknown |
-| Có URL | Gọi backend thật; lỗi không thay bằng dữ liệu mẫu |
+| Chế độ demo (trang Settings) | `VITE_MONITORING_API_URL` | Kết quả |
+|---|---|---|
+| Bật | bất kỳ | Dữ liệu mẫu, nhãn DEMO DATA |
+| Tắt | trống | Mọi metric hiện "Not connected", trạng thái "Unknown" |
+| Tắt | có URL | Dữ liệu từ backend; backend lỗi thì hiện trạng thái lỗi, không rơi về dữ liệu mẫu |
 
 Tích hợp xong không phải sửa trang nào của dashboard: chỉ cần backend trả đúng JSON.
 
@@ -292,7 +282,7 @@ Kết quả mong đợi: HTTP 200, body là một mảng JSON, có header `Acces
    ```
 
 2. Dừng rồi chạy lại `npm run dev` (Vite chỉ đọc file env lúc khởi động).
-3. Mở trang Settings để xác nhận URL backend. Không còn chế độ demo; cấu hình demo cũ trong trình duyệt bị bỏ qua.
+3. Mở trang Settings, bỏ chọn "Chế độ dữ liệu demo". Thiết lập này lưu trong trình duyệt và được ưu tiên hơn `VITE_DEFAULT_DATA_MODE`.
 4. Header phải đổi từ `DEMO DATA` sang `LIVE · BACKEND`.
 5. Mở trang Data Sources: nguồn nào đã nối phải hiện `Connected`.
 
@@ -370,6 +360,7 @@ Nhớ tắt `HEALTH_FORCE_FAIL` sau kiểm tra số 5.
 
 | Hiện tượng | Nguyên nhân thường gặp | Cách xử lý |
 |---|---|---|
+| Header vẫn là `DEMO DATA` sau khi đặt URL | Chế độ demo còn bật trong Settings | Bỏ chọn ở trang Settings |
 | Header là `NOT CONNECTED` | `VITE_MONITORING_API_URL` trống, hoặc chưa chạy lại dev server | Kiểm tra `.env.local`, chạy lại `npm run dev` |
 | "Không tải được dữ liệu", console báo CORS | Lambda không trả `Access-Control-Allow-Origin`, hoặc sai origin | Sửa header ở Lambda, kiểm tra `ALLOWED_ORIGIN` |
 | "Backend trả HTTP 403" | Chưa deploy API sau khi thêm route, hoặc sai stage trong URL | Deploy lại, kiểm tra URL bằng `curl` |
@@ -401,6 +392,7 @@ Nhớ tắt `HEALTH_FORCE_FAIL` sau kiểm tra số 5.
 | `/regions` | Multi-Region | `/monitoring/snapshot` |
 | `/apis` | API Monitoring | `/monitoring/endpoints` |
 | `/incidents` | Failover & Incidents | `/monitoring/incidents` |
+| `/infrastructure` | Hạ tầng triển khai | `/monitoring/snapshot` (trạng thái sống); danh sách tài nguyên ở `src/data/deployment.ts` |
 | `/sources` | Data Sources | `/monitoring/sources` |
 | `/settings` | Settings | không gọi backend |
 
@@ -412,6 +404,7 @@ src/
   data/
     provider.ts  Interface MonitoringProvider: hợp đồng giữa giao diện và nguồn dữ liệu
     providers.ts MockProvider, NotConnectedProvider, HttpProvider, createProvider()
+    mock/        Bộ sinh dữ liệu mẫu
     sources.ts   Danh mục nguồn AWS dự kiến tích hợp
   app/           Settings (localStorage) và các hook truy vấn (TanStack Query)
   components/    Layout, biểu đồ, thành phần giao diện dùng chung
@@ -434,8 +427,3 @@ Ngưỡng đánh giá trạng thái (Healthy, Degraded, Down) nằm ở [src/dom
 - Chưa có form nhập kết quả kiểm thử failover thủ công; kết quả loại `Manual test` phải đến từ backend.
 - Chưa có test trình duyệt tự động (Playwright).
 
-
-
-### Thống kê portal trống dù client gọi thành công
-
-`/api/usage` tổng hợp các request từ `mrapi-telemetry` theo tenant, region, key và khoảng thời gian; giao diện tự làm mới 15 giây. Lỗi là HTTP từ 400 trở lên. Không đọc bộ đếm `USAGE#` cũ trong bảng control. Xem [hướng dẫn triển khai bản sửa](../docs/runbooks/PORTAL_TELEMETRY_FIX.md). Thay code local không tự cập nhật Lambda đang chạy trên AWS.

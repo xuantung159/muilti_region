@@ -4,11 +4,11 @@
   "Runtime": "nodejs24.x",
   "Role": "arn:aws:iam::138150704839:role/mrapi-monitoring-role",
   "Handler": "monitoring/index.handler",
-  "CodeSize": 3831414,
+  "CodeSize": 3831450,
   "Description": "",
   "Timeout": 10,
   "MemorySize": 256,
-  "CodeSha256": "f5BTOxk7f/SurRRfm2aTQJTufyavWbmqqh2qi127CGY=",
+  "CodeSha256": "4uFR/KFr2yoPERi0aoHYkpupOyUsKN5p02BWppCcqt0=",
   "Version": "$LATEST",
   "TracingConfig": {
     "Mode": "Active"

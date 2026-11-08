@@ -11,7 +11,7 @@ const ORIGINS: { value: EventOrigin; label: string; tone: 'warning' | 'accent' |
     label: 'Simulated',
     tone: 'warning',
     explain: 'Sự kiện giả lập do dashboard sinh ra để trình diễn.',
-    empty: 'Không có sự kiện thuộc nguồn này.',
+    empty: 'Không có sự kiện giả lập nào. Bật chế độ demo trong Settings để xem dữ liệu mẫu.',
   },
   {
     value: 'manual_test',

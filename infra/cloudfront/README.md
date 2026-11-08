@@ -64,7 +64,7 @@ Upload nội dung `monitoring-web/dist/` vào gốc bucket: asset trước, `ind
 
 ## Kiểm tra và rollback
 
-`index.html` chưa có Cache-Control; trình duyệt cũ có thể cần Ctrl+F5. Build còn cảnh báo chunk lớn.
+`index.html` có `Cache-Control: no-cache` từ 08/11/2026 (metadata object S3). Mỗi lần upload lại `index.html` phải đặt lại `--cache-control no-cache`, nếu không metadata sẽ mất. Asset có hash chưa có header Cache-Control riêng, đang dựa vào TTL của cache policy CloudFront. Build còn cảnh báo chunk lớn.
 
 Quay API về SG: đổi `TargetOriginId` của 4 behavior API thành `mrapi-api-sg`. Khi cập nhật frontend, lưu bản index hiện hành để có thể khôi phục.
 

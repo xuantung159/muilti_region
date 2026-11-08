@@ -1,0 +1,17 @@
+{
+  "id": "n39r5pits8",
+  "name": "mrapi-api-tyo",
+  "description": "Tokyo REST API mirrored from verified Singapore routes, with Tokyo monitoring integration.",
+  "version": "1.0.0",
+  "apiKeySource": "HEADER",
+  "endpointConfiguration": {
+    "types": [
+      "REGIONAL"
+    ],
+    "ipAddressType": "ipv4"
+  },
+  "disableExecuteApiEndpoint": false,
+  "rootResourceId": "u0t32dzc2i",
+  "securityPolicy": "TLS_1_0",
+  "apiStatus": "AVAILABLE"
+}

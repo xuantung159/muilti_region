@@ -1,9 +1,8 @@
-import { MockProvider } from '../test/fixtures/MockProvider';
 import { describe, expect, it, vi } from 'vitest';
 import { RANGES } from '../domain/range';
 import { deriveRegionHealth } from '../domain/status';
-import { simulatedIncidentWindow } from '../test/fixtures/generator';
-import { createProvider, HttpProvider, NotConnectedProvider } from './providers';
+import { simulatedIncidentWindow } from './mock/generator';
+import { createProvider, HttpProvider, MockProvider, NotConnectedProvider } from './providers';
 
 const NOW = Date.UTC(2026, 9, 13, 5, 7, 30);
 
@@ -73,11 +72,36 @@ describe('HttpProvider', () => {
     await expect(new HttpProvider('https://b.example', respond({}, 503)).getSnapshot('1h')).rejects.toThrow('503');
     await expect(new HttpProvider('https://b.example', respond({ nope: true })).getSnapshot('1h')).rejects.toThrow('sai định dạng');
   });
+
+  it('từ chối snapshot thiếu Region hoặc metric trước khi trang truy cập dữ liệu', async () => {
+    const snapshot = await new NotConnectedProvider().getSnapshot('1h');
+    await expect(new HttpProvider('https://b.example', respond(snapshot)).getSnapshot('1h')).resolves.toEqual(snapshot);
+    for (const regions of [[], [snapshot.regions[0]], [snapshot.regions[0], snapshot.regions[0]], [{}, {}]]) {
+      await expect(new HttpProvider('https://b.example', respond({ ...snapshot, regions })).getSnapshot('1h')).rejects.toThrow('sai định dạng');
+    }
+    const malformed = { ...snapshot, regions: snapshot.regions.map((r) => ({ ...r, lambda: null })) };
+    await expect(new HttpProvider('https://b.example', respond(malformed)).getSnapshot('1h')).rejects.toThrow('sai định dạng');
+  });
+
+  it('từ chối phần tử sai cấu trúc và dữ liệu mô phỏng trong nguồn live', async () => {
+    const provider = new HttpProvider('https://b.example', respond([{}]));
+    await expect(provider.getEndpoints('1h')).rejects.toThrow('sai định dạng');
+    await expect(provider.getIncidents()).rejects.toThrow('sai định dạng');
+    await expect(provider.getSources()).rejects.toThrow('sai định dạng');
+    const mock = new MockProvider(0, () => NOW);
+    const snapshot = { ...await mock.getSnapshot('1h'), dataMode: 'live' };
+    await expect(new HttpProvider('https://b.example', respond(snapshot)).getSnapshot('1h')).resolves.toEqual(snapshot);
+    await expect(new HttpProvider('https://b.example', respond({ ...snapshot, series: [{ t: NOW, regions: {} }] })).getSnapshot('1h')).rejects.toThrow('sai định dạng');
+    await expect(new HttpProvider('https://b.example', respond(await mock.getSnapshot('1h'))).getSnapshot('1h')).rejects.toThrow('sai định dạng');
+    await expect(new HttpProvider('https://b.example', respond(await mock.getIncidents())).getIncidents()).rejects.toThrow('sai định dạng');
+  });
 });
 
 describe('createProvider', () => {
   it('chọn nguồn theo chế độ demo và URL backend', () => {
-    expect(createProvider('').id).toBe('none');
-    expect(createProvider('https://b.example').id).toBe('http');
+    expect(createProvider(true, '').id).toBe('mock');
+    expect(createProvider(true, 'https://b.example').id).toBe('mock');
+    expect(createProvider(false, '').id).toBe('none');
+    expect(createProvider(false, 'https://b.example').id).toBe('http');
   });
 });

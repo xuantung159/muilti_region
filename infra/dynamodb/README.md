@@ -30,7 +30,7 @@ Hai bảng dùng Global Tables giữa Singapore và Tokyo.
 
 Cả hai dùng PK/SK kiểu String, On-demand, TTL `expiresAt`, replica `ap-northeast-1`. PITR và deletion protection bật ở cả hai Region. Muốn xóa bảng phải tắt deletion protection trước.
 
-JSON là định nghĩa dựng lại, không phải bản xuất đầy đủ từ AWS. Tạo bảng từ JSON chưa bao gồm mọi thiết lập replica/PITR; xem [Global Tables](../../docs/runbooks/DYNAMODB_GLOBAL_TABLES.md).
+JSON là định nghĩa dựng lại, không phải bản xuất đầy đủ từ AWS. Tạo bảng từ JSON chưa bao gồm mọi thiết lập replica/PITR; xem [Global Tables](../../docs/runbooks/dynamodb-replica-tokyo.md).
 
 ## Kiểm tra cấu hình
 

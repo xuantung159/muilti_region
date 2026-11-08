@@ -1,0 +1,81 @@
+Route53 live DNS and HTTPS test - 2026-10-27T15:37:58.2264715+00:00
+DNS SERVER 8.8.8.8
+
+Name                   Type TTL IPAddress
+----                   ---- --- ---------
+api.multi-region.io.vn    A  60 52.74.58.114
+
+
+DNS SERVER 1.1.1.1
+
+Name                   Type TTL IPAddress
+----                   ---- --- ---------
+api.multi-region.io.vn    A  60 47.128.196.219
+
+
+DNS SERVER ns-179.awsdns-22.com
+
+Name                   Type    TTL IPAddress
+----                   ----    --- ---------
+api.multi-region.io.vn    A     60 47.128.196.219
+multi-region.io.vn       NS 172800 
+multi-region.io.vn       NS 172800 
+multi-region.io.vn       NS 172800 
+multi-region.io.vn       NS 172800 
+
+
+curl: (6) Could not resolve host: api.multi-region.io.vn
+curl: (6) Could not resolve host: api.multi-region.io.vn
+curl: (6) Could not resolve host: api.multi-region.io.vn
+ap-southeast-1 target IP 54.251.131.234
+HTTP/1.1 200 OK
+x-amzn-RequestId: 352995a7-36b6-49f6-9b20-3d0cfe7d102e
+x-amz-apigw-id: F6PLEEE7yQ0EOfA=
+Cache-Control: no-store
+X-Served-Region: ap-southeast-1
+X-Amzn-Trace-Id: Root=1-6ae0c579-ccc7a4065b7a04e3e7ccf88a
+Content-Type: application/json
+Content-Length: 41
+Connection: keep-alive
+Date: Tue, 27 Oct 2026 15:38:33 GMT
+
+{"region":"ap-southeast-1","status":"ok"}
+ap-northeast-1 target IP 54.92.95.254
+HTTP/1.1 200 OK
+x-amzn-RequestId: a523f3f4-4457-4b3c-9e83-b88e356452fb
+x-amz-apigw-id: F6PLJFKntjMEUEA=
+Cache-Control: no-store
+X-Served-Region: ap-northeast-1
+X-Amzn-Trace-Id: Root=1-6ae0c57a-92d8902fa4daab7307df5741
+Content-Type: application/json
+Content-Length: 41
+Connection: keep-alive
+Date: Tue, 27 Oct 2026 15:38:33 GMT
+
+{"region":"ap-northeast-1","status":"ok"}
+HTTPS to Route53 simulated answer 47.128.196.219
+HTTP/1.1 200 OK
+x-amzn-RequestId: 2915e97d-05bc-4b53-962b-e617b6792db1
+x-amz-apigw-id: F6PQ-GV1SQ0EA5g=
+Cache-Control: no-store
+X-Served-Region: ap-southeast-1
+X-Amzn-Trace-Id: Root=1-6ae0c59f-c55a453954bdffc628b4f7cc
+Content-Type: application/json
+Content-Length: 41
+Connection: keep-alive
+Date: Tue, 27 Oct 2026 15:39:11 GMT
+
+{"region":"ap-southeast-1","status":"ok"}
+HTTPS to Route53 simulated answer 18.178.167.215
+HTTP/1.1 200 OK
+x-amzn-RequestId: 5e1a9201-6303-45e0-8989-93d12bbe5cc4
+x-amz-apigw-id: F6PRDF9fNjMEgbQ=
+Cache-Control: no-store
+X-Served-Region: ap-northeast-1
+X-Amzn-Trace-Id: Root=1-6ae0c59f-496271712085072592fa8dbd
+Content-Type: application/json
+Content-Length: 41
+Connection: keep-alive
+Date: Tue, 27 Oct 2026 15:39:11 GMT
+
+{"region":"ap-northeast-1","status":"ok"}

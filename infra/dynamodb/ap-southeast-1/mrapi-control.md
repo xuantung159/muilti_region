@@ -52,6 +52,6 @@ aws dynamodb create-table --cli-input-json file://mrapi-control.json --region ap
 aws dynamodb update-time-to-live --cli-input-json file://mrapi-control.ttl.json --region ap-southeast-1
 ```
 
-Cấu hình tiếp replica, PITR và deletion protection theo [runbook](../../../docs/runbooks/DYNAMODB_GLOBAL_TABLES.md). Hai lệnh trên chỉ tạo bảng và TTL.
+Cấu hình tiếp replica, PITR và deletion protection theo [runbook](../../../docs/runbooks/dynamodb-replica-tokyo.md). Hai lệnh trên chỉ tạo bảng và TTL.
 
 Tên bảng đã lưu trong `config/demo/*.json`. Dashboard, proxy và authorizer dùng bảng này. Luồng tài khoản/API/key thật chưa nghiệm thu đầy đủ.

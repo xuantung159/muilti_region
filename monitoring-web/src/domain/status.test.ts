@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSnapshot } from '../test/fixtures/generator';
+import { buildSnapshot } from '../data/mock/generator';
 import { deriveEndpointHealth, deriveRegionHealth, deriveReplicationHealth, sumMetrics, weightedAverage } from './status';
 import { type EndpointStat, missing, type RegionSnapshot, value } from './types';
 

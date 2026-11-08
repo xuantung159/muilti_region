@@ -1,4 +1,4 @@
-import { Activity, Database, FlaskConical, Globe2, LayoutDashboard, type LucideIcon, Menu, Moon, PlugZap, Settings as SettingsIcon, Siren, Sun, Unplug, X } from 'lucide-react';
+import { Activity, Database, FlaskConical, Globe2, LayoutDashboard, type LucideIcon, Menu, Moon, Network, PlugZap, Settings as SettingsIcon, Siren, Sun, Unplug, X } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useProvider } from '../app/data';
@@ -12,6 +12,7 @@ const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: '/regions', label: 'Multi-Region', icon: Globe2 },
   { to: '/apis', label: 'API Monitoring', icon: Activity },
   { to: '/incidents', label: 'Failover & Incidents', icon: Siren },
+  { to: '/infrastructure', label: 'Hạ tầng', icon: Network },
   { to: '/sources', label: 'Data Sources', icon: Database },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -56,7 +57,12 @@ export function Layout() {
         }`}
       >
         <div className="flex h-14 items-center justify-between border-b border-line px-4">
-          <span className="text-sm font-semibold">Multi-Region Platform</span>
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            <span className="grid size-7 place-items-center rounded-lg bg-accent text-on-accent">
+              <Globe2 aria-hidden className="size-4" />
+            </span>
+            Multi-Region Platform
+          </span>
           <button type="button" className="lg:hidden" onClick={() => setMenuOpen(false)} aria-label="Đóng menu">
             <X className="size-5" />
           </button>
@@ -69,7 +75,7 @@ export function Layout() {
               end={to === '/'}
               onClick={() => setMenuOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 rounded-md px-3 py-2 text-sm ${isActive ? 'bg-raised font-semibold text-ink' : 'text-ink2 hover:bg-raised hover:text-ink'}`
+                `flex items-center gap-2.5 rounded-md border-l-2 px-3 py-2 text-sm transition-colors ${isActive ? 'border-accent bg-accent/10 font-semibold text-ink' : 'border-transparent text-ink2 hover:bg-raised hover:text-ink'}`
               }
             >
               <Icon aria-hidden className="size-4" />
@@ -77,11 +83,20 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
-        <p className="absolute inset-x-0 bottom-0 border-t border-line p-4 text-xs text-muted">ap-southeast-1 · ap-northeast-1</p>
+        <div className="absolute inset-x-0 bottom-0 space-y-1 border-t border-line p-4 text-xs text-muted">
+          <p className="flex items-center gap-2">
+            <span aria-hidden className="size-2 rounded-full bg-[var(--series-1)]" />
+            ap-southeast-1
+          </p>
+          <p className="flex items-center gap-2">
+            <span aria-hidden className="size-2 rounded-full bg-[var(--series-2)]" />
+            ap-northeast-1
+          </p>
+        </div>
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-line bg-surface px-4">
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-line bg-surface/90 px-4 backdrop-blur">
           <button type="button" className="lg:hidden" onClick={() => setMenuOpen(true)} aria-label="Mở menu">
             <Menu className="size-5" />
           </button>
@@ -105,7 +120,7 @@ export function Layout() {
         )}
         {!portal && provider.id === 'none' && (
           <div className="border-b border-line bg-raised px-4 py-2 text-xs text-ink2">
-            <strong className="font-semibold text-ink">NOT CONNECTED.</strong> Chưa cấu hình backend (<code>VITE_MONITORING_API_URL</code>), nên không có số liệu nào để hiển thị.
+            <strong className="font-semibold text-ink">NOT CONNECTED.</strong> Chế độ demo đang tắt và chưa cấu hình backend (<code>VITE_MONITORING_API_URL</code>), nên không có số liệu nào để hiển thị.
           </div>
         )}
 

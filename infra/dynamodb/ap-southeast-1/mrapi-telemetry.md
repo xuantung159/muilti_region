@@ -86,6 +86,6 @@ aws dynamodb create-table --cli-input-json file://mrapi-telemetry.json --region 
 aws dynamodb update-time-to-live --cli-input-json file://mrapi-telemetry.ttl.json --region ap-southeast-1
 ```
 
-JSON có GSI1; replica/PITR/deletion protection làm tiếp theo [runbook](../../../docs/runbooks/DYNAMODB_GLOBAL_TABLES.md).
+JSON có GSI1; replica/PITR/deletion protection làm tiếp theo [runbook](../../../docs/runbooks/dynamodb-replica-tokyo.md).
 
 Kiểm thử đồng bộ: 10/10 item xuất hiện ở Region kia trong khoảng 1 giây. Cần thêm mẫu để đánh giá p95.

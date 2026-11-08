@@ -8,15 +8,6 @@
       "authorizerUri": "arn:aws:apigateway:ap-southeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-authorizer/invocations",
       "identitySource": "method.request.header.x-api-key",
       "authorizerResultTtlInSeconds": 0
-    },
-    {
-      "id": "sexy17",
-      "name": "mrapi-key-authorizer",
-      "type": "REQUEST",
-      "authType": "custom",
-      "authorizerUri": "arn:aws:apigateway:ap-southeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-authorizer/invocations",
-      "identitySource": "method.request.header.x-api-key",
-      "authorizerResultTtlInSeconds": 0
     }
   ]
 }

@@ -15,7 +15,7 @@ Replication metrics không bật mặc định và có tính phí theo metric Cl
 
 ## Metric
 
-Namespace `AWS/S3`, dimension `SourceBucket`, `DestinationBucket`, `RuleId`. Metric ghi ở Region của bucket nguồn.
+Namespace `AWS/S3`, dimension `SourceBucket`, `DestinationBucket`, `RuleId`. Trên account này metric nằm ở Region của bucket đích (Tokyo với rule `mrapi-sg-to-tyo`), Region nguồn không có metric (`list-metrics`, 01/11/2026).
 
 | Metric | Ý nghĩa | Dùng cho |
 |---|---|---|
@@ -23,7 +23,7 @@ Namespace `AWS/S3`, dimension `SourceBucket`, `DestinationBucket`, `RuleId`. Met
 | `OperationsPendingReplication` | Số thao tác đang chờ replicate | Mở rộng sau |
 | `BytesPendingReplication` | Dung lượng đang chờ replicate | Mở rộng sau |
 
-Giống DynamoDB, mỗi chiều là một truy vấn riêng ở Region của bucket nguồn.
+Mỗi chiều là một truy vấn riêng ở Region của bucket đích, khác DynamoDB (metric ở Region nguồn). Backend dùng thống kê `Maximum` vì metric có điểm 0 mỗi phút khi rảnh.
 
 ## Giới hạn cần biết
 

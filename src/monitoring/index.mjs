@@ -2,7 +2,7 @@
 // monitoring-web/docs/integration/backend-api.md (kiểu: monitoring-web/src/domain/types.ts).
 //
 // Nguyên tắc: metric nào không có dữ liệu thì trả { kind: 'missing', reason }, không bao giờ trả 0 thay thế.
-// Hàm này KHÔNG tự xác thực. Route /monitoring/* phải nằm sau authorizer của API Gateway trước khi công khai.
+// Hàm này KHÔNG tự xác thực. Route /monitoring/* công khai theo quyết định của nhóm ngày 01/11/2026, chỉ trả số liệu tổng hợp.
 import { CloudWatchClient, DescribeAlarmHistoryCommand, GetMetricDataCommand, ListMetricsCommand } from '@aws-sdk/client-cloudwatch';
 
 const REGION_CODES = ['ap-southeast-1', 'ap-northeast-1'];
@@ -20,14 +20,22 @@ const SUPPORTED_METHODS = new Set(['GET', 'POST', 'PUT', 'DELETE']);
 // Tên tài nguyên lấy từ kết quả list-metrics thật trên AWS (Singapore, 23/10/2026).
 // Tên API Gateway ở Tokyo CHƯA xác nhận: C phải đối chiếu rồi đặt qua biến môi trường MONITORING_CONFIG.
 const DEFAULT_CONFIG = {
+  routingPolicy: 'Latency-based + health check',
+  healthChecks: {
+    'ap-southeast-1': 'c7764d38-b17d-44df-8d44-4f2791296adc',
+    'ap-northeast-1': 'bfa2df95-4abf-40d2-a240-dbd04acf735c',
+  },
   dynamoTable: 'mrapi-telemetry',
   regions: {
     'ap-southeast-1': {
       apiName: 'mrapi-api-sg', stage: 'demo', lambda: 'mrapi-proxy',
-      s3: { sourceBucket: 'mrapi-exports-sg', destinationBucket: 'mrapi-exports-tyo', ruleId: 'mrapi-sg-to-tyo' },
+      // Metric S3 Replication nằm ở Region của bucket đích, không phải Region nguồn (list-metrics thật, 01/11/2026).
+      s3: { sourceBucket: 'mrapi-exports-sg', destinationBucket: 'mrapi-exports-tyo', ruleId: 'mrapi-sg-to-tyo', metricRegion: 'ap-northeast-1' },
     },
-    // Rule Tokyo → Singapore chưa bật S3 Replication Metrics nên s3: null (hiện 'not_configured').
-    'ap-northeast-1': { apiName: 'mrapi-api-tyo', stage: 'demo', lambda: 'mrapi-proxy', s3: null },
+    'ap-northeast-1': {
+      apiName: 'mrapi-api-tyo', stage: 'demo', lambda: 'mrapi-proxy',
+      s3: { sourceBucket: 'mrapi-exports-tyo', destinationBucket: 'mrapi-exports-sg', ruleId: 'mrapi-tyo-to-sg', metricRegion: 'ap-southeast-1' },
+    },
   },
 };
 
@@ -35,6 +43,8 @@ export const loadConfig = (raw = process.env.MONITORING_CONFIG) => {
   if (!raw) return DEFAULT_CONFIG;
   const override = JSON.parse(raw);
   return {
+    routingPolicy: override.routingPolicy ?? DEFAULT_CONFIG.routingPolicy,
+    healthChecks: { ...DEFAULT_CONFIG.healthChecks, ...override.healthChecks },
     dynamoTable: override.dynamoTable ?? DEFAULT_CONFIG.dynamoTable,
     regions: Object.fromEntries(REGION_CODES.map((code) => [code, { ...DEFAULT_CONFIG.regions[code], ...(override.regions?.[code] ?? {}) }])),
   };
@@ -45,6 +55,7 @@ const missing = (reason) => ({ kind: 'missing', reason });
 const round = (n, digits = 0) => Math.round(n * 10 ** digits) / 10 ** digits;
 const sum = (m) => [...m.values()].reduce((a, b) => a + b, 0);
 const mean = (m) => sum(m) / m.size;
+const max = (m) => Math.max(...m.values());
 const weighted = (values, weights) => {
   let num = 0; let den = 0;
   for (const [t, w] of weights) if (values.has(t)) { num += values.get(t) * w; den += w; }
@@ -84,7 +95,8 @@ async function getMetricData(client, queries, start, end) {
   return out;
 }
 
-async function fetchRegion(code, config, client, win) {
+async function fetchRegion(code, config, clientFor, win) {
+  const client = clientFor(code);
   const cfg = config.regions[code];
   const other = REGION_CODES.find((c) => c !== code);
   const p = win.periodS;
@@ -102,11 +114,17 @@ async function fetchRegion(code, config, client, win) {
     // Metric nhân bản được ghi ở Region nguồn, dimension ReceivingRegion là Region đích.
     query('d_rep', 'AWS/DynamoDB', 'ReplicationLatency', { TableName: config.dynamoTable, ReceivingRegion: other }, 'Average', p),
   ];
-  if (cfg.s3) {
-    queries.push(query('s_rep', 'AWS/S3', 'ReplicationLatency',
-      { SourceBucket: cfg.s3.sourceBucket, DestinationBucket: cfg.s3.destinationBucket, RuleId: cfg.s3.ruleId }, 'Average', p));
-  }
   const data = await getMetricData(client, queries, win.start, win.end);
+
+  // Truy vấn riêng ở Region metric của S3. Dùng Maximum vì metric có điểm 0 mỗi phút khi rảnh, trung bình sẽ che lần chép chậm.
+  if (cfg.s3) {
+    try {
+      const s3Data = await getMetricData(clientFor(cfg.s3.metricRegion ?? other),
+        [query('s_rep', 'AWS/S3', 'ReplicationLatency',
+          { SourceBucket: cfg.s3.sourceBucket, DestinationBucket: cfg.s3.destinationBucket, RuleId: cfg.s3.ruleId }, 'Maximum', p)], win.start, win.end);
+      if (s3Data.has('s_rep')) data.set('s_rep', s3Data.get('s_rep'));
+    } catch { /* s3 thành 'unavailable', không làm hỏng số liệu Region */ }
+  }
 
   // p95 của cả khoảng xem phải là truy vấn riêng với Period = cả khoảng (không lấy trung bình các p95).
   // Tách riêng để nếu CloudWatch từ chối Period dài thì chỉ metric này thành 'unavailable'.
@@ -119,8 +137,8 @@ async function fetchRegion(code, config, client, win) {
   return { code, ok: true, data, p95All };
 }
 
-const safeFetchRegion = async (code, config, client, win) => {
-  try { return await fetchRegion(code, config, client, win); }
+const safeFetchRegion = async (code, config, clientFor, win) => {
+  try { return await fetchRegion(code, config, clientFor, win); }
   catch (error) { return { code, ok: false, error: error?.name ?? 'Error', data: new Map(), p95All: null }; }
 };
 
@@ -160,7 +178,7 @@ function buildRegion(r, config) {
     },
     apiGateway: { requests: m(requests), error4xx: m(e4), error5xx: m(e5) },
     dynamodbReplicationLatencyMs: d('d_rep').size ? value(round(mean(d('d_rep')))) : missing('unavailable'),
-    s3ReplicationLatencyS: !cfg.s3 ? s3Absent : d('s_rep').size ? value(round(mean(d('s_rep')), 1)) : s3Absent,
+    s3ReplicationLatencyS: !cfg.s3 ? s3Absent : d('s_rep').size ? value(round(max(d('s_rep')), 1)) : s3Absent,
   };
 }
 
@@ -290,7 +308,7 @@ export function createService({ clientFor, config = DEFAULT_CONFIG, now = () => 
   const collect = (range) => cached(`collect:${range}`, async () => {
     const generatedAt = now();
     const win = windowFor(range, generatedAt);
-    const results = await Promise.all(REGION_CODES.map((code) => safeFetchRegion(code, config, clientFor(code), win)));
+    const results = await Promise.all(REGION_CODES.map((code) => safeFetchRegion(code, config, clientFor, win)));
     return { generatedAt, win, results };
   });
   const alarms = () => cached('alarms', async () => {
@@ -300,11 +318,30 @@ export function createService({ clientFor, config = DEFAULT_CONFIG, now = () => 
     }));
     return byRegion;
   });
+  const health = () => cached('health', async () => {
+    try {
+      const end = now();
+      const queries = REGION_CODES.map((code, i) => query(`h${i}`, 'AWS/Route53', 'HealthCheckStatus',
+        { HealthCheckId: config.healthChecks[code] }, 'Minimum', 60));
+      const data = await getMetricData(clientFor('us-east-1'), queries, end - 5 * 60_000, end);
+      return Object.fromEntries(REGION_CODES.map((code, i) => {
+        const points = data.get(`h${i}`);
+        const latest = points?.size ? [...points].sort((a, b) => b[0] - a[0])[0][1] : undefined;
+        return [code, latest === undefined ? missing('unavailable') : value(latest === 1 ? 'healthy' : 'unhealthy')];
+      }));
+    } catch {
+      return Object.fromEntries(REGION_CODES.map((code) => [code, missing('unavailable')]));
+    }
+  });
 
   return {
     async snapshot(range) {
       const { generatedAt, win, results } = await collect(range);
-      return buildSnapshot(range, win, results, config, generatedAt);
+      const snapshot = buildSnapshot(range, win, results, config, generatedAt);
+      const checks = await health();
+      snapshot.regions.forEach((r) => { r.healthCheck = checks[r.region]; });
+      snapshot.routingPolicy = value(config.routingPolicy);
+      return snapshot;
     },
     async endpoints(range) {
       return cached(`endpoints:${range}`, async () => {
@@ -325,6 +362,7 @@ export function createService({ clientFor, config = DEFAULT_CONFIG, now = () => 
     async sources() {
       const { generatedAt, results } = await collect('1h');
       const alarmState = await alarms();
+      const checks = await health();
       const note = (list, has) => list.map((r) => `${REGION_NAMES[r.code]}: ${r.ok === false ? `lỗi ${r.error}` : has(r) ? 'có dữ liệu trong 1 giờ qua' : 'không có dữ liệu trong 1 giờ qua'}`).join('; ');
       const statusOf = (list) => (list.every((r) => r.ok === false) ? 'error' : 'connected');
       const src = (id, service, regions, list, metrics, has, guide, extra = '') => {
@@ -337,9 +375,14 @@ export function createService({ clientFor, config = DEFAULT_CONFIG, now = () => 
         src('api-gateway', 'API Gateway', 'Singapore, Tokyo', results, ['Count', '4XXError', '5XXError', 'Latency'], metricHas('a_count'), 'monitoring-web/docs/integration/api-gateway.md'),
         src('lambda', 'Lambda', 'Singapore, Tokyo', results, ['Invocations', 'Errors', 'Duration'], metricHas('l_inv'), 'monitoring-web/docs/integration/lambda.md'),
         src('dynamodb-replication', 'DynamoDB Global Tables', 'Singapore, Tokyo', results, ['ReplicationLatency'], metricHas('d_rep'), 'monitoring-web/docs/integration/dynamodb-global-tables.md'),
-        src('s3-replication', 'S3 Replication', 'Singapore (Tokyo chưa bật metrics)', results.filter((r) => r.code === 'ap-southeast-1'), ['ReplicationLatency'], metricHas('s_rep'), 'monitoring-web/docs/integration/s3-replication.md', '; Tokyo: not_configured (rule chưa bật S3 Replication Metrics)'),
+        src('s3-replication', 'S3 Replication', 'Singapore, Tokyo', results, ['ReplicationLatency'], metricHas('s_rep'), 'monitoring-web/docs/integration/s3-replication.md',
+        REGION_CODES.filter((code) => !config.regions[code].s3).map((code) => `; ${REGION_NAMES[code]}: not_configured (chưa cấu hình truy vấn S3 Replication Metrics)`).join('')),
         src('cloudwatch-alarms', 'CloudWatch Alarms', 'Singapore, Tokyo', alarmState, ['AlarmHistory'], (r) => r.events.length > 0, 'monitoring-web/docs/integration/cloudwatch.md'),
-        notConnected('route53', 'Route 53', ['HealthCheckStatus', 'Routing policy'], 'Chưa tích hợp: cần health check và record latency do L tạo, client CloudWatch ở us-east-1', 'monitoring-web/docs/integration/route53.md'),
+        { id: 'route53', service: 'Route 53', regions: 'Singapore, Tokyo',
+          status: REGION_CODES.every((code) => checks[code].kind === 'missing') ? 'error' : 'connected',
+          metrics: ['HealthCheckStatus'], lastSync: generatedAt,
+          note: 'HealthCheckStatus thật từ CloudWatch us-east-1; routing policy theo cấu hình triển khai. Có thể trễ một chu kỳ metric.',
+          guide: 'monitoring-web/docs/integration/route53.md' },
         notConnected('xray', 'X-Ray', ['Trace'], 'Chưa tích hợp', 'monitoring-web/docs/integration/cloudwatch.md'),
       ];
     },
@@ -358,7 +401,7 @@ const realService = () => {
 
 const ROUTE = /\/monitoring\/(snapshot|endpoints|incidents|sources)\/?$/;
 
-export const handler = async (event, service = realService()) => {
+export const handleRequest = async (event, service) => {
   const origin = process.env.MONITORING_ALLOWED_ORIGIN; // cố định theo deployment, không phản chiếu Origin của request
   const cors = origin ? {
     'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Methods': 'GET,OPTIONS',
@@ -381,3 +424,6 @@ export const handler = async (event, service = realService()) => {
     return respond(error?.status ?? 502, { error: 'upstream_error', detail: error?.name ?? 'Error' });
   }
 };
+
+// Lambda truyền context ở đối số thứ hai, không phải service của ứng dụng.
+export const handler = async (event, _context) => handleRequest(event, realService());

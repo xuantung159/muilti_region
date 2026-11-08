@@ -2,8 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { MonitoringProvider } from '../data/provider';
-import { MockProvider } from '../test/fixtures/MockProvider';
-import { NotConnectedProvider } from '../data/providers';
+import { MockProvider, NotConnectedProvider } from '../data/providers';
 import { renderApp } from '../test/render';
 
 const mock = () => new MockProvider(0, () => Date.UTC(2026, 9, 13, 5, 7, 30));
@@ -51,6 +50,7 @@ describe('điều hướng', () => {
       ['Multi-Region', 'Multi-Region Monitoring'],
       ['API Monitoring', 'API Monitoring'],
       ['Failover & Incidents', 'Failover & Incidents'],
+      ['Hạ tầng', 'Hạ tầng triển khai'],
       ['Data Sources', 'Data Sources & Integration Status'],
       ['Settings', 'Settings'],
       ['System Overview', 'System Overview'],
@@ -118,19 +118,22 @@ describe('Failover & Incidents', () => {
 describe('Data Sources', () => {
   it('đánh dấu mọi nguồn AWS là Not connected ở chế độ demo', async () => {
     renderApp(mock(), '/sources');
-    expect(await screen.findByText('AWS CloudWatch')).toBeInTheDocument();
-    expect(screen.getAllByText('Not connected')).toHaveLength(6);
+    expect(await screen.findByText('CloudWatch Alarms')).toBeInTheDocument();
+    expect(screen.getAllByText('Not connected')).toHaveLength(7);
     expect(screen.getAllByText('Mock')).toHaveLength(1);
-    expect(screen.getByText(/0 trên 6/)).toBeInTheDocument();
+    expect(screen.getByText(/0 trên 7/)).toBeInTheDocument();
     expect(screen.queryByText('Connected')).not.toBeInTheDocument();
   });
 });
 
-
-it('bỏ qua cấu hình demo cũ và không còn công tắc dữ liệu mẫu', async () => {
-  localStorage.setItem('monitoring-web.settings', JSON.stringify({ demoMode: true }));
-  renderApp(new NotConnectedProvider(), '/settings');
-  expect(await screen.findByText('Chỉ hiển thị dữ liệu backend thật. Chưa kết nối thì không có số liệu.')).toBeInTheDocument();
-  expect(screen.queryByRole('checkbox', { name: /demo/ })).not.toBeInTheDocument();
-  expect(JSON.parse(localStorage.getItem('monitoring-web.settings')!).demoMode).toBeUndefined();
+describe('Hạ tầng', () => {
+  it('liệt kê tài nguyên hai Region và nêu rõ trạng thái sống chưa có khi chưa kết nối', async () => {
+    renderApp(new NotConnectedProvider(), '/infrastructure');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hạ tầng triển khai' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Singapore (ap-southeast-1)' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tokyo (ap-northeast-1)' })).toBeInTheDocument();
+    expect((await screen.findAllByText('Health check: chưa có dữ liệu')).length).toBe(2);
+    expect(screen.queryByText('Health check OK')).not.toBeInTheDocument();
+    expect(screen.getByText('mrapi-api-tyo (n39r5pits8), stage demo')).toBeInTheDocument();
+  });
 });

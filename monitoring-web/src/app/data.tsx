@@ -8,7 +8,8 @@ const ProviderContext = createContext<MonitoringProvider | null>(null);
 
 // `provider` chỉ dùng trong test để thay nguồn dữ liệu.
 export function DataProvider({ children, provider }: { children: ReactNode; provider?: MonitoringProvider }) {
-  const active = useMemo(() => provider ?? createProvider(ENV.backendUrl), [provider]);
+  const { settings } = useSettings();
+  const active = useMemo(() => provider ?? createProvider(settings.demoMode, ENV.backendUrl), [provider, settings.demoMode]);
   return <ProviderContext.Provider value={active}>{children}</ProviderContext.Provider>;
 }
 
