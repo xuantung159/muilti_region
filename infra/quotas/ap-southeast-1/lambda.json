@@ -1,0 +1,19 @@
+{
+  "ServiceCode": "lambda",
+  "ServiceName": "AWS Lambda",
+  "QuotaArn": "arn:aws:servicequotas:ap-southeast-1:138150704839:lambda/L-B99A9384",
+  "QuotaCode": "L-B99A9384",
+  "QuotaName": "Concurrent executions",
+  "Value": 10.0,
+  "Unit": "Count",
+  "Adjustable": true,
+  "GlobalQuota": false,
+  "UsageMetric": {
+    "MetricNamespace": "AWS/Lambda",
+    "MetricName": "ConcurrentExecutions",
+    "MetricDimensions": {},
+    "MetricStatisticRecommendation": "Maximum"
+  },
+  "QuotaAppliedAtLevel": "ACCOUNT",
+  "Description": "The maximum number of events that functions can process simultaneously in the current Region."
+}
