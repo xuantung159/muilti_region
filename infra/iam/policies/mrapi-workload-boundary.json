@@ -33,7 +33,8 @@
                 "cloudwatch:GetMetricData",
                 "cloudwatch:GetMetricStatistics",
                 "cloudwatch:ListMetrics",
-                "cloudwatch:DescribeAlarms"
+                "cloudwatch:DescribeAlarms",
+                "cloudwatch:DescribeAlarmHistory"
             ],
             "Resource": "*"
         },
@@ -67,7 +68,9 @@
                 "s3:ReplicateObject",
                 "s3:ReplicateDelete",
                 "s3:ReplicateTags",
-                "s3:ObjectOwnerOverrideToBucketOwner"
+                "s3:ObjectOwnerOverrideToBucketOwner",
+                "s3:AbortMultipartUpload",
+                "s3:PutObjectAcl"
             ],
             "Resource": [
                 "arn:aws:s3:::mrapi-*",

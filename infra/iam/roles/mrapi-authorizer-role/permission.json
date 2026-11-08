@@ -1,26 +1,44 @@
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "dynamodb:GetItem",
-                "dynamodb:Query"
-            ],
-            "Resource": "arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-control"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "logs:CreateLogGroup",
-            "Resource": "arn:aws:logs:ap-southeast-1:138150704839:*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-            ],
-            "Resource": "arn:aws:logs:ap-southeast-1:138150704839:log-group:/aws/lambda/mrapi-authorizer:*"
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Query"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:ap-southeast-1:138150704839:table/mrapi-control",
+        "arn:aws:dynamodb:ap-northeast-1:138150704839:table/mrapi-control"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": "logs:CreateLogGroup",
+      "Resource": [
+        "arn:aws:logs:ap-southeast-1:138150704839:*",
+        "arn:aws:logs:ap-northeast-1:138150704839:*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:ap-southeast-1:138150704839:log-group:/aws/lambda/mrapi-authorizer:*",
+        "arn:aws:logs:ap-northeast-1:138150704839:log-group:/aws/lambda/mrapi-authorizer:*"
+      ]
+    },
+    {
+      "Sid": "WriteXRay",
+      "Effect": "Allow",
+      "Action": [
+        "xray:PutTraceSegments",
+        "xray:PutTelemetryRecords"
+      ],
+      "Resource": "*"
+    }
+  ]
 }
