@@ -55,7 +55,7 @@ Mở hai tab: một tab Singapore, một tab Tokyo, cùng vào Explore items c�
 4. Sửa và xóa một item ở bên này, xem bên kia có đổi theo không.
 5. Dọn hết item `TEST#repl`.
 
-Kết quả: 10/10 item thấy ở region kia trong khoảng 1 giây ([báo cáo](../reports/2026-11-01-data.md)).
+Kết quả: 10/10 item thấy ở region kia trong khoảng 1 giây ([báo cáo](../reports/data-replication.md)).
 
 ## Những chuyện sẽ gặp (không phải lỗi)
 

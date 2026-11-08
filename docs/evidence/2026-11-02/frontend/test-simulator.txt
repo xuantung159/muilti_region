@@ -1,9 +1,0 @@
-﻿
- RUN  v5.0.4 D:/BTL/aws/monitoring-web
-
-
- Test Files  4 passed (4)
-      Tests  33 passed (33)
-   Start at  13:59:03
-   Duration  14.60s (environment 44%, tests 37%, import 12%, setup 7%, transform 1%)
-

@@ -173,7 +173,7 @@ while ($true) { $r = curl.exe -s -D - -o NUL "https://api.multi-region.io.vn/hea
 3. Khoảng 1–2 phút sau, health check SG chuyển **Unhealthy** (Tab 2). Sau khi DNS hết hạn, vòng lặp đổi từ `X-Served-Region: ap-southeast-1` sang `ap-northeast-1`.
 4. **Trả lại:** quay về `mrapi-proxy` SG → Edit env → **Remove** `HEALTH_FORCE_FAIL` → Save. Đợi health check về Healthy. Bấm Ctrl+C để dừng vòng lặp.
 
-Báo cáo đo trước: `docs/reports/2026-11-01-failover.md` (3 lần, có timeline), có thể chiếu thay nếu không muốn quay trực tiếp.
+Báo cáo đo trước: `docs/reports/failover.md` (3 lần, có timeline), có thể chiếu thay nếu không muốn quay trực tiếp.
 
 ---
 
@@ -266,7 +266,7 @@ curl.exe -i "https://n39r5pits8.execute-api.ap-northeast-1.amazonaws.com/demo/pr
 
 Cả hai trả **403**.
 
-**Nói:** "Thu hồi ở Singapore, Tokyo chặn sau dưới 1 giây. Đo 10 lần ngày 08/11: trung vị khoảng 0,2 giây, chậm nhất 1,34 giây (`docs/reports/2026-11-08-e2e-acceptance.md`). Authorizer không cache (TTL 0) để thu hồi có hiệu lực gần như ngay."
+**Nói:** "Thu hồi ở Singapore, Tokyo chặn sau dưới 1 giây. Đo 10 lần ngày 08/11: trung vị khoảng 0,2 giây, chậm nhất 1,34 giây (`docs/reports/e2e-acceptance.md`). Authorizer không cache (TTL 0) để thu hồi có hiệu lực gần như ngay."
 
 (Tùy chọn) Chạy script đo tự động:
 
@@ -289,9 +289,9 @@ cd monitoring-web; npx vitest run; cd ..
 Thấy backend `pass 34 / fail 0`, frontend `36 passed`.
 
 **Mở trong VS Code / trình xem Markdown** và lướt các bảng PASS:
-- `docs/reports/2026-11-08-e2e-acceptance.md` — 38/39 ca đạt (ca còn lại là lệch tài liệu, đã sửa).
-- `docs/reports/2026-11-08-ops-verification.md` — 7/7 hạng mục vận hành đạt.
-- `docs/reports/2026-11-08-config-fixes.md` — cấu hình đã sửa.
+- `docs/reports/e2e-acceptance.md` — 38/39 ca đạt (ca còn lại là lệch tài liệu, đã sửa).
+- `docs/reports/ops-verification.md` — 7/7 hạng mục vận hành đạt.
+- `docs/reports/config-fixes.md` — cấu hình đã sửa.
 
 **Nói kết:** "Hệ thống chạy active-active ở hai Region, dữ liệu đồng bộ dưới 1,2 giây, tự chuyển Region khi một bên hỏng, có giám sát, cảnh báo và kiểm soát chi phí. Giới hạn hiện tại: quota Lambda tài khoản chỉ 10 concurrent mỗi Region, và failover mới thử bằng cách mô phỏng health check hỏng, chưa thử mất cả Region."
 

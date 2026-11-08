@@ -46,7 +46,7 @@ Toàn cục: Route 53 cho `multi-region.io.vn`, CloudFront `E33WCNP66CDRPQ`, Bud
 | Export theo lịch | 08/11: lượt 01:00 giờ VN chạy tự động, export COMPLETED, 9 object REPLICA ở Tokyo |
 | Alarm và cảnh báo | 08/11: 13/13 alarm OK; SNS ba Region Confirmed. Chưa xác nhận thư tới hộp thư; email Budget còn chờ xác minh |
 
-Báo cáo chi tiết ngày 08/11: [cấu hình](../docs/reports/2026-11-08-config-fixes.md), [E2E](../docs/reports/2026-11-08-e2e-acceptance.md), [vận hành](../docs/reports/2026-11-08-ops-verification.md).
+Báo cáo chi tiết ngày 08/11: [cấu hình](../docs/reports/config-fixes.md), [E2E](../docs/reports/e2e-acceptance.md), [vận hành](../docs/reports/ops-verification.md).
 
 Key đã thu hồi bị authorizer chặn bằng 403 với body mặc định của API Gateway; mã `KEY_REVOKED` chỉ có trong log `AUTHORIZER_DENY`. File `exports/ducminh_credentials.csv` (112 byte, 2 version) còn ở cả hai bucket; chưa mở nội dung. Quota Lambda live vẫn 10 concurrent executions mỗi Region; Console chỉ cho xin tăng từ 1000. REST API Tokyo còn TLS_1_0 ở endpoint execute-api; custom domain hai Region đã dùng TLS 1.2/1.3.
 

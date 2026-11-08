@@ -11,7 +11,6 @@ Nhóm chia việc theo dịch vụ AWS. Mỗi người giữ trọn dịch vụ 
 
 Review chéo: Minh ↔ Toan, Nhân ↔ Tùng. IAM chỉ Tùng sửa; ai thiếu quyền thì gửi action, tài nguyên và lỗi thật.
 
-Kế hoạch chi tiết đợt dựng Tokyo: [phan-cong-tokyo.md](phan-cong-tokyo.md).
 
 ## Ai đưa gì cho ai
 
@@ -24,7 +23,7 @@ Kế hoạch chi tiết đợt dựng Tokyo: [phan-cong-tokyo.md](phan-cong-toky
 | Toan | Nhân | ARN Lambda ở hai region |
 | Nhân | Tùng | URL execute-api và target custom domain của hai region |
 
-Làm xong trên Console thì ghi cấu hình vào `infra/` và `config/demo/` theo [ghi-cau-hinh-console.md](runbooks/ghi-cau-hinh-console.md).
+Làm xong trên Console thì ghi cấu hình vào `infra/` và `config/demo/`.
 
 ## Tiêu chí nghiệm thu
 
@@ -41,7 +40,7 @@ D1–D8 là kiểm thử chức năng trên một region:
 | D7 | Request có telemetry đủ trường, truy vấn đúng tenant |
 | D8 | Cấu hình và hướng dẫn chạy lại đã ghi vào repo |
 
-R1–R10 là tiêu chí cho hai region, theo dõi trong [phan-cong-tokyo.md](phan-cong-tokyo.md).
+R1–R10 là tiêu chí cho hai region; kết quả nghiệm thu ở [docs/reports](reports/README.md).
 
 ## Quy tắc chung
 

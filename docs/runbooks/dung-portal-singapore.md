@@ -2,7 +2,7 @@
 
 Tùng làm. Mục tiêu: doanh nghiệp đăng ký, đăng nhập, khai báo API đích được trên Singapore. Tokyo dựng sau bằng cách nhân lại.
 
-Mỗi bước làm theo nhịp: làm trên Console, mở lại xem đã lưu đúng chưa, ghi vào `infra/`, rồi mới sang bước tiếp. Cách ghi xem [ghi-cau-hinh-console.md](ghi-cau-hinh-console.md).
+Mỗi bước làm theo nhịp: làm trên Console, mở lại xem đã lưu đúng chưa, ghi vào `infra/`, rồi mới sang bước tiếp.
 
 ## 1. Thiết kế
 
@@ -57,6 +57,6 @@ Chốt contract API và cấu trúc bảng với nhóm theo [thiet-ke-gateway.md
 | Role | `infra/iam/roles/mrapi-dashboard-role/` |
 | Lambda | `infra/lambda/ap-southeast-1/mrapi-dashboard.md` |
 | API Gateway | `infra/apigateway/ap-southeast-1/` |
-| Kết quả thử | `docs/reports/first-four-parts.md` |
+| Kết quả thử | `docs/reports/e2e-acceptance.md` |
 
 Không chụp hay ghi mật khẩu, token vào báo cáo.

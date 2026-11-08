@@ -1,6 +1,6 @@
 # Multi-Region API Platform
 
-**Hướng hiện tại: gateway chuyển tiếp request của doanh nghiệp.** Đọc [thiết kế mới](docs/thiet-ke-gateway.md) và [bốn phần đầu](docs/runbooks/dung-portal-singapore.md). Theo [hồ sơ triển khai](infra/DEPLOYED_STATE.md), proxy, authorizer có scope và telemetry đã triển khai hai Region và đã nghiệm thu bằng key thật trên AWS ngày 08/11/2026 ([kết quả E2E](docs/reports/2026-11-08-e2e-acceptance.md)). `npm run test:e2e --prefix src` kiểm tra tài khoản/API đích; `npm run test:e2e:proxy --prefix src` kiểm tra proxy sau khi nối API Gateway.
+**Hướng hiện tại: gateway chuyển tiếp request của doanh nghiệp.** Đọc [thiết kế mới](docs/thiet-ke-gateway.md) và [bốn phần đầu](docs/runbooks/dung-portal-singapore.md). Theo [hồ sơ triển khai](infra/DEPLOYED_STATE.md), proxy, authorizer có scope và telemetry đã triển khai hai Region và đã nghiệm thu bằng key thật trên AWS ngày 08/11/2026 ([kết quả E2E](docs/reports/e2e-acceptance.md)). `npm run test:e2e --prefix src` kiểm tra tài khoản/API đích; `npm run test:e2e:proxy --prefix src` kiểm tra proxy sau khi nối API Gateway.
 
 Đồ án API đa doanh nghiệp chạy tại Singapore và Tokyo.
 
@@ -59,7 +59,7 @@ Portal cần cấu hình `VITE_PORTAL_API_URL` hoặc proxy dev `PORTAL_API_TARG
 - [IAM](infra/iam/README.md), [Budget](infra/monitoring/budget.md) và [SNS us-east-1](infra/monitoring/sns/mrapi-alerts.us-east-1.md)
 - [Báo cáo tiến độ](docs/reports/progress/Bao_cao_tien_do.docx)
 
-Trạng thái hiện hành: [hồ sơ triển khai](infra/DEPLOYED_STATE.md). Nghiệm thu live ngày 08/11/2026: [E2E hai Region](docs/reports/2026-11-08-e2e-acceptance.md) (38/39 ca đạt, ca còn lại là lệch tài liệu đã sửa; thu hồi key xuyên Region dưới 1,34 giây), [vận hành](docs/reports/2026-11-08-ops-verification.md) (export theo lịch, replication, Route 53, alarm, X-Ray, bảo mật S3) và [sửa cấu hình](docs/reports/2026-11-08-config-fixes.md). Còn lại: xác nhận thư cảnh báo tới hộp thư; quota Lambda 10 concurrent mỗi Region; REST API Tokyo còn TLS_1_0 ở endpoint execute-api. [Kịch bản quay video demo](docs/kich-ban-quay-video.md).
+Trạng thái hiện hành: [hồ sơ triển khai](infra/DEPLOYED_STATE.md). Nghiệm thu live ngày 08/11/2026: [E2E hai Region](docs/reports/e2e-acceptance.md) (38/39 ca đạt, ca còn lại là lệch tài liệu đã sửa; thu hồi key xuyên Region dưới 1,34 giây), [vận hành](docs/reports/ops-verification.md) (export theo lịch, replication, Route 53, alarm, X-Ray, bảo mật S3) và [sửa cấu hình](docs/reports/config-fixes.md). Còn lại: xác nhận thư cảnh báo tới hộp thư; quota Lambda 10 concurrent mỗi Region; REST API Tokyo còn TLS_1_0 ở endpoint execute-api. [Kịch bản quay video demo](docs/kich-ban-quay-video.md).
 
 Không commit password, API key, token, AWS credentials, QR MFA hoặc gói build.
 
