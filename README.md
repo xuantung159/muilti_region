@@ -16,11 +16,9 @@ Route 53 chọn endpoint theo latency routing và trạng thái health check; k�
 | Portal doanh nghiệp | https://app.multi-region.io.vn/portal |
 | Trang giám sát | https://app.multi-region.io.vn/ |
 | API (latency routing) | https://api.multi-region.io.vn |
-| Trạng thái | Đã triển khai đủ hai Region. Đã nghiệm thu trên AWS thật ngày 08/11/2026 ([kết quả](#8-kết-quả-kiểm-thử-và-nghiệm-thu)) |
+| Trạng thái | Đã triển khai đủ hai Region.  |
 
 ---
-
-> Phạm vi tài liệu: mã nguồn và thư mục đã có trên nhánh `main` của [GitHub repository](https://github.com/xuantung159/muilti_region). Các thư mục demo riêng trên máy, dependency, bản build và công cụ cài cục bộ không được xem là nội dung sẵn có khi clone repository. Trạng thái AWS được dẫn theo hồ sơ triển khai và báo cáo có ngày kiểm thử.
 
 ## Giới thiệu đề tài
 
@@ -53,16 +51,24 @@ Nền tảng không tự triển khai backend nghiệp vụ của doanh nghiệp
 
 ### Công nghệ chính
 
-| Lớp | Công nghệ |
-|---|---|
-| Backend | JavaScript ESM, AWS Lambda, AWS SDK for JavaScript v3 |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS, React Router |
-| Dữ liệu giao diện | TanStack Query, Recharts |
-| Dữ liệu hệ thống | DynamoDB Global Tables, S3 |
-| Điểm vào và HTTPS | API Gateway REST, Route 53, CloudFront, ACM |
-| Vận hành | CloudWatch, SNS, X-Ray, EventBridge, IAM, AWS Budgets |
-| Kiểm thử | `node:test`, Vitest, Testing Library, script E2E |
-| Ứng dụng tích hợp mẫu | Go trong `project_test/` |
+| Nhóm công nghệ Cloud | Dịch vụ AWS | Vai trò trong hệ thống |
+|---|---|---|
+| Xử lý serverless | AWS Lambda | Chạy proxy, authorizer, API portal, monitoring và exporter tại các Region theo thiết kế |
+| Cổng API | Amazon API Gateway REST | Tiếp nhận request, tích hợp Lambda và xác thực API key qua authorizer |
+| Định tuyến đa Region | Amazon Route 53 | Latency routing, health check và chuyển lưu lượng khi endpoint lỗi |
+| Cơ sở dữ liệu đa Region | Amazon DynamoDB Global Tables | Lưu và sao chép tài khoản, phiên, cấu hình API, API key và telemetry |
+| Lưu trữ đối tượng | Amazon S3 | Lưu bản build frontend, dữ liệu export và bản sao liên Region |
+| Phân phối nội dung | Amazon CloudFront | Phục vụ frontend qua CDN và chuyển tiếp các đường dẫn API |
+| Chứng chỉ HTTPS | AWS Certificate Manager (ACM) | Quản lý chứng chỉ TLS cho domain frontend và API |
+| Giám sát và cảnh báo | Amazon CloudWatch, Amazon SNS | Thu thập metric, log, tạo alarm và gửi thông báo |
+| Truy vết phân tán | AWS X-Ray | Theo dõi luồng xử lý request qua API Gateway và Lambda |
+| Lập lịch | Amazon EventBridge | Kích hoạt Lambda exporter theo lịch |
+| Phân quyền | AWS Identity and Access Management (IAM) | Quản lý role, policy và quyền truy cập tài nguyên |
+| Quản lý ngân sách | AWS Budgets | Theo dõi ngân sách và cảnh báo chi phí |
+
+<sub><strong>Backend:</strong> JavaScript ESM (Node.js), AWS SDK for JavaScript v3. <strong>Frontend:</strong> React 19, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query và Recharts.</sub>
+
+<sub><strong>Công cụ hỗ trợ:</strong> node:test, Vitest, Testing Library và script E2E để kiểm thử; Go cho ứng dụng tích hợp mẫu trong project_test/.</sub>
 
 ## Mục lục
 
