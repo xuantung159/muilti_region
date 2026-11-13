@@ -20,16 +20,14 @@ Route 53 chọn endpoint theo latency routing và trạng thái health check; k�
 
 ---
 
-## Thành viên
+## Thông tin nhóm thực hiện
 
-| STT | Thành viên |
-|---|---|
-| 1 | Tùng |
-| 2 | Minh |
-| 3 | Toàn |
-| 4 | Nhân |
-
-Tên thành viên được ghi theo tài liệu hiện có trong repository.
+| STT | Họ và tên | MSSV | Vai trò |
+|-----|-----------|------|---------|
+| 1 | Đặng Xuân Tùng | 24020350 | Nhóm trưởng |
+| 2 | Nguyễn Đức Minh | 24020233 | Thành viên |
+| 3 | Nguyễn Thế Nhân | 24020257 | Thành viên |
+| 4 | Phạm Văn Toan | 22028208 | Thành viên |
 
 ## Giới thiệu đề tài
 
@@ -83,7 +81,6 @@ Nền tảng không tự triển khai backend nghiệp vụ của doanh nghiệp
 
 ## Mục lục
 
-- [Thành viên](#thành-viên)
 - [Giới thiệu đề tài](#giới-thiệu-đề-tài)
 
 1. [Kiến trúc](#1-kiến-trúc)
@@ -96,7 +93,7 @@ Nền tảng không tự triển khai backend nghiệp vụ của doanh nghiệp
 8. [Kết quả kiểm thử và nghiệm thu](#8-kết-quả-kiểm-thử-và-nghiệm-thu)
 9. [Bảo mật](#9-bảo-mật)
 10. [Giới hạn đã biết](#10-giới-hạn-đã-biết)
-11. [Tài liệu tham khảo](#11-tài-liệu-tham-khảo)
+11. [Thành viên và tài liệu](#11-thành-viên-và-tài-liệu)
 12. [Tích hợp ứng dụng và kịch bản demo](#12-tích-hợp-ứng-dụng-và-kịch-bản-demo)
 13. [Xử lý lỗi thường gặp](#13-xử-lý-lỗi-thường-gặp)
 14. [Hướng phát triển](#14-hướng-phát-triển)
@@ -105,7 +102,7 @@ Nền tảng không tự triển khai backend nghiệp vụ của doanh nghiệp
 
 ## 1. Kiến trúc
 
-Sơ đồ chi tiết dạng Mermaid (GitHub tự vẽ):
+Sơ đồ chi tiết dạng Mermaid:
 
 ```mermaid
 flowchart TB
@@ -275,7 +272,6 @@ flowchart LR
 | **IAM** | | | 6 role riêng cho từng Lambda + 2 role S3 replication, permission boundary | Phân quyền tối thiểu |
 | **Budgets** | | | `mrapi-monthly` 10 USD | Kiểm soát chi phí |
 
-Cấu hình chi tiết từng dịch vụ (JSON đọc lại từ AWS) nằm trong [infra/](infra/README.md). Bản tổng hợp: [infra/DEPLOYED_STATE.md](infra/DEPLOYED_STATE.md).
 
 ---
 
@@ -474,7 +470,6 @@ docs/
 | `/monitoring/incidents` | Sự kiện alarm và failover |
 | `/monitoring/sources` | Trạng thái từng nguồn dữ liệu |
 
-Hợp đồng chi tiết: [monitoring-web/docs/integration/backend-api.md](monitoring-web/docs/integration/backend-api.md).
 
 ### 5.4 DynamoDB
 
@@ -553,10 +548,6 @@ npm run build --prefix monitoring-web
 
 Tải nội dung `monitoring-web/dist/` lên bucket `mrapi-web-sg`. Đặt `Cache-Control: no-cache` cho `index.html`, rồi tạo invalidation `/index.html` và `/portal` trên distribution `E33WCNP66CDRPQ` ([chi tiết](infra/cloudfront/README.md)).
 
-### 6.4 Dựng lại từ đầu
-
-Theo thứ tự trong [docs/runbooks/dung-portal-singapore.md](docs/runbooks/dung-portal-singapore.md): IAM → DynamoDB → Lambda → API Gateway ở Singapore. Sau đó tạo [replica Tokyo](docs/runbooks/dynamodb-replica-tokyo.md), nhân Lambda và API sang Tokyo, rồi Route 53, CloudFront và giám sát. Dọn tài nguyên: [don-tai-nguyen.md](docs/runbooks/don-tai-nguyen.md).
-
 ---
 
 ## 7. Kiểm thử
@@ -629,43 +620,10 @@ Các tồn đọng cấu hình bên dưới được ghi trong hồ sơ nghiệm
 
 ---
 
-## 11. Tài liệu tham khảo
-
-**Tài liệu nên đọc theo thứ tự**
-
-1. [docs/giai-thich-gateway.md](docs/giai-thich-gateway.md): hiểu hệ thống bằng lời thường.
-2. [docs/thiet-ke-gateway.md](docs/thiet-ke-gateway.md): thiết kế kỹ thuật và mã lỗi.
-3. [docs/cau-truc-du-an.md](docs/cau-truc-du-an.md): đường đi request, khái niệm IAM.
-4. [infra/DEPLOYED_STATE.md](infra/DEPLOYED_STATE.md): những gì đang chạy trên AWS.
-5. [docs/reports/](docs/reports/README.md): kết quả nghiệm thu.
-6. [monitoring-web/README.md](monitoring-web/README.md): chi tiết frontend và cách nối monitoring.
+## 11. Tích hợp ứng dụng và kịch bản demo
 
 
-
-
-## 12. Tích hợp ứng dụng và kịch bản demo
-
-### 12.1 Quy trình tích hợp
-
-1. Mở portal và đăng ký doanh nghiệp hoặc đăng nhập tài khoản có sẵn.
-2. Trong **API đích**, đăng ký một backend HTTPS công khai. `baseUrl` là địa chỉ gốc; route nghiệp vụ được truyền khi gọi gateway.
-3. Sao chép `apiId` của API vừa tạo.
-4. Trong **API key**, tạo key và chọn đúng API được phép truy cập. Sao chép secret ngay khi hệ thống hiển thị; `keyId` không thay thế được secret.
-5. Cấu hình URL gateway, API ID và secret tại ứng dụng khách.
-6. Gọi một route có thật trên backend thông qua gateway.
-7. Kiểm tra HTTP status, response, header Region và usage trên portal.
-
-Ví dụ gọi bằng PowerShell, secret được đọc từ biến môi trường đã cấu hình trong phiên terminal:
-
-```powershell
-curl.exe -i --max-time 15 `
-  "https://api.multi-region.io.vn/proxy/API_ID_CUA_BAN/todos/1" `
-  -H "x-api-key: $env:MRAPI_API_KEY"
-```
-
-Ví dụ trên dùng backend có route `/todos/1`; phải thay đường dẫn nếu backend của bạn có hợp đồng khác. Không đưa API key thật vào README hoặc mã nguồn frontend công khai. Mỗi doanh nghiệp có thể gọi cùng gateway nhưng được kiểm tra theo tenant và scope riêng.
-
-### 12.2 Chạy client Go trong repository
+### 11.2 Chạy client Go trong repository
 
 Cài Go 1.22 trở lên. Trong thư mục gốc repository:
 
@@ -691,22 +649,8 @@ go run . /todos/1
 
 `project_test/server/` là backend mẫu riêng; client ở `project_test/main.go` có thể gọi một backend HTTPS khác đã đăng ký. Go hoặc công cụ tunnel cài trong `artifacts/` trên máy tác giả không được cung cấp sẵn khi clone. Xem [project_test/README.md](project_test/README.md) để biết cấu hình chi tiết. Trước khi commit, kiểm tra `.env` không xuất hiện trong danh sách file được Git theo dõi.
 
-### 12.3 Kịch bản trình bày đồ án
 
-| Bước | Thao tác | Điều cần chứng minh |
-|---|---|---|
-| 1 | Mở sơ đồ và dashboard | Hai Region cùng phục vụ, các lớp kiến trúc rõ ràng |
-| 2 | Đăng nhập và đăng ký backend | Portal quản lý cấu hình theo tenant |
-| 3 | Tạo key có scope, gọi API | Request được xác thực và chuyển tiếp đúng backend |
-| 4 | Gọi thiếu key hoặc ngoài scope | Gateway từ chối truy cập không hợp lệ |
-| 5 | Xem usage, log, trace | Có thể liên hệ request với Region và kết quả xử lý |
-| 6 | Thu hồi key rồi gọi lại ở hai Region | Quyền bị thu hồi sau khi dữ liệu replica cập nhật |
-| 7 | Thực hiện kịch bản failover theo báo cáo | Health check phát hiện lỗi và DNS chuyển endpoint |
-| 8 | Khôi phục cấu hình và kiểm tra lại | Hai Region trở về trạng thái hoạt động bình thường |
-
-Failover phải quan sát bằng nhiều request theo thời gian và kiểm tra `X-Served-Region`. Gọi trực tiếp URL execute-api của Singapore sẽ luôn nhắm Singapore, nên không thể dùng URL đó để chứng minh chuyển vùng qua DNS. Một request thành công cũng chưa đủ để kết luận toàn hệ thống đã chịu được sự cố Region.
-
-## 13. Xử lý lỗi thường gặp
+## 12. Xử lý lỗi thường gặp
 
 | Hiện tượng | Kiểm tra và cách xử lý |
 |---|---|
@@ -724,7 +668,7 @@ Failover phải quan sát bằng nhiều request theo thời gian và kiểm tra
 | Web vẫn hiển thị bản cũ sau deploy | Kiểm tra build, bucket đích, cache của `index.html` và CloudFront invalidation |
 | Usage thấp hơn tổng số lần gọi | Request bị chặn trước khi vào proxy không tạo telemetry proxy; đối chiếu thêm metric API Gateway và log authorizer |
 
-## 14. Hướng phát triển
+## 13. Hướng phát triển
 
 Các mục sau là định hướng, không phải chức năng đã được nghiệm thu:
 
@@ -736,4 +680,3 @@ Các mục sau là định hướng, không phải chức năng đã được ng
 - Kiểm thử mất dịch vụ thực tế với phạm vi được kiểm soát, đo thời gian khôi phục và ảnh hưởng tới request đang xử lý.
 - Đánh giá xung đột ghi, đăng ký đồng thời và yêu cầu nhất quán dữ liệu khi nhiều Region cùng nhận ghi.
 - Chuẩn hóa vòng đời key, chính sách lưu dữ liệu và giám sát chi phí theo môi trường.
-
