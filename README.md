@@ -20,6 +20,17 @@ Route 53 chọn endpoint theo latency routing và trạng thái health check; k�
 
 ---
 
+## Thành viên
+
+| STT | Thành viên |
+|---|---|
+| 1 | Tùng |
+| 2 | Minh |
+| 3 | Toàn |
+| 4 | Nhân |
+
+Tên thành viên được ghi theo tài liệu hiện có trong repository.
+
 ## Giới thiệu đề tài
 
 **Tên đề tài: Xây dựng nền tảng API đa doanh nghiệp trên AWS theo kiến trúc Multi-Region Active-Active.**
@@ -72,6 +83,7 @@ Nền tảng không tự triển khai backend nghiệp vụ của doanh nghiệp
 
 ## Mục lục
 
+- [Thành viên](#thành-viên)
 - [Giới thiệu đề tài](#giới-thiệu-đề-tài)
 
 1. [Kiến trúc](#1-kiến-trúc)
@@ -84,7 +96,7 @@ Nền tảng không tự triển khai backend nghiệp vụ của doanh nghiệp
 8. [Kết quả kiểm thử và nghiệm thu](#8-kết-quả-kiểm-thử-và-nghiệm-thu)
 9. [Bảo mật](#9-bảo-mật)
 10. [Giới hạn đã biết](#10-giới-hạn-đã-biết)
-11. [Thành viên và tài liệu](#11-thành-viên-và-tài-liệu)
+11. [Tài liệu tham khảo](#11-tài-liệu-tham-khảo)
 12. [Tích hợp ứng dụng và kịch bản demo](#12-tích-hợp-ứng-dụng-và-kịch-bản-demo)
 13. [Xử lý lỗi thường gặp](#13-xử-lý-lỗi-thường-gặp)
 14. [Hướng phát triển](#14-hướng-phát-triển)
@@ -617,16 +629,7 @@ Các tồn đọng cấu hình bên dưới được ghi trong hồ sơ nghiệm
 
 ---
 
-## 11. Thành viên và tài liệu
-
-| STT | Thành viên |
-|---|---|
-| 1 | Tùng |
-| 2 | Minh |
-| 3 | Toàn |
-| 4 | Nhân |
-
-Tên thành viên được ghi theo tài liệu hiện có trong repository.
+## 11. Tài liệu tham khảo
 
 **Tài liệu nên đọc theo thứ tự**
 
