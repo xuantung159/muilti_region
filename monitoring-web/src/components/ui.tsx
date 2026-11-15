@@ -54,12 +54,30 @@ export function MetricText({ metric, format }: { metric: Metric; format: (n: num
   return <span className="text-sm font-normal italic text-muted">{MISSING_LABEL[metric.reason]}</span>;
 }
 
-export function KpiCard({ label, metric, format, hint }: { label: string; metric: Metric; format: (n: number) => string; hint?: string }) {
+export const NA_TITLE = 'Không có số liệu: backend chưa trả trường này hoặc không có mẫu nào trong khoảng đang xem';
+
+// Ô "N/A": dùng cho trường tùy chọn (backend cũ không trả) hoặc không có mẫu. Không bao giờ thay bằng 0.
+export function NotAvailable() {
+  return (
+    <span className="text-sm font-normal italic text-muted" title={NA_TITLE}>
+      N/A
+    </span>
+  );
+}
+
+// Metric tùy chọn: thiếu trường hoặc không có mẫu (unavailable) → N/A; chưa kết nối / chưa cấu hình giữ nhãn riêng.
+export function OptionalMetric({ metric, format }: { metric: Metric | undefined; format: (n: number) => string }) {
+  if (!metric || (metric.kind === 'missing' && metric.reason === 'unavailable')) return <NotAvailable />;
+  return <MetricText metric={metric} format={format} />;
+}
+
+export function KpiCard({ label, metric, format, hint, prefix }: { label: ReactNode; metric: Metric | undefined; format: (n: number) => string; hint?: string; prefix?: string }) {
   return (
     <Card>
       <div className="text-xs font-medium text-ink2">{label}</div>
       <div className="mt-2 text-2xl font-semibold tabular-nums text-ink">
-        <MetricText metric={metric} format={format} />
+        {prefix && metric?.kind === 'value' && <span className="mr-1 text-base font-medium text-ink2">{prefix}</span>}
+        {metric ? <MetricText metric={metric} format={format} /> : <NotAvailable />}
       </div>
       {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
     </Card>

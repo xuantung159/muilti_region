@@ -104,12 +104,12 @@ export function RequestSimulator({ initial = 'success', autoPlay = false, locked
   const detail = NODES[selected];
 
   return <Card className="space-y-4">
-    <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">Mô phỏng một request</h2><Tag tone="warning">Minh họa, không gọi AWS</Tag></div>
+    <div className="flex flex-wrap items-center gap-2"><h2 className="text-base font-semibold">Mô phỏng một request</h2><Tag tone="warning">Minh họa, không gọi AWS</Tag></div>
     {!locked && <div className="flex flex-wrap gap-2" role="group" aria-label="Chọn tình huống request">
       {SIMULATIONS.map(item => <button type="button" key={item.id} aria-pressed={id === item.id} onClick={() => choose(item.id)} className={`chip ${id === item.id ? 'chip-active' : ''}`}>{item.label}</button>)}
     </div>}
 
-    <div className="sim-stage" style={stage}>
+    <div className="sim-stage @container" style={stage}>
       <div className="sim-region" aria-hidden><span>{simulation.region === 'sg' ? 'Singapore · ap-southeast-1' : 'Tokyo · ap-northeast-1'}{simulation.regionNote ? ` · ${simulation.regionNote}` : ''}</span></div>
       <div className="sim-track" aria-hidden><span className="sim-track-fill" data-on={index >= 0} /></div>
       <ol className="sim-nodes">
@@ -123,7 +123,8 @@ export function RequestSimulator({ initial = 'success', autoPlay = false, locked
       </ol>
       {step && <div className="sim-packet" data-tone={failed ? 'error' : step.back ? 'back' : 'out'} aria-hidden>
         <span className="sim-dot" />
-        <span className="sim-label">{step.back ? <ArrowLeft className="size-3" /> : <ArrowRight className="size-3" />}{step.packet}</span>
+        {/* Mobile: nhãn bám mép phải khung để không tràn ra ngoài thẻ (100cqw = bề rộng .sim-stage). */}
+        <span className="sim-label max-md:left-[calc(100cqw-2.875rem)]! max-md:-translate-x-full">{step.back ? <ArrowLeft className="size-3" /> : <ArrowRight className="size-3" />}{step.packet}</span>
       </div>}
     </div>
 
@@ -131,7 +132,7 @@ export function RequestSimulator({ initial = 'success', autoPlay = false, locked
       <button type="button" onClick={toggle} className="btn-primary">{playing ? <Pause aria-hidden className="size-4" /> : <Play aria-hidden className="size-4" />}{playing ? 'Tạm dừng' : finished ? 'Chạy lại' : index >= 0 ? 'Tiếp tục' : 'Chạy mô phỏng'}</button>
       <button type="button" disabled={finished} onClick={() => { setPlaying(false); setIndex(value => Math.min(value + 1, last)); }} className="chip"><SkipForward aria-hidden className="size-4" />Từng bước</button>
       <button type="button" disabled={index < 0} onClick={() => { setPlaying(false); setIndex(-1); }} className="chip"><RotateCcw aria-hidden className="size-4" />Về đầu</button>
-      <div className="ml-auto flex items-center gap-1" role="group" aria-label="Tốc độ mô phỏng">
+      <div className="flex items-center gap-1 max-sm:w-full sm:ml-auto" role="group" aria-label="Tốc độ mô phỏng">
         <FastForward aria-hidden className="size-4 text-muted" />
         {SPEEDS.map(([label, value]) => <button type="button" key={label} aria-pressed={speed === value} onClick={() => setSpeed(value)} className={`chip chip-small ${speed === value ? 'chip-active' : ''}`}>{label}</button>)}
       </div>
@@ -149,7 +150,7 @@ export function RequestSimulator({ initial = 'success', autoPlay = false, locked
       </div>
       <div className="code-window min-w-0">
         <div className="code-bar"><span className="code-dots" aria-hidden><i /><i /><i /></span><span className="truncate">{step ? (step.back ? 'Phản hồi tại chặng này' : 'Dữ liệu tại chặng này') : 'Dữ liệu tại chặng này'}</span></div>
-        <pre className="min-h-32 overflow-x-auto p-3 text-xs leading-6"><code>{step?.wire ?? 'Bấm Chạy mô phỏng để xem request đi qua từng chặng.'}</code></pre>
+        <pre className="min-h-32 overflow-x-auto p-3 text-xs leading-6 whitespace-pre-wrap break-all"><code>{step?.wire ?? 'Bấm Chạy mô phỏng để xem request đi qua từng chặng.'}</code></pre>
       </div>
     </div>
   </Card>;

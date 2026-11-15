@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop Node · Quản lý sản phẩm</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">SN</span>
+      <div>
+        <h1>Shop Node</h1>
+        <p class="sub">Quản lý sản phẩm</p>
+      </div>
+    </div>
+    <div id="conn" class="conn" title="Đường đi của request">Đang kiểm tra kết nối…</div>
+  </header>
+
+  <main class="layout">
+    <section class="panel">
+      <div class="toolbar">
+        <form id="search" class="filters">
+          <input id="q" type="search" placeholder="Tìm theo tên sản phẩm" aria-label="Tìm theo tên">
+          <select id="category" aria-label="Lọc danh mục"><option value="">Tất cả danh mục</option></select>
+          <button type="submit" class="btn">Tìm</button>
+        </form>
+        <button id="add" class="btn primary" type="button">+ Thêm sản phẩm</button>
+      </div>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Tên sản phẩm</th><th>Danh mục</th><th class="num">Giá</th><th class="num">Tồn kho</th><th>Cập nhật</th><th></th></tr>
+          </thead>
+          <tbody id="rows"><tr><td colspan="7" class="empty">Đang tải…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="panel log">
+      <div class="log-head">
+        <h2>Request qua gateway</h2>
+        <button id="clear-log" class="link" type="button">Xóa</button>
+      </div>
+      <p class="hint" id="log-note">Mỗi thao tác là một request thật: trình duyệt → web server (giữ API key) → api.multi-region.io.vn → backend.</p>
+      <div class="auto">
+        <div class="auto-row">
+          <button id="auto-toggle" class="btn primary" type="button">▶ Gửi liên tục</button>
+          <label class="auto-every">mỗi
+            <select id="auto-every" aria-label="Khoảng cách giữa hai request">
+              <option value="300">0,3 giây</option>
+              <option value="1000" selected>1 giây</option>
+              <option value="2000">2 giây</option>
+              <option value="5000">5 giây</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint auto-note">Tự gửi request đọc (danh sách, tìm kiếm, chi tiết, thỉnh thoảng một 404) cho tới khi bấm Dừng. Không sửa dữ liệu.</p>
+        <div id="auto-stats" class="auto-stats" hidden></div>
+      </div>
+      <div id="compare" class="auto" hidden>
+        <div class="auto-row">
+          <button id="cmp-run" class="btn" type="button">So sánh độ trễ</button>
+          <label class="auto-every">
+            <select id="cmp-rounds" aria-label="Số vòng so sánh">
+              <option value="15">15 vòng</option>
+              <option value="30" selected>30 vòng</option>
+              <option value="60">60 vòng</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint auto-note">So Multi-Region với hệ thống bình thường chỉ có một Region cố định (cùng gateway, backend, key). Mỗi vòng đo theo thứ tự ngẫu nhiên: chặng trình duyệt → gateway của domain chung và của từng Region, cộng request thật qua hai hệ thống (nhãn <span class="badge">1R</span>). Kết quả là trung vị, kèm p95.</p>
+        <div id="cmp-result" hidden>
+          <div class="table-wrap">
+            <table class="cmp">
+              <thead><tr><th></th><th class="num">Tới gateway<small>p50 · p95</small></th><th class="num">Request thật<small>p50 · p95</small></th><th class="num">Lỗi</th></tr></thead>
+              <tbody id="cmp-body"></tbody>
+            </table>
+          </div>
+          <ul id="cmp-verdict" class="cmp-verdict"></ul>
+        </div>
+      </div>
+      <ol id="log"></ol>
+    </aside>
+  </main>
+
+  <dialog id="form-dialog">
+    <form id="product-form" method="dialog">
+      <h2 id="form-title">Thêm sản phẩm</h2>
+      <label>Tên sản phẩm<input name="name" required maxlength="100"></label>
+      <label>Danh mục<input name="category" required maxlength="50" list="category-list"></label>
+      <datalist id="category-list"></datalist>
+      <div class="two">
+        <label>Giá (VNĐ)<input name="price" type="number" min="0" step="1000" required></label>
+        <label>Tồn kho<input name="stock" type="number" min="0" step="1" required></label>
+      </div>
+      <p id="form-error" class="error" role="alert"></p>
+      <div class="actions">
+        <button type="button" class="btn" data-close>Hủy</button>
+        <button type="submit" class="btn primary" id="save">Lưu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="delete-dialog">
+    <form method="dialog">
+      <h2>Xóa sản phẩm?</h2>
+      <p id="delete-text"></p>
+      <div class="actions">
+        <button type="button" class="btn" data-close>Hủy</button>
+        <button type="submit" class="btn danger" id="confirm-delete">Xóa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -212,7 +212,7 @@
         "x-amazon-apigateway-authtype": "custom",
         "x-amazon-apigateway-authorizer": {
           "authorizerUri": "arn:aws:apigateway:ap-southeast-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-southeast-1:138150704839:function:mrapi-authorizer/invocations",
-          "authorizerResultTtlInSeconds": 0,
+          "authorizerResultTtlInSeconds": 60,
           "identitySource": "method.request.header.x-api-key",
           "type": "request"
         }

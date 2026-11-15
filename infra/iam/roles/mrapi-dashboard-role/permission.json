@@ -37,7 +37,8 @@
       "Effect": "Allow",
       "Action": [
         "route53:ListHealthChecks",
-        "route53:GetHealthCheckStatus"
+        "route53:GetHealthCheckStatus",
+        "route53:TestDNSAnswer"
       ],
       "Resource": "*"
     },

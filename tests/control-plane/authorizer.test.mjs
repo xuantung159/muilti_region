@@ -37,10 +37,17 @@ test('missing, malformed, unknown or wrong-secret key is 401 Unauthorized', asyn
   await assert.rejects(call(allowed), /Unauthorized/);
 });
 
-test('revoked key, API outside scope and legacy key without scope are denied', async () => {
+test('API outside scope gets the same Allow policy, which does not cover the requested API (safe to cache)', async () => {
   const outside = await call(other);
-  assert.equal(outside.policyDocument.Statement[0].Effect, 'Deny');
-  assert.equal(outside.context.reason, 'KEY_SCOPE_DENIED');
+  const [statement] = outside.policyDocument.Statement;
+  assert.equal(statement.Effect, 'Allow');
+  assert.deepEqual(statement.Resource, [`${arn}/*/proxy/${allowed}`, `${arn}/*/proxy/${allowed}/*`]);
+  assert.ok(!statement.Resource.some(r => r.includes(other)));
+  // Kết quả cache từ lần gọi sai này vẫn cho phép API hợp lệ của key.
+  assert.deepEqual(outside, await call(allowed));
+});
+
+test('revoked key and legacy key without scope are denied', async () => {
   key.status = 'revoked';
   assert.equal((await call(allowed)).context.reason, 'KEY_REVOKED');
   key.status = 'active'; delete key.apiIds;

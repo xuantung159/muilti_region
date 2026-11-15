@@ -11,8 +11,12 @@ const STATUS: Record<SourceStatus, { label: string; icon: LucideIcon; color: str
   error: { label: 'Error', icon: XCircle, color: 'text-critical' },
 };
 
+const guides = import.meta.glob('../../docs/integration/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+
 function SourceCard({ source }: { source: DataSource }) {
   const { label, icon: Icon, color } = STATUS[source.status];
+  const guideName = source.guide.split('/').pop();
+  const guide = guides[`../../docs/integration/${guideName}`];
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
@@ -37,16 +41,21 @@ function SourceCard({ source }: { source: DataSource }) {
       </div>
       <dl className="grid gap-2 text-xs">
         <div>
-          <dt className="text-ink2">Đồng bộ gần nhất</dt>
+          <dt className="text-ink2">Kiểm tra kết nối gần nhất</dt>
           <dd className="font-medium text-ink">{source.lastSync ? formatDateTime(source.lastSync) : 'Chưa từng đồng bộ'}</dd>
         </div>
         <div>
-          <dt className="text-ink2">Cấu hình còn thiếu</dt>
+          <dt className="text-ink2">Chi tiết kết nối và dữ liệu</dt>
           <dd className="text-ink">{source.note}</dd>
         </div>
         <div>
           <dt className="text-ink2">Hướng dẫn tích hợp</dt>
-          <dd className="font-mono text-ink">{source.guide}</dd>
+          <dd className="text-ink">{guide ? (
+            <details className="mt-1">
+              <summary className="cursor-pointer font-medium text-accent">Mở hướng dẫn {source.service}</summary>
+              <pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-md bg-raised p-3 font-mono text-xs">{guide}</pre>
+            </details>
+          ) : <span>Chưa có tài liệu tích hợp cho nguồn này.</span>}</dd>
         </div>
       </dl>
     </Card>
@@ -68,7 +77,7 @@ export function SourcesPage() {
                 <span className="font-semibold text-ink">
                   {connected} trên {aws}
                 </span>{' '}
-                nguồn AWS đã kết nối.{connected === 0 && ' Chưa có số liệu AWS thật nào được hiển thị trên dashboard.'}
+                nguồn AWS đã kết nối. Connected xác nhận truy vấn thành công, không có nghĩa luôn có metric mới. {connected === 0 && ' Chưa có số liệu AWS thật nào được hiển thị trên dashboard.'}
               </p>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {sources.map((s) => (

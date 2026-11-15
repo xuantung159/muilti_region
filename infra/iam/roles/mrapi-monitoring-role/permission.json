@@ -63,6 +63,14 @@
         "xray:PutTelemetryRecords"
       ],
       "Resource": "*"
+    },
+    {
+      "Sid": "ReadTraces",
+      "Effect": "Allow",
+      "Action": [
+        "xray:GetTraceSummaries"
+      ],
+      "Resource": "*"
     }
   ]
 }

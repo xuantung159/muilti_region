@@ -1,3 +1,4 @@
+import { readToken } from '../portal/client';
 import { useQuery } from '@tanstack/react-query';
 import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import type { MonitoringProvider } from '../data/provider';
@@ -28,8 +29,8 @@ export function useSnapshot() {
   const provider = useProvider();
   const { settings } = useSettings();
   return useQuery({
-    queryKey: [provider.id, 'snapshot', settings.range],
-    queryFn: () => provider.getSnapshot(settings.range),
+    queryKey: [provider.id, readToken(), 'snapshot', settings.range, settings.keyId, settings.region],
+    queryFn: () => provider.getSnapshot(settings.range, settings.keyId, settings.region),
     refetchInterval: useRefetchInterval(),
   });
 }
@@ -38,18 +39,28 @@ export function useEndpoints() {
   const provider = useProvider();
   const { settings } = useSettings();
   return useQuery({
-    queryKey: [provider.id, 'endpoints', settings.range],
-    queryFn: () => provider.getEndpoints(settings.range),
+    queryKey: [provider.id, readToken(), 'endpoints', settings.range, settings.keyId],
+    queryFn: () => provider.getEndpoints(settings.range, settings.keyId),
+    refetchInterval: useRefetchInterval(),
+  });
+}
+
+export function useRoutes() {
+  const provider = useProvider();
+  const { settings } = useSettings();
+  return useQuery({
+    queryKey: [provider.id, readToken(), 'routes', settings.range, settings.keyId],
+    queryFn: () => provider.getRoutes(settings.range, settings.keyId),
     refetchInterval: useRefetchInterval(),
   });
 }
 
 export function useIncidents() {
   const provider = useProvider();
-  return useQuery({ queryKey: [provider.id, 'incidents'], queryFn: () => provider.getIncidents(), refetchInterval: useRefetchInterval() });
+  return useQuery({ queryKey: [provider.id, readToken(), 'incidents'], queryFn: () => provider.getIncidents(), refetchInterval: useRefetchInterval() });
 }
 
 export function useSources() {
   const provider = useProvider();
-  return useQuery({ queryKey: [provider.id, 'sources'], queryFn: () => provider.getSources(), refetchInterval: useRefetchInterval() });
+  return useQuery({ queryKey: [provider.id, readToken(), 'sources'], queryFn: () => provider.getSources(), refetchInterval: useRefetchInterval() });
 }
