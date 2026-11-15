@@ -12,29 +12,58 @@ let direct = null; // { gatewayBase, regionBases, publicKey } khi trình duyệt
 let singleRegion = null; // Region cố định của chế độ so sánh "một Region"
 let healthUrls = null; // { multi, <region>: url } để đo chặng trình duyệt → gateway
 
-// Failover phía trình duyệt, cùng quy tắc với shopClient.js của server:
-// - Bình thường gọi api.multi-region.io.vn, Route 53 chọn Region gần người xem.
-// - Gateway trả 5xx mà không có X-Served-Region (Lambda proxy của Region đó không chạy) hoặc lỗi mạng với GET:
-//   gửi lại ngay sang endpoint của Region kia, rồi ghim Region đó FAILOVER_HOLD_MS trước khi trả lại cho Route 53.
-// Trình duyệt giữ kết nối tới Region gần nhất nên không cần chờ DNS: Region đó sống lại là request tự về.
 const FAILOVER_HOLD_MS = 30_000;
+const PROBE_MS = 10_000;
+const RECOVER_MAX_MS = 10 * 60_000;
 const SAFE_METHODS = new Set(['GET', 'HEAD']);
 const regionDown = res => res.status >= 500 && !res.headers.get('X-Served-Region');
 let lastRegion = null; // Region phục vụ request thành công gần nhất qua Route 53
 let failover = null; // { region, until } khi đang ghim Region dự phòng
+let recovering = null; // { region, until, up, checkedAt } Region gốc đang chờ quay về
 
 function fetchVia(base, method, path, body) {
   const headers = { 'x-api-key': direct.publicKey, ...(body ? { 'Content-Type': 'application/json' } : {}) };
   return fetch(base + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
 }
 
+// Region trả lời /health thành công, null nếu lỗi.
+async function healthRegion(url) {
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    return res.ok ? res.headers.get('X-Served-Region') : null;
+  } catch { return null; }
+}
+
+async function checkRecovery() {
+  if (!recovering) return;
+  const now = Date.now();
+  if (now > recovering.until) { recovering = null; return; }
+  if (now - recovering.checkedAt < PROBE_MS || !healthUrls?.[recovering.region]) return;
+  recovering.checkedAt = now;
+  const home = recovering.region;
+  const [own, viaDns] = await Promise.all([healthRegion(healthUrls[home]), healthUrls.multi ? healthRegion(healthUrls.multi) : null]);
+  if (!recovering) return;
+  if (viaDns === home) { // Route 53 và kết nối của trình duyệt đều đã về Region gốc
+    console.info(`[failback] api.multi-region.io.vn đã trả lại ${home}`);
+    recovering = null; failover = null; return;
+  }
+  if (own === home && !recovering.up) console.info(`[failback] ${home} sống lại, gửi thẳng về ${home}`);
+  recovering.up = own === home;
+  if (recovering.up) failover = null;
+}
+
 async function directFetch(method, path, body) {
+  await checkRecovery();
   if (failover && Date.now() > failover.until) failover = null;
-  const pinned = failover?.region;
+  // Ưu tiên: Region dự phòng đang ghim → Region gốc đã sống lại (gửi thẳng) → domain chung (Route 53).
+  const pinned = failover?.region ?? (recovering?.up ? recovering.region : null);
   let res, error;
   try { res = await fetchVia(pinned ? direct.regionBases[pinned] : direct.gatewayBase, method, path, body); } catch (err) { error = err; }
   if (res && !regionDown(res)) {
-    if (!pinned) lastRegion = res.headers.get('X-Served-Region') ?? lastRegion;
+    if (!pinned) {
+      lastRegion = res.headers.get('X-Served-Region') ?? lastRegion;
+      if (recovering && lastRegion === recovering.region) recovering = null;
+    }
     return { res, retried: false };
   }
   // 5xx trước khi tới proxy thì request chưa tới backend, gửi lại an toàn; lỗi mạng chỉ gửi lại GET.
@@ -45,6 +74,9 @@ async function directFetch(method, path, body) {
       const retry = await fetchVia(direct.regionBases[region], method, path, body);
       if (regionDown(retry)) continue;
       failover = { region, until: Date.now() + FAILOVER_HOLD_MS };
+      // Region gốc lỗi: nhớ nó để quay về khi sống lại. Region dự phòng lỗi thì giữ Region gốc cũ.
+      const home = recovering?.region ?? failed;
+      if (home && home === failed) recovering = { region: home, until: Date.now() + RECOVER_MAX_MS, up: false, checkedAt: Date.now() };
       return { res: retry, retried: true };
     } catch { /* thử Region kế tiếp */ }
   }
