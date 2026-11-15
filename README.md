@@ -2,6 +2,18 @@
 
 Gateway API cho nhiều doanh nghiệp, chạy **active-active ở hai AWS Region**: Singapore (`ap-southeast-1`) và Tokyo (`ap-northeast-1`).
 
+## Thông tin nhóm thực hiện
+
+Nhóm G17, môn Điện toán đám mây.
+
+| STT | Họ và tên | MSSV | Vai trò | Phụ trách chính |
+|-----|-----------|------|---------|-----------------|
+| 1 | Đặng Xuân Tùng | 24020350 | Nhóm trưởng | IAM, Route 53, CloudFront, ACM us-east-1, Budget, SNS us-east-1, gom repo |
+| 2 | Nguyễn Đức Minh | 24020233 | Thành viên | DynamoDB, S3, backend giám sát, export |
+| 3 | Phạm Văn Toan | 22028208 | Thành viên | Lambda (proxy, authorizer, dashboard, monitoring), X-Ray, failover |
+| 4 | Nguyễn Thế Nhân | 24020257 | Thành viên | API Gateway, ACM Regional, CloudWatch, SNS Regional, giao diện web |
+
+## Tổng quan hệ thống
 Doanh nghiệp đăng ký backend của mình trên portal và nhận API key có phạm vi. Ứng dụng của họ gọi `https://api.multi-region.io.vn/proxy/{apiId}/...`, và gateway sẽ:
 
 1. Kiểm tra key.
@@ -19,15 +31,6 @@ Route 53 chọn endpoint theo latency routing và trạng thái health check; k�
 | Trạng thái | Đã triển khai đủ hai Region.  |
 
 ---
-
-## Thông tin nhóm thực hiện
-
-| STT | Họ và tên | MSSV | Vai trò |
-|-----|-----------|------|---------|
-| 1 | Đặng Xuân Tùng | 24020350 | Nhóm trưởng |
-| 2 | Nguyễn Đức Minh | 24020233 | Thành viên |
-| 3 | Nguyễn Thế Nhân | 24020257 | Thành viên |
-| 4 | Phạm Văn Toan | 22028208 | Thành viên |
 
 ## Giới thiệu đề tài
 
@@ -77,10 +80,11 @@ Nền tảng không tự triển khai backend nghiệp vụ của doanh nghiệp
 
 <sub><strong>Backend:</strong> JavaScript ESM (Node.js), AWS SDK for JavaScript v3. <strong>Frontend:</strong> React 19, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query và Recharts.</sub>
 
-<sub><strong>Công cụ hỗ trợ:</strong> node:test, Vitest, Testing Library và script E2E để kiểm thử; Go cho ứng dụng tích hợp mẫu trong project_test/.</sub>
+<sub><strong>Công cụ hỗ trợ:</strong> node:test, Vitest, Testing Library và script E2E để kiểm thử; Node.js + Cloudflare Tunnel cho ứng dụng tích hợp mẫu trong project_node_shop/.</sub>
 
 ## Mục lục
 
+- [Thông tin nhóm thực hiện](#thông-tin-nhóm-thực-hiện)
 - [Giới thiệu đề tài](#giới-thiệu-đề-tài)
 
 1. [Kiến trúc](#1-kiến-trúc)
@@ -88,15 +92,14 @@ Nền tảng không tự triển khai backend nghiệp vụ của doanh nghiệp
 3. [Dịch vụ AWS sử dụng](#3-dịch-vụ-aws-sử-dụng)
 4. [Tổ chức thư mục](#4-tổ-chức-thư-mục)
 5. [API và mô hình dữ liệu](#5-api-và-mô-hình-dữ-liệu)
-6. [Chạy và triển khai](#6-chạy-và-triển-khai)
-7. [Kiểm thử](#7-kiểm-thử)
-8. [Kết quả kiểm thử và nghiệm thu](#8-kết-quả-kiểm-thử-và-nghiệm-thu)
-9. [Bảo mật](#9-bảo-mật)
-10. [Giới hạn đã biết](#10-giới-hạn-đã-biết)
-11. [Thành viên và tài liệu](#11-thành-viên-và-tài-liệu)
-12. [Tích hợp ứng dụng và kịch bản demo](#12-tích-hợp-ứng-dụng-và-kịch-bản-demo)
-13. [Xử lý lỗi thường gặp](#13-xử-lý-lỗi-thường-gặp)
-14. [Hướng phát triển](#14-hướng-phát-triển)
+6. [Kiểm thử](#6-kiểm-thử)
+7. [Kết quả kiểm thử và nghiệm thu](#7-kết-quả-kiểm-thử-và-nghiệm-thu)
+8. [Bảo mật](#8-bảo-mật)
+9. [Giới hạn đã biết](#9-giới-hạn-đã-biết)
+10. [Tài liệu tham khảo](#10-tài-liệu-tham-khảo)
+11. [Tích hợp ứng dụng](#11-tích-hợp-ứng-dụng)
+12. [Xử lý lỗi thường gặp](#12-xử-lý-lỗi-thường-gặp)
+13. [Hướng phát triển](#13-hướng-phát-triển)
 
 ---
 
@@ -201,7 +204,7 @@ sequenceDiagram
     App->>R53: DNS api.multi-region.io.vn
     R53-->>App: IP của Region có độ trễ thấp nhất, còn Healthy
     App->>APIGW: ANY /proxy/{apiId}/... + x-api-key
-    APIGW->>Auth: REQUEST authorizer (cache TTL 0)
+    APIGW->>Auth: REQUEST authorizer (cache kết quả 60 s theo key)
     Auth->>DDB: đọc key theo băm SHA-256
     alt Thiếu / sai key
         Auth-->>APIGW: Unauthorized → 401
@@ -285,7 +288,7 @@ aws/
 ├── scripts/                 Đóng gói Lambda, so cấu hình hai Region
 ├── config/                  Tên, ID, URL tài nguyên từng Region (không có secret)
 ├── infra/                   Cấu hình AWS đọc lại từ Console, theo từng dịch vụ
-├── project_test/            Project Go mẫu: một "doanh nghiệp" gọi API qua gateway
+├── project_node_shop/       Web CRUD sản phẩm mẫu (Node): một "doanh nghiệp" gọi API qua gateway
 ├── docs/                    Thiết kế, runbook, báo cáo, bằng chứng
 └── artifacts/               ZIP Lambda và file build sinh ra (bị .gitignore)
 ```
@@ -298,19 +301,28 @@ src/
 ├── api/                     → Lambda mrapi-proxy
 │   ├── index.mjs            Handler: GET /health (kiểm DynamoDB; HEALTH_FORCE_FAIL=true → 503) và ANY /proxy/{apiId}/{proxy+}
 │   ├── proxy.mjs            Chuyển tiếp request tới backend doanh nghiệp, lọc header, timeout, ghi telemetry
+│   ├── geo.mjs              Suy ra quốc gia client từ IP bằng GeoLite2 offline; chỉ lưu mã quốc gia, không lưu IP
 │   └── target.mjs           Chặn SSRF: kiểm IP thật lúc mở kết nối (chống DNS rebinding), cấm mạng nội bộ
 ├── authorizer/
 │   └── index.mjs            → Lambda mrapi-authorizer: REQUEST authorizer, kiểm x-api-key (băm SHA-256) và scope apiIds
 ├── dashboard/               → Lambda mrapi-dashboard: API của portal (/api/*)
 │   ├── index.mjs            Đăng ký, đăng nhập (scrypt), phiên Bearer, API key, thống kê usage, trạng thái Region, CORS
-│   └── apis.mjs             CRUD API đích của doanh nghiệp (kiểm URL backend hợp lệ)
+│   ├── apis.mjs             CRUD API đích của doanh nghiệp (kiểm URL backend hợp lệ)
+│   ├── report.mjs           Báo cáo theo tenant: lọc theo key/Region, percentile độ trễ, theo quốc gia
+│   ├── demo-failover.mjs    /api/demo/failover: giả lập một Region lỗi (chỉ /health trả 503), có hạn giờ
+│   └── demo-geo.mjs         /api/demo/geo: Route 53 TestDNSAnswer theo nước + request HTTPS thật tới IP được chọn
 ├── monitoring/              → Lambda mrapi-monitoring: /monitoring/*
 │   ├── index.mjs            Đọc CloudWatch hai Region, Route 53, S3 replication; metric thiếu trả "missing", không bao giờ trả 0 giả
+│   ├── report-auth.mjs      Kiểm phiên portal và key còn hoạt động trước khi trả báo cáo; số liệu hạ tầng chỉ cho admin
 │   └── README.md            Cấu hình MONITORING_CONFIG, quyền IAM cần có
 ├── exporter/
 │   └── index.mjs            → Lambda mrapi-exporter: gọi DynamoDB ExportTableToPointInTime ra S3 SG, ClientToken theo ngày
+├── probe/
+│   └── index.mjs            → Lambda mrapi-geo-probe (us-east-1, Function URL): gửi request thật từ Mỹ tới /health
 └── shared/
-    └── lib.mjs              Client DynamoDB, tên bảng, json(), routeOf(), sha256, so sánh an toàn (timingSafeEqual), khóa PK/SK
+    ├── lib.mjs              Client DynamoDB, tên bảng, json(), routeOf(), sha256, so sánh an toàn (timingSafeEqual), khóa PK/SK
+    ├── errors.mjs           Mã lỗi gateway dùng chung
+    └── outage.mjs           Bản ghi HEALTH/SIMULATED_OUTAGE cho demo failover
 ```
 
 | Lambda | Thư mục | Handler | Route | Region |
@@ -320,6 +332,7 @@ src/
 | `mrapi-dashboard` | `src/dashboard` | `dashboard/index.handler` | `GET /`, `ANY /api/{proxy+}` | SG, Tokyo |
 | `mrapi-monitoring` | `src/monitoring` | `monitoring/index.handler` | `GET /monitoring/{proxy+}` | SG, Tokyo |
 | `mrapi-exporter` | `src/exporter` | `exporter/index.handler` | EventBridge, không có route | Chỉ SG (thiết kế) |
+| `mrapi-geo-probe` | `src/probe` | `probe/index.handler` | Lambda Function URL | Chỉ us-east-1, phục vụ demo định tuyến |
 
 ### 4.2 `monitoring-web/` — Frontend React
 
@@ -329,7 +342,7 @@ React 19 + TypeScript + Vite + Tailwind + TanStack Query. Một bản build ph�
 monitoring-web/
 ├── index.html, vite.config.ts, tsconfig.json, package.json
 ├── .env.example             VITE_PORTAL_API_URL, VITE_MONITORING_API_URL, VITE_DEFAULT_DATA_MODE (mock | live)
-├── public/samples/          project-mau-mrapi.zip — project mẫu cho doanh nghiệp tải về (đóng gói từ project_test/)
+├── public/samples/          project-mau-mrapi.zip — project mẫu cho doanh nghiệp tải về
 ├── docs/integration/        Hợp đồng backend giám sát (backend-api.md) và hướng dẫn nối từng dịch vụ AWS
 └── src/
     ├── main.tsx, App.tsx    Khởi tạo React, router
@@ -347,13 +360,18 @@ monitoring-web/
 | Đường dẫn | Trang | Nội dung |
 |---|---|---|
 | `/portal` | PortalPage | Đăng ký, đăng nhập; tab Tổng quan (lượt gọi, lỗi, theo Region, theo key), API đích, API key, Hướng dẫn tích hợp |
+| `/demo` | DemoPage | Tự bấm demo: request theo quốc gia và giả lập một Region lỗi (cần đăng nhập) |
 | `/` | OverviewPage | System Overview: sức khỏe hai Region, request, error rate, độ trễ |
 | `/regions` | RegionsPage | So sánh Singapore và Tokyo, health check Route 53, replication |
+| `/routing` | RoutingPage | Request theo quốc gia và Region phục vụ |
+| `/errors` | ErrorsPage | Phân loại lỗi gateway và upstream |
 | `/apis` | ApisPage | Thống kê theo endpoint |
 | `/incidents` | IncidentsPage | Failover và sự cố (alarm, health check) |
 | `/infrastructure` | InfrastructurePage | Sơ đồ tài nguyên đã triển khai |
 | `/sources` | SourcesPage | Từng nguồn dữ liệu: đã kết nối, thiếu dữ liệu hay chưa cấu hình |
 | `/settings` | SettingsPage | URL backend, chế độ dữ liệu demo hoặc live |
+
+Các trang giám sát (từ `/` đến `/sources`) cần đăng nhập portal và có ít nhất một API key còn hoạt động; chưa đăng nhập thì trang mời xem dữ liệu demo có nhãn.
 
 ### 4.3 `tests/` — Kiểm thử
 
@@ -412,14 +430,15 @@ Các file chủ yếu là JSON cấu hình được xuất từ AWS và tài li�
 | [`acm/`](infra/acm/README.md), [`xray/`](infra/xray/README.md), [`quotas/`](infra/quotas/README.md) | Chứng chỉ, sampling rule, quota Lambda |
 | [`DEPLOYED_STATE.md`](infra/DEPLOYED_STATE.md) | Tổng hợp trạng thái đã triển khai và kết quả nghiệm thu |
 
-### 4.7 `project_test/` — Doanh nghiệp mẫu
+### 4.7 `project_node_shop/` — Doanh nghiệp mẫu
 
-Project Go nhỏ, đóng vai "doanh nghiệp" dùng gateway:
+Web CRUD sản phẩm bằng Node, đóng vai "doanh nghiệp" dùng gateway:
 
-- `server/main.go`: backend mẫu.
-- `main.go`: client gọi `MRAPI_GATEWAY_URL/proxy/{MRAPI_API_ID}/...` với `MRAPI_API_KEY` lấy từ `.env`; `.env.example` có sẵn khung.
+- `backend/server.js`: backend REST có sẵn (`/products`), mở ra internet bằng Cloudflare Tunnel.
+- `src/lib/shopClient.js`: HTTP client gọi `MRAPI_GATEWAY_URL/proxy/{MRAPI_API_ID}/...` với `MRAPI_API_KEY` lấy từ `.env` (khung ở `.env.example`), có failover phía client.
+- `src/web.js`, `public/`: giao diện CRUD và bảng request ghi Region phục vụ; `src/traffic.js`, `src/compare.js`: sinh tải và so sánh độ trễ.
 
-Portal cho tải bản nén của project này để demo tích hợp.
+Cách chạy và test ở [mục 11.1](#111-chạy-và-test-project_node_shop-web-crud-qua-gateway).
 
 ### 4.8 `docs/`
 
@@ -444,8 +463,8 @@ docs/
 | `GET /` | dashboard | Không | Chuyển hướng tới `/portal` |
 | `ANY /api/{proxy+}` | dashboard | Lambda tự kiểm `Authorization: Bearer` | Portal |
 | `GET /health` | proxy | Không | Route 53 health check |
-| `ANY /proxy/{apiId}/{proxy+}` | proxy | REQUEST authorizer, header `x-api-key`, cache TTL 0 | Ứng dụng doanh nghiệp |
-| `GET /monitoring/{proxy+}` | monitoring | Không, chỉ trả số liệu tổng hợp; method throttling rate 5, burst 10 | Trang giám sát |
+| `ANY /proxy/{apiId}/{proxy+}` | proxy | REQUEST authorizer, header `x-api-key`, cache kết quả 60 s | Ứng dụng doanh nghiệp |
+| `GET /monitoring/{proxy+}` | monitoring | Lambda tự kiểm `Authorization: Bearer` qua portal, cần key còn hoạt động; số liệu Lambda/API Gateway toàn stage chỉ trả cho admin. Method throttling rate 5, burst 10 | Trang giám sát |
 
 ### 5.2 API portal (`/api/...`)
 
@@ -459,7 +478,10 @@ docs/
 | GET, POST | `/api/keys` | Liệt kê / tạo API key với danh sách `apiIds` được phép (key chỉ hiện một lần) |
 | DELETE | `/api/keys/{keyId}` | Thu hồi key |
 | GET | `/api/usage?range=1h\|24h\|7d` | Tổng lượt gọi, lỗi, theo Region, theo key, theo thời gian |
+| GET | `/api/report?range=…` | Báo cáo của tenant: lọc theo key/Region, percentile độ trễ, theo quốc gia |
 | GET | `/api/status` | Trạng thái health check Route 53 của hai Region |
+| GET, POST | `/api/demo/geo` | Demo định tuyến theo nước (DNS mô phỏng + request HTTPS thật tới IP được chọn) |
+| GET, POST, DELETE | `/api/demo/failover` | Xem / bật / hủy giả lập một Region lỗi có hạn giờ |
 
 ### 5.3 API giám sát (`/monitoring/...`)
 
@@ -467,6 +489,7 @@ docs/
 |---|---|
 | `/monitoring/snapshot?range=1h\|6h\|24h\|7d` | Sức khỏe, request, lỗi, độ trễ từng Region; replication DynamoDB và S3; health check |
 | `/monitoring/endpoints?range=…` | Thống kê theo endpoint |
+| `/monitoring/routes?range=…` | Quốc gia → Region phục vụ, gộp từ cả hai Region |
 | `/monitoring/incidents` | Sự kiện alarm và failover |
 | `/monitoring/sources` | Trạng thái từng nguồn dữ liệu |
 
@@ -494,68 +517,12 @@ Telemetry không lưu body request/response. Cơ sở dữ liệu chỉ lưu b�
 
 ---
 
-## 6. Chạy và triển khai
-
-### 6.1 Yêu cầu
-
-- Node.js 24 và npm tương thích được khuyến nghị để chạy đồng nhất với runtime ghi trong hồ sơ; kiểm tra yêu cầu engine của dependency khi dùng phiên bản Node khác.
-- Go 1.22+ nếu chạy `project_test/`.
-- Quyền AWS Console phù hợp và MFA cho tài khoản quản trị. Lệnh AWS chạy trong **CloudShell**, không cần cài AWS CLI trên máy.
-
-### 6.2 Backend
-
-```bash
-npm ci --prefix src
-```
-
-```bash
-npm test --prefix src
-```
-
-```bash
-npm run package --prefix src
-```
-
-Lệnh cuối tạo `artifacts/lambda/{api,authorizer,dashboard,monitoring,exporter}.zip`. Deploy: Lambda Console → hàm tương ứng → **Upload from .zip**, làm ở **cả hai Region** (trừ exporter). Handler dạng `<thư mục>/index.handler`, ví dụ `dashboard/index.handler`.
-
-Biến môi trường chính trên Lambda (giá trị thật chỉ có trên AWS):
-
-| Hàm | Biến |
-|---|---|
-| proxy | `CONTROL_TABLE`, `TELEMETRY_TABLE`, `TELEMETRY_RETENTION_DAYS` (mặc định 30), `HEALTH_FORCE_FAIL` (chỉ đặt `true` khi thử failover) |
-| authorizer | `CONTROL_TABLE` |
-| dashboard | `CONTROL_TABLE`, `TELEMETRY_TABLE`, `FRONTEND_URL`, `PORTAL_ALLOWED_ORIGIN`, `PROJECT` (tiền tố tên health check) |
-| monitoring | `MONITORING_CONFIG` (để trống thì dùng cấu hình mặc định trong code), `MONITORING_ALLOWED_ORIGIN` |
-| exporter | `TABLE_ARN` (bảng telemetry), `EXPORT_BUCKET` = `mrapi-exports-sg`, `EXPORT_PREFIX` = `exports/telemetry/` |
-
-### 6.3 Frontend
-
-```bash
-npm ci --prefix monitoring-web
-```
-
-```bash
-npm run dev --prefix monitoring-web
-```
-
-Tạo `monitoring-web/.env.local` từ `.env.example`, điền `VITE_PORTAL_API_URL` và `VITE_MONITORING_API_URL` (URL API Gateway gồm stage, không có `/` cuối). Mở http://localhost:5173/portal.
-
-Build và triển khai:
-
-```bash
-npm run build --prefix monitoring-web
-```
-
-Tải nội dung `monitoring-web/dist/` lên bucket `mrapi-web-sg`. Đặt `Cache-Control: no-cache` cho `index.html`, rồi tạo invalidation `/index.html` và `/portal` trên distribution `E33WCNP66CDRPQ` ([chi tiết](infra/cloudfront/README.md)).
-
----
-
-## 7. Kiểm thử
+## 6. Kiểm thử
 
 | Loại | Lệnh | Ghi chú |
 |---|---|---|
-| Unit backend | `npm test --prefix src` | Kiểm thử logic với mock, không gọi AWS thật |
-| Unit frontend | `npm test --prefix monitoring-web` | Vitest và Testing Library |
+| Unit backend | `npm test --prefix src` | Kiểm thử logic với mock, không gọi AWS thật. 129/129 đạt (15/11/2026) |
+| Unit frontend | `npm test --prefix monitoring-web` | Vitest và Testing Library. 103/103 đạt, 14 file (15/11/2026) |
 | Typecheck + build | `npm run build --prefix monitoring-web` | |
 | E2E control plane | `API_BASE_URL=<url> npm run test:e2e --prefix src` | AWS thật, tạo tenant thử |
 | E2E proxy | `API_BASE_URL=<url> npm run test:e2e:proxy --prefix src` | AWS thật, backend mẫu httpbin.org |
@@ -572,7 +539,7 @@ Không chạy song song nhiều E2E: quota Lambda chỉ 10 concurrent mỗi Regi
 
 ---
 
-## 8. Kết quả kiểm thử và nghiệm thu
+## 7. Kết quả kiểm thử và nghiệm thu
 
 Các kết quả dưới đây trích từ báo cáo nghiệm thu trên AWS thật ngày **08/11/2026**. Đây là số liệu tại thời điểm kiểm thử; README không khẳng định các endpoint hoặc cấu hình hiện vẫn giữ nguyên:
 
@@ -583,16 +550,17 @@ Các kết quả dưới đây trích từ báo cáo nghiệm thu trên AWS th�
 | Đồng bộ DynamoDB Global Tables | Trung bình 0,7–0,85 s, tối đa ~1,2 s | [ops-verification.md](docs/reports/ops-verification.md), [data-replication.md](docs/reports/data-replication.md) |
 | Export theo lịch → S3 → bản sao Tokyo | Tự chạy 01:00, COMPLETED, 9/9 object REPLICA | [ops-verification.md](docs/reports/ops-verification.md) |
 | Route 53 latency + health check | 2 Region Healthy (16/16 checker) | [route53-live-test.md](docs/reports/route53-live-test.md) |
-| Failover Singapore → Tokyo | 3/3 lần chuyển và quay về thành công | [failover.md](docs/reports/failover.md) |
+| Failover Singapore → Tokyo | 3/3 lần chuyển và quay về thành công (mô phỏng `/health` lỗi, 01/11) | [failover.md](docs/reports/failover.md) |
+| Failover khi tắt hẳn Lambda (14/11) | Client chỉ dùng DNS đổi Region sau 31–48 s; client có gửi lại sang Region kia: 0 lỗi / 140 request | [failover.md](docs/reports/failover.md) mục 8 |
 | CloudWatch, SNS, X-Ray | 13/13 alarm OK, SNS Confirmed, trace đầy đủ proxy hai Region | [ops-verification.md](docs/reports/ops-verification.md) |
 | Truy vết một request | `X-Request-Id` → log proxy → item telemetry (cả replica) → trace X-Ray | [e2e-acceptance.md](docs/reports/e2e-acceptance.md) |
 | Sửa cấu hình | Monitoring Tokyo đọc S3 TYO→SG; `index.html` không cache | [config-fixes.md](docs/reports/config-fixes.md) |
 
 ---
 
-## 9. Bảo mật
+## 8. Bảo mật
 
-- **API key:** chỉ hiện một lần lúc tạo, lưu dạng băm SHA-256, so sánh bằng `timingSafeEqual`. Scope giới hạn theo `apiIds`. Authorizer được cấu hình không cache (TTL 0); thu hồi xuyên Region vẫn chịu độ trễ replica.
+- **API key:** chỉ hiện một lần lúc tạo, lưu dạng băm SHA-256, so sánh bằng `timingSafeEqual`. Scope giới hạn theo `apiIds`. Authorizer cache kết quả 60 s theo key (từ 13/11, để giảm độ trễ), nên key thu hồi bị chặn chậm nhất sau 60 s (đo được 47 s); thêm độ trễ replica nếu thu hồi ở Region kia.
 - **Mật khẩu:** băm scrypt có salt. Token phiên lưu dạng băm, hết hạn bằng TTL.
 - **Cách ly tenant:** proxy chỉ tin `tenant_id` do authorizer trả về và đọc cấu hình API theo tenant đó. Tenant khác gọi vào nhận 403 hoặc 404.
 - **Chống SSRF:** chỉ cho `https://`; chặn địa chỉ nội bộ và metadata, kiểm trên IP thật lúc kết nối.
@@ -604,7 +572,7 @@ Các kết quả dưới đây trích từ báo cáo nghiệm thu trên AWS th�
 
 ---
 
-## 10. Giới hạn đã biết
+## 9. Giới hạn đã biết
 
 Các tồn đọng cấu hình bên dưới được ghi trong hồ sơ nghiệm thu; cần kiểm tra lại trên AWS trước khi kết luận tình trạng hiện tại.
 
@@ -613,41 +581,133 @@ Các tồn đọng cấu hình bên dưới được ghi trong hồ sơ nghiệm
 | Quota Lambda 10 concurrent mỗi Region | Tải cao bị throttle (429/500) | Xin tăng quota (Console chỉ cho xin từ 1000) |
 | REST API Tokyo còn `TLS_1_0` ở endpoint execute-api | Chỉ ảnh hưởng gọi trực tiếp execute-api; custom domain đã TLS 1.2+ | Đổi sang `SecurityPolicy_TLS13_1_2_2021_06` |
 | Lambda monitoring Singapore còn bản cũ | Trang giám sát qua SG báo S3 Tokyo→SG `not_configured` | Deploy ZIP monitoring mới cho SG |
-| Failover mới thử bằng mô phỏng health check lỗi | Chưa chứng minh mất toàn Region | Thử tắt toàn bộ API Region |
+| Failover mới thử bằng tắt Lambda proxy một Region | Chưa thử mất cả Region (DynamoDB, API Gateway); mỗi chiều mới đo một lần, từ một client | Đo thêm nhiều lần, từ nhiều client |
 | Global Tables là eventual consistency | Trong ~1 s sau thu hồi, Region kia còn có thể cho key đi qua | Chấp nhận theo thiết kế |
 | Budget tính cả credit | Không cảnh báo dù chi phí thật trước credit ~7,9 USD/8 ngày | Loại Credit khỏi phạm vi Budget |
 | Body 403 là thông báo mặc định của API Gateway | Client không thấy lý do cụ thể; lý do có trong log `AUTHORIZER_DENY` | Cấu hình Gateway Response `ACCESS_DENIED` |
 
 ---
 
-## 11. Tích hợp ứng dụng và kịch bản demo
+## 10. Tài liệu tham khảo
+
+**Tài liệu nên đọc theo thứ tự**
+
+1. [docs/giai-thich-gateway.md](docs/giai-thich-gateway.md): hiểu hệ thống bằng lời thường.
+2. [docs/thiet-ke-gateway.md](docs/thiet-ke-gateway.md): thiết kế kỹ thuật và mã lỗi.
+3. [docs/cau-truc-du-an.md](docs/cau-truc-du-an.md): đường đi request, khái niệm IAM.
+4. [infra/DEPLOYED_STATE.md](infra/DEPLOYED_STATE.md): những gì đang chạy trên AWS.
+5. [docs/reports/](docs/reports/README.md): kết quả nghiệm thu.
+6. [monitoring-web/README.md](monitoring-web/README.md): chi tiết frontend và cách nối monitoring.
 
 
-### 11.2 Chạy client Go trong repository
 
-Cài Go 1.22 trở lên. Trong thư mục gốc repository:
+
+## 11. Tích hợp ứng dụng
+
+### 11.1 Chạy và test `project_node_shop/` (web CRUD qua gateway)
+
+Ứng dụng Node mẫu: backend REST sản phẩm chạy trên máy, mở ra internet bằng Cloudflare Tunnel, web server gọi backend **qua gateway** (`/proxy/<API_ID>/products…`) và hiện Region phục vụ cho từng request. Chi tiết ở [project_node_shop/README.md](project_node_shop/README.md).
+
+```text
+Trình duyệt → web (localhost:3000, giữ key) → api.multi-region.io.vn/proxy/<API_ID> → Route 53 → SG/Tokyo
+            → cloudflared tunnel (https://<tên>.trycloudflare.com) → backend (localhost:8081) → data/products.json
+```
+
+**Yêu cầu:** Node.js 20.6 trở lên (script dùng `node --env-file`), `cloudflared`, một tài khoản Cổng doanh nghiệp đã có API đích `shop-node` và một API key.
+
+Cài `cloudflared` (một lần):
 
 ```powershell
-Set-Location project_test
+winget install --id Cloudflare.cloudflared
+cloudflared --version
+```
+
+**Bước 1: cài thư viện và cấu hình**
+
+```powershell
+Set-Location project_node_shop
+npm install
 Copy-Item .env.example .env
 ```
 
-Chỉ sao chép khi chưa có `.env`. Điền ba biến trong file:
+Chỉ sao chép khi chưa có `.env`. Điền vào `.env` (không commit):
 
 ```dotenv
 MRAPI_GATEWAY_URL=https://api.multi-region.io.vn
-MRAPI_API_ID=API_ID_CUA_BAN
-MRAPI_API_KEY=SECRET_KEY_CUA_BAN
+MRAPI_API_ID=<API ID của shop-node, xem ở portal → API đích>
+MRAPI_API_KEY=<key mrk_… tạo ở portal → API key>
+# Tuỳ chọn: key demo riêng để trình duyệt gọi thẳng gateway (Region theo vị trí người xem)
+# MRAPI_PUBLIC_KEY=<key demo, scope chỉ shop-node, quota thấp>
 ```
 
-Sau đó chạy client với route phù hợp:
+**Bước 2: chạy ba terminal**
 
 ```powershell
-go test ./...
-go run . /todos/1
+# Terminal 1: backend có sẵn của doanh nghiệp, http://localhost:8081
+npm run backend
 ```
 
-`project_test/server/` là backend mẫu riêng; client ở `project_test/main.go` có thể gọi một backend HTTPS khác đã đăng ký. Go hoặc công cụ tunnel cài trong `artifacts/` trên máy tác giả không được cung cấp sẵn khi clone. Xem [project_test/README.md](project_test/README.md) để biết cấu hình chi tiết. Trước khi commit, kiểm tra `.env` không xuất hiện trong danh sách file được Git theo dõi.
+```powershell
+# Terminal 2: mở backend ra internet, in ra https://<tên>.trycloudflare.com
+cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8081
+```
+
+Lấy URL `https://<tên>.trycloudflare.com` vừa in → portal → **API đích** → `shop-node` → **Chỉnh sửa** → đặt **Base URL** bằng URL đó. Quick tunnel đổi URL mỗi lần chạy lại, nên lần nào chạy lại cloudflared cũng phải cập nhật Base URL.
+
+```powershell
+# Terminal 3: web server, mở http://localhost:3000
+npm run web
+```
+
+**Bước 3: kiểm tra từng chặng**
+
+```powershell
+# Backend chạy được
+curl.exe -s http://localhost:8081/products
+# Tunnel chuyển được về backend
+curl.exe -s https://<tên>.trycloudflare.com/products
+# Gateway → tunnel → backend, xem header X-Served-Region
+curl.exe -s -i -H "x-api-key: <MRAPI_API_KEY>" https://api.multi-region.io.vn/proxy/<API_ID>/products
+```
+
+Lệnh cuối phải trả `200` và có `X-Served-Region: ap-southeast-1` (ở Việt Nam) hoặc `ap-northeast-1`. `403` là sai key/key đã thu hồi hoặc key không có scope `shop-node`; `502/504` thường là Base URL chưa trùng URL tunnel hiện tại.
+
+**Bước 4: test trên web và sinh tải**
+
+- Mở `http://localhost:3000`: thêm, tìm, sửa, xóa sản phẩm; khung **Request qua gateway** ghi method, mã trạng thái, Region, độ trễ của từng request.
+- Nút **▶ Gửi liên tục** gửi request đọc theo nhịp chọn (0,3–5 giây); mở song song `https://app.multi-region.io.vn` để xem số liệu lên dashboard.
+- Sinh tải bằng lệnh:
+
+```powershell
+npm run traffic                                   # 300 request (đọc, tìm, sửa tồn kho, 404)
+$env:TOTAL=50; $env:CONCURRENCY=2; npm run traffic # tuỳ số lượng (bash: TOTAL=50 CONCURRENCY=2 npm run traffic)
+npm run traffic:loop                              # gửi liên tục tới khi Ctrl+C, vẫn in tổng kết
+```
+
+- So sánh định tuyến theo vị trí với hệ thống chỉ một Region (ép Singapore):
+
+```powershell
+$env:ROUNDS=20; npm run compare
+```
+
+- Đối chứng không qua gateway: `npm run web:direct` (web gọi thẳng backend).
+
+**Bước 5 (tuỳ chọn): người xem ở nước khác, Region theo vị trí người xem**
+
+Thêm `MRAPI_PUBLIC_KEY` vào `.env`, chạy lại `npm run web`, rồi mở web ra internet bằng tunnel thứ hai:
+
+```powershell
+# Terminal 4: tunnel cho web (khác tunnel của backend)
+cloudflared tunnel --no-autoupdate --url http://127.0.0.1:3000
+```
+
+Gửi link `https://<tên-khác>.trycloudflare.com` cho người xem; bật VPN Nhật/Mỹ sẽ thấy Region đổi sang `ap-northeast-1`. Thu hồi key demo ngay sau khi xong.
+
+**Test failover phía client:** trong lúc **Gửi liên tục** đang chạy, làm hỏng Region đang phục vụ theo [docs/runbooks/demo-failover-tren-web.md](docs/runbooks/demo-failover-tren-web.md). Request lỗi 5xx không có `X-Served-Region` (hoặc lỗi mạng với GET) được gửi lại ngay sang Region kia, đánh dấu ↻ trên bảng; log web server in dòng `[failover] …`. Region kia được ghim 30 giây rồi trả lại cho Route 53.
+
+**Chạy từ CloudShell Singapore/Tokyo/Mỹ** (request thật từ nước khác, backend và tunnel ở máy vẫn phải đang chạy): làm theo [project_node_shop/CLOUDSHELL.md](project_node_shop/CLOUDSHELL.md). Kỳ vọng: Singapore → `ap-southeast-1`; Tokyo và Mỹ → `ap-northeast-1`.
+
+**Dọn sau khi test:** Ctrl+C cả ba (bốn) terminal để tắt backend, web và tunnel — backend không tự kiểm tra key, ai biết URL trycloudflare đều gọi thẳng được. Thu hồi key demo nếu đã tạo; key lộ trên ảnh/video thì thu hồi và tạo key mới.
 
 
 ## 12. Xử lý lỗi thường gặp
