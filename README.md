@@ -6,12 +6,12 @@ Gateway API cho nhiều doanh nghiệp, chạy **active-active ở hai AWS Regio
 
 Nhóm G17, môn Điện toán đám mây.
 
-| STT | Họ và tên | MSSV | Vai trò | Phụ trách chính |
-|-----|-----------|------|---------|-----------------|
-| 1 | Đặng Xuân Tùng | 24020350 | Nhóm trưởng | IAM, Route 53, CloudFront, ACM us-east-1, Budget, SNS us-east-1, gom repo |
-| 2 | Nguyễn Đức Minh | 24020233 | Thành viên | DynamoDB, S3, backend giám sát, export |
-| 3 | Phạm Văn Toan | 22028208 | Thành viên | Lambda (proxy, authorizer, dashboard, monitoring), X-Ray, failover |
-| 4 | Nguyễn Thế Nhân | 24020257 | Thành viên | API Gateway, ACM Regional, CloudWatch, SNS Regional, giao diện web |
+| STT | Họ và tên | MSSV | Vai trò | 
+|-----|-----------|------|---------|
+| 1 | Đặng Xuân Tùng | 24020350 | Nhóm trưởng | 
+| 2 | Nguyễn Đức Minh | 24020233 | Thành viên | 
+| 3 | Phạm Văn Toan | 22028208 | Thành viên | 
+| 4 | Nguyễn Thế Nhân | 24020257 | Thành viên |
 
 ## Tổng quan hệ thống
 Doanh nghiệp đăng ký backend của mình trên portal và nhận API key có phạm vi. Ứng dụng của họ gọi `https://api.multi-region.io.vn/proxy/{apiId}/...`, và gateway sẽ:
