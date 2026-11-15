@@ -1,4 +1,5 @@
-import type { DataSource, EndpointStat, IncidentEvent, MonitoringSnapshot, RangeKey } from '../../domain/types';
+import type { DataSource, EndpointStat, IncidentEvent, MonitoringSnapshot, RangeKey, RouteStat } from '../../domain/types';
+import { buildRoutes } from '../../data/mock/routes';
 import { buildEndpoints, buildIncidents, buildSnapshot } from './generator';
 import type { MonitoringProvider } from '../../data/provider';
 import { awsSources } from '../../data/sources';
@@ -20,6 +21,11 @@ export class MockProvider implements MonitoringProvider {
   async getEndpoints(range: RangeKey): Promise<EndpointStat[]> {
     await wait(this.delayMs);
     return buildEndpoints(range, this.now());
+  }
+
+  async getRoutes(range: RangeKey): Promise<RouteStat[]> {
+    await wait(this.delayMs);
+    return buildRoutes(range, this.now());
   }
 
   async getIncidents(): Promise<IncidentEvent[]> {

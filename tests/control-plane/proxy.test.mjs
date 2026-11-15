@@ -6,7 +6,7 @@ process.env.CONTROL_TABLE = 'mrapi-control';
 process.env.TELEMETRY_TABLE = 'mrapi-telemetry';
 const { db } = await import('../../src/shared/lib.mjs');
 const { handler } = await import('../../src/api/index.mjs');
-const { transport, targetUrl, MAX_RESPONSE_BYTES } = await import('../../src/api/proxy.mjs');
+const { transport, targetUrl, MAX_RESPONSE_BYTES, upstreamAgent } = await import('../../src/api/proxy.mjs');
 const { safeLookup, isBlockedAddress } = await import('../../src/api/target.mjs');
 const realRequest = transport.request;
 
@@ -135,6 +135,62 @@ test('DNS pointing at a private address is blocked before any connection (real h
   transport.request = realRequest;
   api.baseUrl = 'https://localhost';
   const result = await call(`/proxy/${apiId}/x`);
+  assert.equal(result.statusCode, 403);
+  assert.equal(JSON.parse(result.body).code, 'TARGET_BLOCKED');
+});
+
+// Backend giả theo từng lần gọi: `plan` là danh sách hành vi cho lần gọi 1, 2, ...
+function scripted(plan) {
+  const calls = [];
+  transport.request = (url, options, onResponse) => {
+    const step = plan[calls.length] ?? plan.at(-1);
+    calls.push({ agent: options.agent, lookup: options.lookup });
+    const req = new EventEmitter();
+    req.destroy = () => {};
+    req.reusedSocket = step.reused ?? false;
+    req.end = () => setImmediate(() => {
+      if (step.error) return req.emit('error', Object.assign(new Error(step.error), { code: step.error }));
+      const res = new PassThrough();
+      Object.assign(res, { statusCode: 200, headers: {}, body: '' });
+      onResponse(res);
+      res.end('ok');
+    });
+    return req;
+  };
+  return calls;
+}
+
+test('idempotent methods reuse the keep-alive agent; POST and PATCH open a fresh connection', async () => {
+  const calls = scripted([{}]);
+  for (const httpMethod of ['GET', 'PUT', 'DELETE', 'POST', 'PATCH']) await call(`/proxy/${apiId}/x`, { httpMethod });
+  assert.deepEqual(calls.map(c => c.agent === upstreamAgent), [true, true, true, false, false]);
+  assert.ok(calls.every(c => c.lookup === safeLookup));
+});
+
+test('a reused socket closed by the backend is retried once on a fresh connection', async () => {
+  const calls = scripted([{ reused: true, error: 'ECONNRESET' }, {}]);
+  const result = await call(`/proxy/${apiId}/x`, { httpMethod: 'GET' });
+  assert.equal(result.statusCode, 200);
+  assert.deepEqual(calls.map(c => c.agent === upstreamAgent), [true, false]);
+  assert.equal(telemetry.length, 1);
+});
+
+test('no retry for a fresh connection, a POST, or a second failure', async () => {
+  let calls = scripted([{ reused: false, error: 'ECONNRESET' }]);
+  assert.equal((await call(`/proxy/${apiId}/x`, { httpMethod: 'GET' })).statusCode, 502);
+  assert.equal(calls.length, 1);
+  calls = scripted([{ reused: true, error: 'ECONNRESET' }]);
+  assert.equal((await call(`/proxy/${apiId}/x`, { httpMethod: 'POST' })).statusCode, 502);
+  assert.equal(calls.length, 1);
+  calls = scripted([{ reused: true, error: 'ECONNRESET' }, { reused: false, error: 'ECONNRESET' }]);
+  assert.equal((await call(`/proxy/${apiId}/x`, { httpMethod: 'GET' })).statusCode, 502);
+  assert.equal(calls.length, 2);
+});
+
+test('keep-alive agent still blocks private DNS targets (real https, GET)', async () => {
+  transport.request = realRequest;
+  api.baseUrl = 'https://localhost';
+  const result = await call(`/proxy/${apiId}/x`, { httpMethod: 'GET' });
   assert.equal(result.statusCode, 403);
   assert.equal(JSON.parse(result.body).code, 'TARGET_BLOCKED');
 });

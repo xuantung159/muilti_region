@@ -1,6 +1,7 @@
-// Đo thời gian thu hồi key xuyên Region (Global Table mrapi-control, authorizer cache TTL 0).
+// Đo thời gian thu hồi key xuyên Region (Global Table mrapi-control, authorizer cache TTL 60 s:
+// thời gian đo gồm cả thời gian kết quả cũ còn trong cache, tối đa ~60 s).
 // Mỗi lượt: tạo key ở Region gốc → chờ Region kia trả 200 → DELETE /api/keys ở Region gốc →
-// poll Region kia mỗi ~200 ms (tuần tự, tối đa 30 s) đến khi 401/403.
+// poll Region kia mỗi ~200 ms (tuần tự, tối đa 90 s) đến khi 401/403.
 // Thời gian đo = lúc gửi request bị chặn đầu tiên − lúc DELETE trả 200 (cận trên);
 // độ phân giải = khoảng giữa request còn được phép cuối cùng và request bị chặn đầu tiên.
 //
@@ -73,7 +74,7 @@ for (const [origin, target] of [['SG', 'TYO'], ['TYO', 'SG']]) {
     const delDone = Date.now();
     assert.equal(del.status, 200);
     let lastAllowed = delStart, deniedAt, deniedStatus, polls = 0;
-    for (const end = delDone + 30000; Date.now() < end;) {
+    for (const end = delDone + 90000; Date.now() < end;) {
       const sentAt = Date.now(); polls++;
       const r = await call(BASES[target], 'GET', path, { key: k.data.apiKey });
       if (denied(r)) { deniedAt = sentAt; deniedStatus = r.status; break; }

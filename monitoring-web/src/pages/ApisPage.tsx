@@ -1,13 +1,13 @@
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useEndpoints, useProvider } from '../app/data';
-import { RangeSelect } from '../components/Toolbar';
+import { KeySelect, RangeSelect } from '../components/Toolbar';
 import { Card, EmptyState, HealthBadge, PageHeader, QueryBoundary, Select, Tag } from '../components/ui';
 import { formatDateTime, formatMs, formatNumber, formatPct } from '../domain/format';
 import { deriveEndpointHealth, type Health } from '../domain/status';
 import { type EndpointStat, type HttpMethod, type RegionCode, regionName, REGIONS } from '../domain/types';
 
-const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE'];
+const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'ANY'];
 const HEALTHS: { value: Health; label: string }[] = [
   { value: 'healthy', label: 'Healthy' },
   { value: 'degraded', label: 'Degraded' },
@@ -29,7 +29,11 @@ function EndpointTable({ endpoints }: { endpoints: EndpointStat[] }) {
   }, [endpoints, search, region, method, health]);
 
   if (endpoints.length === 0)
-    return <EmptyState title="Chưa có dữ liệu endpoint">Nguồn dữ liệu chưa trả về endpoint nào. Kiểm tra trang Data Sources để biết nguồn nào chưa kết nối.</EmptyState>;
+    return (
+      <EmptyState title="Chưa có dữ liệu endpoint">
+        Chưa có request nào qua API key đang chọn tới API doanh nghiệp (/proxy/…) trong khoảng thời gian này; key mới tạo sẽ trống cho tới khi bạn gọi API qua gateway. Health check, portal và dashboard không được tính. Nếu đã gọi API mà vẫn trống, kiểm tra trang Data Sources.
+      </EmptyState>
+    );
 
   return (
     <>
@@ -69,6 +73,7 @@ function EndpointTable({ endpoints }: { endpoints: EndpointStat[] }) {
             </option>
           ))}
         </Select>
+        <KeySelect />
         <RangeSelect />
       </div>
 
@@ -88,7 +93,7 @@ function EndpointTable({ endpoints }: { endpoints: EndpointStat[] }) {
                     {h}
                   </th>
                 ))}
-                {['Request count', 'Success rate', 'Error rate', 'Latency', 'Last updated'].map((h) => (
+                {['Request count', 'Success rate', 'Error rate (4xx + 5xx)', '4xx rate', '5xx rate', 'Latency', 'Last updated'].map((h) => (
                   <th key={h} className="px-4 py-3 text-right font-medium">
                     {h}
                   </th>
@@ -107,6 +112,8 @@ function EndpointTable({ endpoints }: { endpoints: EndpointStat[] }) {
                   <td className="px-4 py-2.5 text-right tabular-nums text-ink">{formatNumber(e.requests)}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-ink">{formatPct(e.successRatePct)}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-ink">{formatPct(e.errorRatePct)}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-ink">{e.error4xxRatePct !== undefined ? formatPct(e.error4xxRatePct) : e.serverErrorRatePct !== undefined ? formatPct(Math.max(0, e.errorRatePct - e.serverErrorRatePct)) : 'N/A'}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-ink">{e.serverErrorRatePct !== undefined ? formatPct(e.serverErrorRatePct) : 'N/A'}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-ink">{formatMs(e.latencyAvgMs)}</td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-right tabular-nums text-ink2">{formatDateTime(e.lastUpdated)}</td>
                 </tr>
@@ -124,7 +131,12 @@ export function ApisPage() {
   const provider = useProvider();
   return (
     <>
-      <PageHeader title="API Monitoring" description="Tình trạng từng endpoint theo Region." actions={provider.id === 'mock' ? <Tag tone="warning">Endpoint minh họa</Tag> : undefined} />
+      <PageHeader
+        title="API Monitoring"
+        description="Tình trạng từng endpoint API của doanh nghiệp bạn (/proxy/…) theo Region, lọc được theo API key. Không gồm health check Route 53, portal và chính dashboard."
+        actions={provider.id === 'mock' ? <Tag tone="warning">Endpoint minh họa</Tag> : undefined}
+      />
+      <p className="mb-4 text-sm text-ink2">Status phản ánh lỗi máy chủ (5xx), không phải tỷ lệ request thành công hay health check Region. 4xx (ví dụ 404, key sai) vẫn tính vào Error rate nhưng không làm endpoint Down. Từ 1% 5xx là Degraded, từ 5% là Down khi có ít nhất 20 request; dưới 20 request, có 5xx là Degraded. Backend cũ chưa tách 5xx dùng tổng lỗi và hiển thị N/A ở cột chưa có dữ liệu.</p>
       {provider.id === 'mock' && (
         <p className="mb-4 text-sm text-ink2">Danh sách endpoint dưới đây là minh họa cho đến khi cấu hình API thật được xác nhận. Trạng thái suy ra từ error rate: từ 1% là Degraded, từ 5% là Down.</p>
       )}

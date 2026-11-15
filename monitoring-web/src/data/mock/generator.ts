@@ -1,8 +1,18 @@
 // Bộ sinh dữ liệu mẫu. Giá trị được suy ra từ thời điểm của ô thời gian nên ổn định giữa các lần refresh
 // và tự dịch chuyển theo đồng hồ. Đây là số liệu minh họa, không phản ánh hệ thống AWS nào.
 import { RANGES } from '../../domain/range';
+import { statsFields } from '../report';
 import {
   type BucketStats,
+  ERROR_CLASSES,
+  type ErrorClass,
+  type ErrorClassCounts,
+  type ErrorTypeStat,
+  type KeyErrorStat,
+  type LatencyStats,
+  type RegionFilter,
+  type TenantReportExtras,
+  type TrafficStats,
   type EndpointStat,
   type HttpMethod,
   type IncidentEvent,
@@ -63,6 +73,8 @@ function bucketStats(region: RegionCode, t: number, bucketMs: number, incident: 
   const error4xx = Math.round(requests * rate4xx);
   const error5xx = Math.round(requests * rate5xx);
   const latencyAvgMs = profile.latencyMs * (1 + 0.08 * noise(`${region}-lat`, t)) * (1 + (region === TYO ? 2 : 0.15) * hit);
+  const latencyP95Ms = latencyAvgMs * 2.4 * (1 + 0.06 * noise(`${region}-p95`, t));
+  const errorsByClass = splitErrors(error4xx, error5xx, region === TYO ? hit : 0);
 
   return {
     requests,
@@ -70,7 +82,160 @@ function bucketStats(region: RegionCode, t: number, bucketMs: number, incident: 
     error4xx,
     error5xx,
     latencyAvgMs,
-    latencyP95Ms: latencyAvgMs * 2.4 * (1 + 0.06 * noise(`${region}-p95`, t)),
+    latencyP95Ms,
+    // Trường schemaVersion 2 (mô phỏng).
+    hasData: requests > 0,
+    timeout: errorsByClass.timeout,
+    gatewayErrors: errorsByClass.gateway,
+    upstreamErrors: errorsByClass.upstream_5xx + errorsByClass.timeout + errorsByClass.connection_error,
+    errorsByClass,
+    latency:
+      requests > 0
+        ? { avgMs: Math.round(latencyAvgMs), p50Ms: Math.round(latencyAvgMs * 0.85), p95Ms: Math.round(latencyP95Ms), p99Ms: Math.round(latencyP95Ms * 1.5) }
+        : null,
+  };
+}
+
+// Chia 4xx/5xx mẫu theo errorClass, giữ bất biến 4xx = client_4xx + upstream_4xx, 5xx = gateway + upstream_5xx + timeout + connection_error.
+// Trong sự cố mô phỏng, phần lớn 5xx là timeout.
+function splitErrors(error4xx: number, error5xx: number, incident: number): ErrorClassCounts {
+  const client = Math.floor(error4xx * 0.4);
+  const timeout = Math.floor(error5xx * (0.25 + 0.5 * incident));
+  const connection = Math.floor(error5xx * 0.1);
+  const gateway = Math.floor(error5xx * 0.05);
+  return {
+    client_4xx: client,
+    upstream_4xx: error4xx - client,
+    gateway,
+    upstream_5xx: error5xx - timeout - connection - gateway,
+    timeout,
+    connection_error: connection,
+  };
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+const rate = (part: number, total: number) => (total > 0 ? round2((part / total) * 100) : null);
+const zeroClasses = (): ErrorClassCounts => Object.fromEntries(ERROR_CLASSES.map((c) => [c, 0])) as ErrorClassCounts;
+const addClasses = (a: ErrorClassCounts, b: ErrorClassCounts): ErrorClassCounts =>
+  Object.fromEntries(ERROR_CLASSES.map((c) => [c, a[c] + b[c]])) as ErrorClassCounts;
+
+function latencyStats(samples: number, avg: number, p95: number): LatencyStats {
+  if (samples === 0) return { samples: 0, avgMs: null, p50Ms: null, p90Ms: null, p95Ms: null, p99Ms: null, maxMs: null };
+  return {
+    samples,
+    avgMs: Math.round(avg),
+    p50Ms: Math.round(avg * 0.85),
+    p90Ms: Math.round(p95 * 0.8),
+    p95Ms: Math.round(p95),
+    p99Ms: Math.round(p95 * 1.5),
+    maxMs: Math.round(p95 * 2.2),
+  };
+}
+
+// TrafficStats mô phỏng từ các ô. Percentile mẫu là trung bình có trọng số của ô (bộ sinh không có mẫu thô),
+// chỉ để minh họa giao diện.
+function trafficStats(rows: BucketStats[], seed: string): TrafficStats {
+  const sum = (pick: (b: BucketStats) => number) => rows.reduce((s, b) => s + pick(b), 0);
+  const requests = sum((b) => b.requests);
+  const error4xx = sum((b) => b.error4xx);
+  const error5xx = sum((b) => b.error5xx);
+  const errorsByClass = rows.reduce((acc, b) => addClasses(acc, b.errorsByClass ?? zeroClasses()), zeroClasses());
+  const weighted = (pick: (b: BucketStats) => number) => sum((b) => pick(b) * b.requests) / Math.max(1, requests);
+  const avg = weighted((b) => b.latencyAvgMs);
+  const p95 = weighted((b) => b.latencyP95Ms);
+  const upstreamSamples = requests - errorsByClass.client_4xx; // client_4xx dừng ở gateway, không gọi backend
+  const gatewayAvg = 14 * (1 + 0.1 * noise(`${seed}-gw`, requests));
+  const connectSamples = Math.round(upstreamSamples * 0.08);
+  const ttfbSamples = upstreamSamples - errorsByClass.timeout - errorsByClass.connection_error;
+  const none = requests === 0;
+  return {
+    requests,
+    success: requests - error4xx - error5xx,
+    error4xx,
+    error5xx,
+    timeout: errorsByClass.timeout,
+    errorsByClass,
+    successRatePct: rate(requests - error4xx - error5xx, requests),
+    errorRatePct: rate(error4xx + error5xx, requests),
+    error4xxRatePct: rate(error4xx, requests),
+    error5xxRatePct: rate(error5xx, requests),
+    gatewayErrorRatePct: rate(errorsByClass.gateway, requests),
+    upstreamErrorRatePct: rate(errorsByClass.upstream_5xx + errorsByClass.timeout + errorsByClass.connection_error, requests),
+    timeoutRatePct: rate(errorsByClass.timeout, requests),
+    latency: latencyStats(requests, avg, p95),
+    latencySuccess: latencyStats(requests - error4xx - error5xx, avg * 0.95, p95 * 0.9),
+    breakdown: {
+      samples: requests,
+      gatewayAvgMs: none ? null : Math.round(gatewayAvg),
+      gatewayP95Ms: none ? null : Math.round(gatewayAvg * 2.5),
+      upstreamSamples,
+      upstreamAvgMs: upstreamSamples ? Math.round(Math.max(0, avg - gatewayAvg)) : null,
+      upstreamP95Ms: upstreamSamples ? Math.round(Math.max(0, p95 - gatewayAvg * 2.5)) : null,
+      connectSamples,
+      upstreamConnectAvgMs: connectSamples ? Math.round(avg * 0.6) : null,
+      upstreamConnectP95Ms: connectSamples ? Math.round(p95 * 0.7) : null,
+      ttfbSamples,
+      upstreamTtfbAvgMs: ttfbSamples ? Math.round(Math.max(0, avg - gatewayAvg) * 0.9) : null,
+      upstreamTtfbP95Ms: ttfbSamples ? Math.round(Math.max(0, p95 - gatewayAvg * 2.5) * 0.9) : null,
+      reusedConnectionPct: upstreamSamples ? 92 : null,
+      coldStarts: Math.min(requests, 3),
+    },
+  };
+}
+
+const ERROR_TYPE: Record<ErrorClass, { errorType: string | null; status: number }> = {
+  client_4xx: { errorType: 'API_NOT_FOUND', status: 404 },
+  upstream_4xx: { errorType: null, status: 404 },
+  gateway: { errorType: 'GATEWAY_INTERNAL', status: 500 },
+  upstream_5xx: { errorType: 'UPSTREAM_5XX', status: 503 },
+  timeout: { errorType: 'UPSTREAM_TIMEOUT', status: 504 },
+  connection_error: { errorType: 'UPSTREAM_UNREACHABLE', status: 502 },
+};
+
+// Key mẫu: tên ghi rõ là mẫu để không nhầm với key thật của doanh nghiệp.
+const MOCK_KEYS: { keyId: string; name: string; status: 'active' | 'revoked'; share: number }[] = [
+  { keyId: '00000000a001', name: 'Key mẫu: web', status: 'active', share: 0.6 },
+  { keyId: '00000000a002', name: 'Key mẫu: mobile', status: 'active', share: 0.3 },
+  { keyId: '00000000a003', name: 'Key mẫu: batch', status: 'revoked', share: 0.1 },
+];
+
+function buildExtras(series: SeriesPoint[], range: RangeKey, now: number, region: RegionFilter): TenantReportExtras {
+  const codes = REGIONS.map((r) => r.code).filter((c) => region === 'all' || c === region);
+  const rows = series.flatMap((p) => codes.map((c) => p.regions[c]));
+  const totals = trafficStats(rows, `totals-${region}`);
+
+  const errorsByKey: KeyErrorStat[] = MOCK_KEYS.map((k, i) => {
+    // Key đầu nhận phần dư để tổng các key đúng bằng totals.
+    const take = (n: number) => (i === 0 ? n - MOCK_KEYS.slice(1).reduce((s, x) => s + Math.floor(n * x.share), 0) : Math.floor(n * k.share));
+    const errorsByClass = Object.fromEntries(ERROR_CLASSES.map((c) => [c, take(totals.errorsByClass[c])])) as ErrorClassCounts;
+    const requests = take(totals.requests);
+    const error4xx = errorsByClass.client_4xx + errorsByClass.upstream_4xx;
+    const error5xx = errorsByClass.gateway + errorsByClass.upstream_5xx + errorsByClass.timeout + errorsByClass.connection_error;
+    return { keyId: k.keyId, name: k.name, status: k.status, requests, error4xx, error5xx, timeout: errorsByClass.timeout, errorsByClass, errorRatePct: rate(error4xx + error5xx, requests) };
+  })
+    .filter((k) => k.requests > 0)
+    .sort((a, b) => b.error4xx + b.error5xx - (a.error4xx + a.error5xx) || b.requests - a.requests || a.keyId.localeCompare(b.keyId));
+
+  const errorTypes: ErrorTypeStat[] = codes
+    .flatMap((code) =>
+      ERROR_CLASSES.map((errorClass) => {
+        const hits = series.filter((p) => (p.regions[code].errorsByClass?.[errorClass] ?? 0) > 0);
+        const count = hits.reduce((s, p) => s + (p.regions[code].errorsByClass?.[errorClass] ?? 0), 0);
+        return { errorClass, ...ERROR_TYPE[errorClass], region: code, count, lastSeen: hits.at(-1)?.t ?? now };
+      }),
+    )
+    .filter((e) => e.count > 0)
+    .sort((a, b) => b.count - a.count || b.lastSeen - a.lastSeen)
+    .slice(0, 50);
+
+  const { buckets, bucketMs } = RANGES[range];
+  return {
+    schemaVersion: 2,
+    filters: { range, keyId: null, region },
+    window: { startMs: series[0]?.t ?? now, endMs: now, bucketMs, buckets },
+    totals,
+    errorsByKey,
+    errorTypes,
   };
 }
 
@@ -80,7 +245,8 @@ function buildSeries(range: RangeKey, now: number): SeriesPoint[] {
   const incident = simulatedIncidentWindow(now);
   return Array.from({ length: buckets }, (_, i) => {
     const t = end - (buckets - i) * bucketMs;
-    return { t, regions: { [SG]: bucketStats(SG, t, bucketMs, incident), [TYO]: bucketStats(TYO, t, bucketMs, incident) } };
+    // Ô cuối kết thúc trước thời điểm hiện tại nên luôn đủ thời gian: partial = false.
+    return { t, partial: false, regions: { [SG]: bucketStats(SG, t, bucketMs, incident), [TYO]: bucketStats(TYO, t, bucketMs, incident) } };
   });
 }
 
@@ -100,6 +266,7 @@ function summarise(region: RegionCode, series: SeriesPoint[], sharePct: number, 
     requests: value(requests),
     successRatePct: value(((requests - error4xx - error5xx) / Math.max(1, requests)) * 100),
     errorRatePct: value(((error4xx + error5xx) / Math.max(1, requests)) * 100),
+    serverErrorRatePct: value((error5xx / Math.max(1, requests)) * 100),
     latencyAvgMs: value(latencyAvg),
     latencyP95Ms: value(weighted((b) => b.latencyP95Ms)),
     lambda: {
@@ -107,14 +274,21 @@ function summarise(region: RegionCode, series: SeriesPoint[], sharePct: number, 
       errors: value(Math.round(error5xx * 0.8)),
       durationAvgMs: value(latencyAvg * 0.7),
     },
-    apiGateway: { requests: value(requests), error4xx: value(error4xx), error5xx: value(error5xx) },
+    // Mẫu: stage = /proxy + health check (~2 điểm kiểm tra/phút × 16 điểm) + một ít portal/dashboard.
+    apiGateway: (() => {
+      const health = Math.round((series.length * (series[1] ? series[1].t - series[0].t : MINUTE)) / 30_000) * 16;
+      const total = requests + health + Math.round(requests * 0.05);
+      return { requests: value(total), error4xx: value(error4xx), error5xx: value(error5xx), healthCheckRequests: value(health), proxyRequests: value(requests) };
+    })(),
+    ...statsFields(trafficStats(rows, region)),
+    dynamodbReplicationObservedAt: now,
     dynamodbReplicationLatencyMs: value(PROFILE[region].replicationMs * (1 + 0.1 * noise(`${region}-repl`, Math.floor(now / MINUTE)))),
     // Cố ý để trống: minh họa trạng thái "Not configured" khi replication metrics của S3 chưa bật.
     s3ReplicationLatencyS: missing('not_configured'),
   };
 }
 
-export function buildSnapshot(range: RangeKey, now: number): MonitoringSnapshot {
+export function buildSnapshot(range: RangeKey, now: number, region: RegionFilter = 'all'): MonitoringSnapshot {
   const series = buildSeries(range, now);
   const last = series[series.length - 1].regions;
   const lastTotal = Math.max(1, last[SG].requests + last[TYO].requests);
@@ -125,6 +299,7 @@ export function buildSnapshot(range: RangeKey, now: number): MonitoringSnapshot 
     routingPolicy: value('Latency-based + health check'),
     regions: REGIONS.map((r) => summarise(r.code, series, (last[r.code].requests / lastTotal) * 100, now)),
     series,
+    report: buildExtras(series, range, now, region),
   };
 }
 
@@ -149,7 +324,12 @@ export function buildEndpoints(range: RangeKey, now: number): EndpointStat[] {
       requests: Math.round(total * e.weight),
       successRatePct: 100 - e.errorPct[r.region],
       errorRatePct: e.errorPct[r.region],
+      serverErrorRatePct: e.errorPct[r.region],
       latencyAvgMs: PROFILE[r.region].latencyMs * e.latencyFactor,
+      latencyP50Ms: PROFILE[r.region].latencyMs * e.latencyFactor * 0.85,
+      latencyP99Ms: PROFILE[r.region].latencyMs * e.latencyFactor * 3.6,
+      error4xxRatePct: 0,
+      timeoutRatePct: round2(e.errorPct[r.region] * 0.3),
       lastUpdated: now,
     }));
   });

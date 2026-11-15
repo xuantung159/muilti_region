@@ -28,6 +28,9 @@
   /* Biểu đồ: loại lỗi */
   --error-4xx: #4a3aa7;
   --error-5xx: #e34948;
+  /* Timeout tách khỏi 5xx khác; khoảng thiếu dữ liệu / ô đang thu thập */
+  --error-timeout: #b45309;
+  --gap: #94a3b8;
 
   /* Trạng thái: luôn đi kèm biểu tượng và nhãn */
   --good: #0ca30c;
@@ -61,6 +64,8 @@
   --series-2: #fb923c;
   --error-4xx: #9085e9;
   --error-5xx: #e66767;
+  --error-timeout: #f59e0b;
+  --gap: #64748b;
 }
 
 @theme inline {
@@ -468,3 +473,69 @@ html {
 .recharts-wrapper:focus {
   outline: none;
 }
+
+/* Integration guide: language selection and one readable step at a time. */
+.guide-eyebrow { color: var(--accent); font-size: 0.65rem; font-weight: 700; letter-spacing: .14em; }
+.guide-header { padding: clamp(1.25rem, 3vw, 2rem); }
+.guide-header h2 { margin-top: .6rem; font-size: clamp(1.4rem, 2.5vw, 2rem); font-weight: 650; letter-spacing: -.035em; }
+.guide-header > p:not(.guide-eyebrow) { margin-top: .6rem; color: var(--ink-2); font-size: .875rem; line-height: 1.7; }
+.guide-view-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin-top: 1.5rem; padding: .35rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--page); }
+.guide-view-tabs button { padding: .8rem 1rem; border-radius: .7rem; text-align: left; }
+.guide-view-tabs strong, .guide-view-tabs small { display: block; }
+.guide-view-tabs strong { font-size: .875rem; }
+.guide-view-tabs small { margin-top: .25rem; font-size: .7rem; opacity: .6; }
+.guide-view-tabs button[aria-pressed=true] { background: var(--surface); box-shadow: 0 1px 8px #0001; color: var(--accent); }
+.guide-language-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; }
+.guide-language-picker button { display: flex; align-items: center; gap: .7rem; min-width: 0; padding: 1rem; border: 1px solid var(--border); border-radius: .85rem; text-align: left; transition: border-color .15s; }
+.guide-language-picker button[aria-pressed=true] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.guide-language-picker strong { display: block; font-size: .875rem; }
+.guide-language-picker small { display: block; margin-top: .25rem; font-size: .7rem; opacity: .6; }
+.guide-flow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .7rem; padding: .9rem; border-radius: .7rem; background: var(--page); font-size: .75rem; color: var(--ink-2); }
+.project-wizard { display: grid; grid-template-columns: 12.5rem minmax(0, 1fr); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; }
+.project-step-nav { padding: 1rem .6rem; border-right: 1px solid var(--border); background: var(--page); }
+.project-step-nav button { display: flex; width: 100%; align-items: center; gap: .7rem; padding: .8rem .65rem; border-radius: .6rem; text-align: left; font-size: .75rem; }
+.project-step-nav button > span { font-variant-numeric: tabular-nums; font-size: .65rem; opacity: .55; }
+.project-step-nav button[aria-current=step] { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); font-weight: 650; }
+.project-panel { min-width: 0; padding: clamp(1rem, 2.3vw, 1.8rem); }
+.project-panel > section { border: 0; padding: 0; min-height: 23rem; }
+.guide-result { border-left: 2px solid var(--accent); padding: .7rem 1rem; background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.project-step-footer { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.project-step-footer button:disabled { opacity: .35; cursor: default; }
+.guide-evidence { border: 1px solid var(--border); border-radius: .8rem; padding: 1rem; font-size: .8rem; }
+.guide-evidence > summary { cursor: pointer; font-weight: 600; }
+.guide-evidence > summary span { margin-left: .5rem; opacity: .5; font-size: .7rem; }
+@media (max-width: 800px) {
+  .guide-language-picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .project-wizard { grid-template-columns: minmax(0, 1fr); }
+  .project-step-nav { display: flex; gap: .4rem; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: .6rem; }
+  .project-step-nav button { width: auto; flex-shrink: 0; padding: .65rem; white-space: nowrap; }
+  .guide-view-tabs button { padding: .65rem .45rem; }
+  .guide-view-tabs small { display: none; }
+}
+
+/* Trang Định tuyến: vòng sáng quanh Region đang nhận traffic và nét chạy dọc tuyến. */
+@keyframes region-pulse { 0% { transform: scale(0.6); opacity: 0.45; } 100% { transform: scale(1.6); opacity: 0; } }
+.region-pulse { transform-box: fill-box; transform-origin: center; animation: region-pulse 1.8s ease-out infinite; }
+@keyframes route-flow { to { stroke-dashoffset: -24; } }
+.route-arc { stroke-dasharray: 8 4; animation: route-flow 1.2s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .region-pulse, .route-arc { animation: none; } }
+
+/* Cổng doanh nghiệp: form, nút và trạng thái dùng chung, đủ tương phản ở cả hai chế độ màu. */
+.portal-label { display: flex; flex-direction: column; gap: .375rem; min-width: 0; font-size: .875rem; font-weight: 500; color: var(--ink-2); }
+.portal-input { width: 100%; min-width: 0; height: 2.5rem; border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent); border-radius: .5rem; background: var(--page); color: var(--ink); padding: 0 .75rem; font-size: .875rem; font-weight: 400; transition: border-color .15s, box-shadow .15s; }
+.portal-input::placeholder { color: var(--muted); opacity: .8; }
+.portal-input:hover { border-color: color-mix(in srgb, var(--ink) 35%, transparent); }
+.portal-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
+.portal-input:user-invalid { border-color: var(--critical); }
+.portal-btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.5rem; border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); border-radius: .625rem; background: var(--raised); color: var(--ink); padding: .5rem .875rem; font-size: .875rem; font-weight: 500; transition: background-color .15s, border-color .15s; }
+.portal-btn:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ink) 30%, transparent); background: color-mix(in srgb, var(--raised) 70%, var(--ink) 8%); }
+.portal-btn:disabled { opacity: .5; cursor: not-allowed; }
+.portal-link { font-size: .875rem; color: var(--accent); text-align: left; text-underline-offset: 3px; }
+.portal-link:hover:not(:disabled) { text-decoration: underline; }
+.portal-check { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.25rem; border: 1px solid var(--border); border-radius: .5rem; padding: .25rem .75rem; color: var(--ink); cursor: pointer; }
+.portal-check:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.portal-check input { width: 1rem; height: 1rem; accent-color: var(--accent); }
+.portal-alert { border: 1px solid color-mix(in srgb, var(--critical) 55%, transparent); border-left-width: 3px; border-radius: .5rem; background: color-mix(in srgb, var(--critical) 10%, transparent); color: var(--ink); padding: .5rem .75rem; font-size: .875rem; }
+.portal-code { border-radius: .375rem; background: var(--page); padding: .05rem .35rem; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .8em; color: var(--ink); overflow-wrap: anywhere; }
+.portal-tabs { scrollbar-width: thin; scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
+.portal-tabs > button { scroll-snap-align: start; }

@@ -13,7 +13,7 @@ function RegionBox({ name, code, down, color }: { name: string; code: string; do
     <div className="flex items-center gap-2"><span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: color }} /><p className="truncate text-sm font-semibold">{name}</p></div>
     <p className="break-all text-xs text-muted">{code}</p>
     <HealthBadge health={down ? 'down' : 'healthy'} label={down ? 'Health check lỗi' : 'Health check OK'} />
-    <p className="text-xs text-ink2">API Gateway → Lambda → DynamoDB</p>
+    <p className="text-xs leading-5 text-ink2">API Gateway → Lambda → DynamoDB</p>
   </div>;
 }
 
@@ -22,14 +22,14 @@ export function FailoverDiagram() {
   const [, , explain] = SCENARIOS.find(([id]) => id === scenario) ?? SCENARIOS[0];
   const line = (x: number, down: boolean) => <path className={down ? undefined : 'flow-line'} d={`M50 0 C50 18 ${x} 12 ${x} 30`} fill="none" stroke={down ? 'var(--critical)' : x < 50 ? 'var(--series-1)' : 'var(--series-2)'} strokeWidth="2" strokeDasharray={down ? '4 6' : undefined} opacity={down ? 0.5 : 1} vectorEffect="non-scaling-stroke" />;
   return <Card className="space-y-4">
-    <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">Hai Region và failover</h2><Tag tone="warning">Minh họa, không phải trạng thái thật</Tag></div>
+    <div className="flex flex-wrap items-center gap-2"><h2 className="text-base font-semibold">Hai Region và failover</h2><Tag tone="warning">Minh họa, không phải trạng thái thật</Tag></div>
     <div className="flex flex-wrap gap-2" role="group" aria-label="Chọn tình huống minh họa">
       {SCENARIOS.map(([id, label]) => <button type="button" key={id} aria-pressed={scenario === id} onClick={() => setScenario(id)} className={`chip ${scenario === id ? 'chip-active' : ''}`}>{label}</button>)}
     </div>
     <div>
-      <div className="mx-auto w-fit rounded-xl border border-line bg-raised px-4 py-2 text-center"><p className="text-sm font-semibold">Route 53</p><p className="text-xs text-muted">Latency + health check</p></div>
+      <div className="mx-auto w-fit max-w-full rounded-xl border border-line bg-raised px-4 py-2 text-center"><p className="text-sm font-semibold">Route 53</p><p className="text-xs text-muted">Latency + health check</p></div>
       <svg aria-hidden viewBox="0 0 100 30" preserveAspectRatio="none" className="h-12 w-full">{line(25, scenario === 'sg')}{line(75, scenario === 'tyo')}</svg>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <RegionBox name="Singapore" code="ap-southeast-1" down={scenario === 'sg'} color="var(--series-1)" />
         <RegionBox name="Tokyo" code="ap-northeast-1" down={scenario === 'tyo'} color="var(--series-2)" />
       </div>

@@ -10,6 +10,7 @@ const account = { orgName: 'Doanh nghiệp A', email: 'a@company.com', tenantId:
 let apis: { apiId: string; name: string; baseUrl: string; timeoutMs: number; enabled: boolean }[];
 let keys: { keyId: string; name: string; status: string; createdAt: string }[];
 let expired = false;
+let role: 'admin' | undefined;
 const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
   const path = url.replace(/^.*\/api\//, '');
   const body = init?.body ? JSON.parse(String(init.body)) : {};
@@ -18,7 +19,7 @@ const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
   if (path === 'login' || path === 'signup') return reply({ ...account, token });
   if (path === 'logout') return reply({});
   if (expired) return reply({ error: 'Phiên đã hết hạn' }, 401);
-  if (path === 'me') return reply(account);
+  if (path === 'me') return reply(role ? { ...account, role } : account);
   if (path === 'apis' && method === 'POST') { apis.push({ apiId: 'api-1', enabled: true, ...body }); return reply({ api: apis[0] }, 201); }
   if (path === 'apis/api-1' && method === 'PATCH') { Object.assign(apis[0], body); return reply({ api: apis[0] }); }
   if (path === 'apis') return reply({ apis });
@@ -29,7 +30,7 @@ const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
   if (path === 'status') return reply({ regions: [] });
   throw new Error(`Unexpected request ${method} ${path}`);
 });
-beforeEach(() => { sessionStorage.clear(); apis = []; keys = []; expired = false; fetchMock.mockClear(); vi.stubGlobal('fetch', fetchMock); });
+beforeEach(() => { sessionStorage.clear(); apis = []; keys = []; expired = false; role = undefined; fetchMock.mockClear(); vi.stubGlobal('fetch', fetchMock); });
 afterEach(() => { sessionStorage.clear(); vi.unstubAllGlobals(); });
 
 it('đăng nhập, tạo/sửa/tắt API và đăng xuất trong frontend dùng chung', async () => {
@@ -134,10 +135,20 @@ it('demo tạo key, gửi request, từ chối key thu hồi và không gọi AW
   expect(screen.queryByText('Demo shop · Đã thu hồi')).not.toBeInTheDocument();
 });
 
-it('hướng dẫn tích hợp đọc được trước đăng nhập và có mẫu cho ba nền tảng', async () => {
+it('hướng dẫn đổi ngôn ngữ cùng project tải xuống và lệnh chạy, giữ nguyên bước', async () => {
   const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
+  await user.click(screen.getByRole('button', { name: /Project mẫu/ }));
+  expect(screen.getByRole('link', { name: 'Tải project JavaScript (.zip)' })).toHaveAttribute('href', '/samples/mrapi-javascript.zip');
+  await user.click(screen.getByRole('button', { name: 'Java' }));
+  expect(screen.getByRole('link', { name: 'Tải project Java (.zip)' })).toHaveAttribute('href', '/samples/mrapi-java.zip');
+  await user.click(screen.getByRole('button', { name: /Chạy project$/ }));
+  expect(screen.getByText('java Main.java', { selector: 'code' })).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Python' }));
+  expect(screen.getByText('python main.py', { selector: 'code' })).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'JavaScript' }));
+  expect(screen.getByText('node --env-file=.env main.mjs', { selector: 'code' })).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: /^Tham khảo/ }));
   expect(screen.getByRole('heading', { name: '2. Lấy API key' })).toBeInTheDocument();
-  expect(screen.getByText(/Proxy chuyển tiếp và key theo phạm vi API đã triển khai/)).toBeInTheDocument();
   expect(screen.getByText(/const response = await fetch/)).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Python' }));
   expect(screen.getByText(/from urllib.request import Request/)).toBeInTheDocument();
@@ -146,34 +157,27 @@ it('hướng dẫn tích hợp đọc được trước đăng nhập và có m�
   expect(fetchMock).not.toHaveBeenCalled();
 });
 
-it('hướng dẫn project mẫu đi từ tạo key tới dán .env, chạy client và không gọi AWS', async () => {
-  const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
-  expect(screen.getByRole('link', { name: 'Tải project mẫu (.zip)' })).toHaveAttribute('href', '/samples/project-mau-mrapi.zip');
-  expect(screen.getByRole('button', { name: 'Bước 5: Chạy và xem kết quả' })).toBeDisabled();
-  await user.click(screen.getByRole('button', { name: 'Chạy backend' }));
+it('hướng dẫn chỉ mở bước đang chọn, điều hướng được và không gọi AWS', async () => {
+  const user = userEvent.setup();
+  renderApp(new MockProvider(), '/portal');
+  await user.click(screen.getByRole('button', { name: /Project mẫu/ }));
+  expect(screen.getByRole('navigation', { name: 'Các bước tích hợp project' }).querySelectorAll('button')).toHaveLength(8);
+  expect(screen.getByRole('button', { name: 'Bước trước' })).toBeDisabled();
+  expect(screen.queryByRole('heading', { name: /Đưa cấu hình portal vào file .env/ })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: /Cấu hình .env$/ }));
+  expect(screen.getByRole('heading', { name: /Đưa cấu hình portal vào file .env/ })).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Go' }));
   await user.click(screen.getByRole('button', { name: 'Bước tiếp' }));
-  await user.click(screen.getByRole('button', { name: 'Đăng ký API' }));
-  await user.click(screen.getByRole('button', { name: 'Bước tiếp' }));
-  await user.click(screen.getByRole('button', { name: 'Tạo key' }));
-  expect(screen.getByText('DEMO_ONLY_KEY_MAU_KHONG_GOI_DUOC_GATEWAY')).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Bước tiếp' }));
-  expect(screen.getByText('MRAPI_API_KEY=PASTE_YOUR_SECRET_KEY_HERE')).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Dán API ID và key' }));
-  expect(screen.getByText('MRAPI_API_KEY=DEMO_ONLY_KEY_MAU_KHONG_GOI_DUOC_GATEWAY')).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Bước tiếp' }));
-  await user.click(screen.getByRole('button', { name: 'Dán sai key' }));
-  expect(screen.getByText(/HTTP 401/)).toBeInTheDocument();
-  expect(screen.getByText('Tổng quan · Tổng lượt gọi').nextSibling).toHaveTextContent('0');
-  await user.click(screen.getByRole('button', { name: 'Backend đã tắt' }));
-  expect(screen.getByText(/HTTP 502 \| 2329 ms/)).toBeInTheDocument();
-  expect(screen.getByText('Tổng quan · Lượt lỗi').nextSibling).toHaveTextContent('1');
-  await user.click(screen.getByRole('button', { name: 'Làm lại' }));
-  expect(screen.getByRole('button', { name: 'Chạy backend' })).toBeInTheDocument();
+  expect(screen.getByText('go run . /todos/1', { selector: 'code' })).toBeInTheDocument();
+  await user.click(screen.getByText(/Kết quả đã kiểm chứng trên AWS/));
+  expect(screen.getByText(/Kết quả một lần chạy đã lưu, không phải trạng thái thời gian thực/)).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Tạo key' })).not.toBeInTheDocument();
   expect(fetchMock).not.toHaveBeenCalled();
 });
 
 it('sơ đồ hướng dẫn tương tác được, có nhãn minh họa và bảng mã lỗi theo contract', async () => {
   const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
+  await user.click(screen.getByRole('button', { name: /^Animation/ }));
   await user.click(screen.getByRole('button', { name: /Lambda authorizer/ }));
   expect(screen.getByText(/Request bị từ chối ở đây không ghi telemetry/)).toBeInTheDocument();
   expect(screen.getByText('Minh họa, không phải trạng thái thật')).toBeInTheDocument();
@@ -186,6 +190,49 @@ it('sơ đồ hướng dẫn tương tác được, có nhãn minh họa và b�
   expect(screen.getByText('Bước 3/4: API Gateway từ chối')).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Từng bước' }));
   expect(screen.getByText('HTTP 401 · Dừng ở API Gateway')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: /^Tham khảo/ }));
   for (const code of ['KEY_REVOKED', 'KEY_SCOPE_DENIED', 'API_DISABLED', 'TARGET_BLOCKED', 'PAYLOAD_TOO_LARGE', 'UPSTREAM_TOO_LARGE', 'GATEWAY_INTERNAL']) expect(screen.getByText(code)).toBeInTheDocument();
   expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it('tài khoản admin hiện tag Admin và card project mẫu với API Todo demo', async () => {
+  sessionStorage.setItem(TOKEN_KEY, token); role = 'admin';
+  apis.push(
+    { apiId: 'api-todo-1', name: 'API Todo demo', baseUrl: 'https://jsonplaceholder.typicode.com', timeoutMs: 5000, enabled: true },
+    { apiId: 'api-todo-2', name: 'API Todo demo (Tokyo)', baseUrl: 'https://jsonplaceholder.typicode.com', timeoutMs: 5000, enabled: true },
+    { apiId: 'api-orders', name: 'Orders', baseUrl: 'https://backend.company.com', timeoutMs: 5000, enabled: true },
+  );
+  const user = userEvent.setup(); renderApp(new MockProvider(), '/portal');
+  expect(await screen.findByText(account.orgName)).toBeInTheDocument();
+  expect(screen.getAllByText('Admin').length).toBeGreaterThan(0);
+  const card = (await screen.findByRole('heading', { name: 'Project mẫu đã tích hợp sẵn' })).closest('section')!;
+  expect(card).toHaveTextContent('https://jsonplaceholder.typicode.com');
+  expect(card).toHaveTextContent('Project mẫu');
+  expect(card).toHaveTextContent(/không bao giờ hiển thị lại/);
+  expect(card).toHaveTextContent('api-todo-1');
+  expect(card).toHaveTextContent('api-todo-2');
+  expect(card).not.toHaveTextContent('api-orders');
+  await user.click(screen.getByRole('button', { name: 'Mở hướng dẫn tích hợp' }));
+  expect(screen.getByRole('button', { name: 'Hướng dẫn' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.queryByRole('heading', { name: 'Project mẫu đã tích hợp sẵn' })).not.toBeInTheDocument();
+});
+
+it('tài khoản thường không có tag Admin hay card project mẫu', async () => {
+  sessionStorage.setItem(TOKEN_KEY, token);
+  renderApp(new MockProvider(), '/portal');
+  expect(await screen.findByText(account.orgName)).toBeInTheDocument();
+  expect(await screen.findByText('Tổng lượt gọi')).toBeInTheDocument();
+  expect(screen.queryByText('Admin')).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Project mẫu đã tích hợp sẵn' })).not.toBeInTheDocument();
+});
+
+it('hướng dẫn mặc định là tích hợp dự án có sẵn: đổi base URL, thêm x-api-key, cảnh báo header bị bỏ', async () => {
+  const user = userEvent.setup();
+  renderApp(new MockProvider(), '/portal');
+  expect(screen.getByRole('heading', { name: 'Đưa API có sẵn ra sau gateway' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /Sau · src\/lib\/ordersClient.js/ })).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Python (requests)' }));
+  expect(screen.getByRole('heading', { name: /Sau · app\/clients\/orders.py/ })).toBeInTheDocument();
+  expect(screen.getByText(/session.headers\['x-api-key'\] = key/)).toBeInTheDocument();
+  expect(screen.getAllByText('Authorization').length).toBeGreaterThan(0);
 });

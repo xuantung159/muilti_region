@@ -83,7 +83,8 @@
             "Action": [
                 "route53:GetHealthCheck",
                 "route53:GetHealthCheckStatus",
-                "route53:ListHealthChecks"
+                "route53:ListHealthChecks",
+                "route53:TestDNSAnswer"
             ],
             "Resource": "*"
         },
@@ -92,6 +93,14 @@
             "Effect": "Allow",
             "Action": "sns:Publish",
             "Resource": "arn:aws:sns:*:138150704839:mrapi-*"
+        },
+        {
+            "Sid": "TracingRead",
+            "Effect": "Allow",
+            "Action": [
+                "xray:GetTraceSummaries"
+            ],
+            "Resource": "*"
         }
     ]
 }

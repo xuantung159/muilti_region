@@ -1,9 +1,12 @@
 // API doanh nghiệp. Giao diện React dùng chung nằm trong monitoring-web/.
 import { randomBytes, scryptSync } from "node:crypto";
-import { GetHealthCheckStatusCommand, ListHealthChecksCommand, Route53Client } from "@aws-sdk/client-route-53";
+import { GetHealthCheckStatusCommand, Route53Client } from "@aws-sdk/client-route-53";
 import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { API_ID_PATTERN, CONTROL_TABLE, TELEMETRY_TABLE, apiRef, db, json, keyRef, parseBody, routeOf, sameHex, sha256, text } from "../shared/lib.mjs";
 import { apis } from './apis.mjs';
+import { report } from './report.mjs';
+import { demoGeo } from './demo-geo.mjs';
+import { demoFailover } from './demo-failover.mjs';
 
 const SESSION_HOURS = 8;
 const MAX_KEYS = 20;
@@ -14,7 +17,10 @@ const RANGES = {
   "24h": { buckets: 24, minutes: 60, chars: 13 },
   "7d": { buckets: 7, minutes: 1440, chars: 10 },
 };
-const HEALTH_CHECK_PREFIX = `${process.env.PROJECT}-hc-`;
+const HEALTH_CHECK_IDS = {
+  'ap-southeast-1': 'c7764d38-b17d-44df-8d44-4f2791296adc',
+  'ap-northeast-1': 'bfa2df95-4abf-40d2-a240-dbd04acf735c',
+};
 
 // Route 53 là dịch vụ toàn cục, API của nó đặt tại us-east-1.
 const route53 = new Route53Client({ region: "us-east-1", maxAttempts: 1 });
@@ -35,11 +41,13 @@ async function startSession(user) {
         tenantId: user.tenantId,
         orgName: user.orgName,
         email: user.email,
+        // Chỉ tài khoản seed bằng scripts/seed-admin.mjs mới có role; đăng ký qua portal không đặt được.
+        ...(user.role === "admin" ? { role: "admin" } : {}),
         expiresAt: Math.floor(Date.now() / 1000) + SESSION_HOURS * 3600,
       },
     }),
   );
-  return { token, orgName: user.orgName, email: user.email, tenantId: user.tenantId };
+  return { token, orgName: user.orgName, email: user.email, tenantId: user.tenantId, ...(user.role === "admin" ? { role: "admin" } : {}) };
 }
 
 async function signup(event) {
@@ -181,6 +189,12 @@ async function usage(session, event) {
   const rangeName = event.queryStringParameters?.range ?? "24h";
   const range = RANGES[rangeName];
   if (!range) return json(400, { error: "range phải là 1h, 24h hoặc 7d" });
+  // Lọc theo một key của chính doanh nghiệp; "all" hoặc bỏ trống = mọi key.
+  const keyFilter = event.queryStringParameters?.keyId;
+  const keyId = keyFilter && keyFilter !== "all" ? keyFilter : null;
+  if (keyId && !(await listKeyItems(session.tenantId)).some((k) => k.keyId === keyId)) {
+    return json(404, { error: "Không tìm thấy API key" });
+  }
 
   const now = new Date();
   const start = new Date(now.getTime() - (range.buckets - 1) * range.minutes * 60_000);
@@ -213,6 +227,7 @@ async function usage(session, event) {
   const series = {};
   for (const record of items) {
     if (!record.timestamp || !Number.isFinite(record.status) || !Number.isFinite(record.latencyMs)) continue;
+    if (keyId && record.keyId !== keyId) continue;
     const item = { requests: 1, errors: record.status >= 400 ? 1 : 0, totalMs: record.latencyMs,
       servedRegion: record.region, keyId: record.keyId, minute: record.timestamp };
     totals.requests += item.requests ?? 0;
@@ -225,6 +240,7 @@ async function usage(session, event) {
 
   return json(200, {
     range: rangeName,
+    keyId,
     source: "telemetry",
     generatedAt: new Date().toISOString(),
     totals,
@@ -243,8 +259,7 @@ async function usage(session, event) {
 async function regionStatus() {
   try {
     const options = { abortSignal: AbortSignal.timeout(3000) };
-    const { HealthChecks = [] } = await route53.send(new ListHealthChecksCommand({}), options);
-    const checks = HealthChecks.filter((check) => check.CallerReference?.startsWith(HEALTH_CHECK_PREFIX));
+    const checks = Object.entries(HEALTH_CHECK_IDS).map(([region, Id]) => ({ region, Id }));
     const regions = await Promise.all(
       checks.map(async (check) => {
         const { HealthCheckObservations: observations = [] } = await route53.send(
@@ -254,7 +269,7 @@ async function regionStatus() {
         const ok = observations.filter((o) => o.StatusReport?.Status?.startsWith("Success")).length;
         // Route 53 coi endpoint là khoẻ khi hơn 18% điểm kiểm tra báo thành công.
         const status = !observations.length ? "unknown" : ok / observations.length > 0.18 ? "healthy" : "unhealthy";
-        return { region: check.CallerReference.slice(HEALTH_CHECK_PREFIX.length), status };
+        return { region: check.region, status };
       }),
     );
     return json(200, { regions: regions.sort((a, b) => a.region.localeCompare(b.region)) });
@@ -277,13 +292,17 @@ async function portalApi(method, [action, id, ...extra], headers, event) {
   if (action === 'apis') return apis(method, id, session, event);
 
   if (action === "me" && !id && method === "GET") {
-    return json(200, { orgName: session.orgName, email: session.email, tenantId: session.tenantId });
+    return json(200, { orgName: session.orgName, email: session.email, tenantId: session.tenantId,
+      ...(session.role === "admin" ? { role: "admin" } : {}) });
   }
   if (action === "keys" && !id && method === "GET") return listKeys(session);
   if (action === "keys" && !id && method === "POST") return createKey(session, event);
   if (action === "keys" && id && method === "DELETE") return revokeKey(session, id);
   if (action === "usage" && !id && method === "GET") return usage(session, event);
+  if (action === "report" && !id && method === "GET") return report(session, event, await listKeyItems(session.tenantId));
   if (action === "status" && !id && method === "GET") return regionStatus();
+  if (action === "demo" && id === "geo") return demoGeo(method, session, event);
+  if (action === "demo" && id === "failover") return demoFailover(method, session, event);
   return json(404, { error: "Không tìm thấy" });
 }
 

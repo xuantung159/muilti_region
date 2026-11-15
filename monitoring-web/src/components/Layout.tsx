@@ -1,4 +1,4 @@
-import { Activity, Database, FlaskConical, Globe2, LayoutDashboard, type LucideIcon, Menu, Moon, Network, PlugZap, Settings as SettingsIcon, Siren, Sun, Unplug, X } from 'lucide-react';
+import { Activity, AlertOctagon, Database, FlaskConical, Globe2, LayoutDashboard, type LucideIcon, MapPinned, Menu, Moon, Network, PlugZap, Settings as SettingsIcon, Siren, Sun, Unplug, X } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useProvider } from '../app/data';
@@ -8,8 +8,11 @@ import { Tag } from './ui';
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: '/portal', label: 'Cổng doanh nghiệp', icon: PlugZap },
+  { to: '/demo', label: 'Kiểm thử đa Region', icon: FlaskConical },
   { to: '/', label: 'System Overview', icon: LayoutDashboard },
   { to: '/regions', label: 'Multi-Region', icon: Globe2 },
+  { to: '/routing', label: 'Định tuyến theo vị trí', icon: MapPinned },
+  { to: '/errors', label: 'Lỗi & timeout', icon: AlertOctagon },
   { to: '/apis', label: 'API Monitoring', icon: Activity },
   { to: '/incidents', label: 'Failover & Incidents', icon: Siren },
   { to: '/infrastructure', label: 'Hạ tầng', icon: Network },

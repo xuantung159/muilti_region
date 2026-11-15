@@ -1,3 +1,5 @@
+import { beforeEach, afterEach, vi } from 'vitest';
+import { TOKEN_KEY } from '../portal/client';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -25,6 +27,34 @@ describe('System Overview', () => {
     expect(screen.getByText('chưa có dữ liệu')).toBeInTheDocument();
   });
 
+  it('backend live chưa có request /proxy (tài khoản vừa đăng ký) thì hiện 0, không hiện nhãn mock', async () => {
+    const base = new NotConnectedProvider();
+    const zero = { kind: 'value', value: 0 } as const;
+    const live: MonitoringProvider = {
+      id: 'http',
+      getSnapshot: async (range) => {
+        const snapshot = await base.getSnapshot(range);
+        return {
+          ...snapshot,
+          generatedAt: Date.UTC(2026, 10, 10, 3, 0),
+          // Stage vẫn có traffic health check/portal, nhưng request người dùng bằng 0.
+          regions: snapshot.regions.map((r) => ({ ...r, requests: zero, apiGateway: { ...r.apiGateway, requests: { kind: 'value', value: 120 } } })),
+        };
+      },
+      getEndpoints: () => base.getEndpoints(),
+      getIncidents: () => base.getIncidents(),
+      getSources: () => base.getSources(),
+      getRoutes: () => base.getRoutes(),
+    };
+    renderApp(live);
+    const kpi = (await screen.findByText('Tổng request')).parentElement!;
+    expect(within(kpi).getByText('0')).toBeInTheDocument();
+    expect(within(kpi).getByText(/Không gồm health check/)).toBeInTheDocument();
+    expect(screen.queryByText('DEMO DATA.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Mock data')).not.toBeInTheDocument();
+    expect(screen.getByText('Live · backend')).toBeInTheDocument();
+  });
+
   it('hiện trạng thái lỗi kèm nút thử lại khi nguồn dữ liệu hỏng', async () => {
     const base = new NotConnectedProvider();
     const broken: MonitoringProvider = {
@@ -33,6 +63,7 @@ describe('System Overview', () => {
       getEndpoints: () => base.getEndpoints(),
       getIncidents: () => base.getIncidents(),
       getSources: () => base.getSources(),
+      getRoutes: () => base.getRoutes(),
     };
     renderApp(broken);
     expect(await screen.findByText('Không tải được dữ liệu')).toBeInTheDocument();
@@ -48,6 +79,7 @@ describe('điều hướng', () => {
     const nav = screen.getByRole('navigation', { name: 'Điều hướng chính' });
     const pages = [
       ['Multi-Region', 'Multi-Region Monitoring'],
+      ['Lỗi & timeout', 'Lỗi & timeout'],
       ['API Monitoring', 'API Monitoring'],
       ['Failover & Incidents', 'Failover & Incidents'],
       ['Hạ tầng', 'Hạ tầng triển khai'],
@@ -70,7 +102,52 @@ describe('Multi-Region', () => {
     expect(screen.getAllByText('Not configured')).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: 'Tokyo' }));
     expect(screen.getAllByText('Not configured')).toHaveLength(1);
-    expect(within(screen.getByRole('table')).queryByText('ap-southeast-1')).not.toBeInTheDocument();
+    for (const table of screen.getAllByRole('table')) expect(within(table).queryByText('ap-southeast-1')).not.toBeInTheDocument();
+  });
+
+  it('key mới tạo: traffic của doanh nghiệp bằng 0, số liệu hạ tầng dùng chung tách riêng kèm giải thích health check', async () => {
+    const base = new NotConnectedProvider();
+    const v = (n: number) => ({ kind: 'value', value: n }) as const;
+    const live: MonitoringProvider = {
+      id: 'http',
+      getSnapshot: async (range) => {
+        const snapshot = await base.getSnapshot(range);
+        return {
+          ...snapshot,
+          generatedAt: Date.UTC(2026, 10, 10, 3, 0),
+          regions: snapshot.regions.map((r) => ({
+            ...r,
+            requests: v(0),
+            lambda: { ...r.lambda, invocations: v(11097) },
+            apiGateway: { requests: v(11092), error4xx: v(3), error5xx: v(0), healthCheckRequests: v(10800), proxyRequests: v(200) },
+          })),
+        };
+      },
+      getEndpoints: () => base.getEndpoints(),
+      getIncidents: () => base.getIncidents(),
+      getSources: () => base.getSources(),
+      getRoutes: () => base.getRoutes(),
+    };
+    vi.stubGlobal('fetch', async (url: string) => new Response(JSON.stringify(String(url).endsWith('/api/me') ? { role: 'admin' } : { keys: [{ status: 'active' }] }), { headers: { 'Content-Type': 'application/json' } }));
+    renderApp(live, '/regions');
+    const tenant = await screen.findByRole('table', { name: 'Traffic của doanh nghiệp bạn' });
+    await screen.findByRole('table', { name: 'Hạ tầng dùng chung toàn hệ thống' });
+    const shared = screen.getByRole('table', { name: 'Hạ tầng dùng chung toàn hệ thống' });
+    expect(within(tenant).getAllByText('0')).toHaveLength(2);
+    expect(within(tenant).queryByText('11.097')).not.toBeInTheDocument();
+    expect(screen.getByText(/Chưa có request nào qua API key này/)).toBeInTheDocument();
+    expect(screen.getByText('Đây không phải lưu lượng của key bạn.')).toBeInTheDocument();
+    expect(within(shared).getAllByText('11.097')).toHaveLength(2);
+    expect(within(shared).getAllByText('10.800')).toHaveLength(2);
+    expect(within(shared).getAllByText('92')).toHaveLength(2); // còn lại: 11092 - 10800 - 200
+  });
+
+  it('người dùng không phải admin không thấy phần hạ tầng dùng chung', async () => {
+    const base = new NotConnectedProvider();
+    renderApp({ ...base, id: 'http', getSnapshot: (range) => base.getSnapshot(range) } as MonitoringProvider, '/regions');
+    expect(await screen.findByRole('table', { name: 'Traffic của doanh nghiệp bạn' })).toBeInTheDocument();
+    expect(screen.queryByRole('table', { name: 'Hạ tầng dùng chung toàn hệ thống' })).not.toBeInTheDocument();
+    expect(screen.getByText(/chỉ hiển thị cho tài khoản quản trị/)).toBeInTheDocument();
   });
 });
 
@@ -136,4 +213,18 @@ describe('Hạ tầng', () => {
     expect(screen.queryByText('Health check OK')).not.toBeInTheDocument();
     expect(screen.getByText('mrapi-api-tyo (n39r5pits8), stage demo')).toBeInTheDocument();
   });
+});
+
+beforeEach(() => { sessionStorage.setItem(TOKEN_KEY, 'a'.repeat(64)); vi.stubGlobal('fetch', async () => new Response(JSON.stringify({ keys: [{ status: 'active' }] }), { headers: { 'Content-Type': 'application/json' } })); });
+afterEach(() => { sessionStorage.clear(); vi.unstubAllGlobals(); });
+
+it('mở được hướng dẫn tích hợp đã đóng gói và giải thích trạng thái Connected', async () => {
+  const user = userEvent.setup();
+  renderApp(new NotConnectedProvider(), '/sources');
+  expect(await screen.findByText('Data Sources & Integration Status')).toBeInTheDocument();
+  const guide = await screen.findByText('Mở hướng dẫn API Gateway');
+  await user.click(guide);
+  expect(guide.closest('details')).toHaveAttribute('open');
+  expect(guide.closest('details')?.querySelector('pre')?.textContent).toContain('API Gateway');
+  expect(screen.queryByText('Cấu hình còn thiếu')).not.toBeInTheDocument();
 });

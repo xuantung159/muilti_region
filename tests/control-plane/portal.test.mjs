@@ -88,3 +88,30 @@ test('API keys are scoped to the tenant own APIs and returned only once', async 
   assert.equal((await call('DELETE', `/api/keys/${created.data.key.keyId}`, undefined, y)).status, 404);
   assert.equal((await call('DELETE', `/api/keys/${created.data.key.keyId}`, undefined, x)).data.status, 'revoked');
 });
+
+test('seed-admin: admin account with sample project, idempotent, role only via seed', async () => {
+  // Mock db nhận lệnh theo tên class, nên dùng class giả cùng tên thay cho @aws-sdk/lib-dynamodb.
+  const command = name => ({ [name]: class { constructor(input) { this.input = input; } } })[name];
+  const lib = { GetCommand: command('GetCommand'), PutCommand: command('PutCommand'), QueryCommand: command('QueryCommand') };
+  const { seedAdmin, ADMIN_EMAIL, SAMPLE_KEY_NAME } = await import('../../scripts/seed-admin.mjs');
+  const first = await seedAdmin({ db, cmd: lib, table: 'mrapi-control', password: 'Admin-password-123' });
+  assert.deepEqual(first.created, ['user', 'api', 'key']);
+  assert.match(first.apiKey, /^mrk_t[a-f0-9]{10}_[a-f0-9]{12}_[a-f0-9]{48}$/);
+  const login = await call('POST', '/api/login', { email: ADMIN_EMAIL, password: 'Admin-password-123' });
+  assert.equal(login.status, 200); assert.equal(login.data.role, 'admin');
+  const me = await call('GET', '/api/me', undefined, login.data.token); assert.equal(me.data.role, 'admin');
+  const apis = await call('GET', '/api/apis', undefined, login.data.token);
+  assert.deepEqual(apis.data.apis.map(api => api.apiId), [first.apiId]);
+  const keys = await call('GET', '/api/keys', undefined, login.data.token);
+  assert.deepEqual(keys.data.keys.map(key => [key.name, key.status, key.apiIds]), [[SAMPLE_KEY_NAME, 'active', [first.apiId]]]);
+
+  const again = await seedAdmin({ db, cmd: lib, table: 'mrapi-control' });
+  assert.deepEqual(again.created, []); assert.equal(again.apiKey, undefined); assert.equal(again.apiId, first.apiId);
+  const rotated = await seedAdmin({ db, cmd: lib, table: 'mrapi-control', newKey: true });
+  assert.ok(rotated.apiKey); assert.notEqual(rotated.keyId, first.keyId);
+  assert.equal(items.get(`TENANT#${first.tenantId}|KEY#${first.keyId}`).status, 'revoked');
+
+  const normal = await account('user@company.com');
+  assert.equal(normal.data.role, undefined);
+  assert.equal((await call('GET', '/api/me', undefined, normal.data.token)).data.role, undefined);
+});

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card, Tag } from '../components/ui';
-import { Snippet } from './IntegrationGuide';
+import { Snippet } from './Snippet';
 import { envConfig, requestUrl, sendGatewayRequest, type GatewayResult, type IntegrationApi, type IntegrationKey } from './integration';
 
 const field = 'mt-1 w-full rounded-md border border-line bg-surface p-2 text-sm';
